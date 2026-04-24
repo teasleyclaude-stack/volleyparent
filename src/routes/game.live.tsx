@@ -40,6 +40,7 @@ function LivePage() {
   const [errorMode, setErrorMode] = useState(false);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  const [matchWinPromptShown, setMatchWinPromptShown] = useState(false);
 
   const previousByZone = useMemo(() => {
     const m: Record<number, number> = {};
@@ -50,6 +51,35 @@ function LivePage() {
     });
     return m;
   }, [session?.events]);
+
+  // Set wins
+  const homeSetsWon = useMemo(
+    () => session?.completedSets.filter((s) => s.homeScore > s.awayScore).length ?? 0,
+    [session?.completedSets],
+  );
+  const awaySetsWon = useMemo(
+    () => session?.completedSets.filter((s) => s.awayScore > s.homeScore).length ?? 0,
+    [session?.completedSets],
+  );
+
+  const currentSet = session?.currentSet ?? 1;
+  const isDecidingSet = currentSet === 5;
+  const pointTarget = isDecidingSet ? 15 : 25;
+  const matchWinner =
+    homeSetsWon >= 3
+      ? session?.homeTeam || "Home"
+      : awaySetsWon >= 3
+        ? session?.awayTeam || "Away"
+        : null;
+  const isFinalSet = currentSet >= 5 || matchWinner !== null;
+
+  // Auto-prompt when a team reaches 3 set wins
+  useEffect(() => {
+    if (matchWinner && !matchWinPromptShown && !endConfirmOpen) {
+      setMatchWinPromptShown(true);
+      setEndConfirmOpen(true);
+    }
+  }, [matchWinner, matchWinPromptShown, endConfirmOpen]);
 
   if (!session) {
     return (
