@@ -344,6 +344,25 @@ function SetupPage() {
           </p>
         )}
       </footer>
+
+      {showAdd && (
+        <AddPlayerModal
+          existingNumbers={roster.map((p) => p.number)}
+          onClose={() => setShowAdd(false)}
+          onAdd={(name, num, pos) => {
+            addPlayer(name, num, pos);
+            setShowAdd(false);
+          }}
+        />
+      )}
+
+      {showLoad && (
+        <LoadRosterModal
+          sessions={pastSessions}
+          onClose={() => setShowLoad(false)}
+          onLoad={loadFromSession}
+        />
+      )}
     </PhoneShell>
   );
 }
