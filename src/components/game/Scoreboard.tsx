@@ -34,6 +34,9 @@ export function Scoreboard(props: ScoreboardProps) {
     setNumber,
     isHomeServing,
     isHomeOurs,
+    homeSetsWon,
+    awaySetsWon,
+    pointTarget,
     onScoreHome,
     onScoreAway,
   } = props;
