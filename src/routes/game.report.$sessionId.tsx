@@ -112,6 +112,39 @@ function ReportPage() {
       </header>
 
       <main className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+        {/* Final match result */}
+        {(() => {
+          const homeSetsWon = session.completedSets.filter((s) => s.homeScore > s.awayScore).length;
+          const awaySetsWon = session.completedSets.filter((s) => s.awayScore > s.homeScore).length;
+          const homeWon = homeSetsWon > awaySetsWon;
+          const winner = homeWon ? session.homeTeam : session.awayTeam;
+          const ourWin = homeWon === session.isHomeTeam;
+          return (
+            <div
+              className={`rounded-2xl border p-4 text-center ${ourWin ? "border-primary/50 bg-primary/10" : "border-border bg-card"}`}
+            >
+              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Final · Best of 5
+              </div>
+              <div className="mt-1 text-xl font-black text-foreground">{winner || "—"} wins</div>
+              <div className="mt-2 flex items-center justify-center gap-3 text-3xl font-black tabular-nums">
+                <span className={homeWon ? "text-[var(--gold)]" : "text-muted-foreground"}>
+                  {homeSetsWon}
+                </span>
+                <span className="text-muted-foreground/40">—</span>
+                <span className={!homeWon ? "text-[var(--gold)]" : "text-muted-foreground"}>
+                  {awaySetsWon}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <span>{session.homeTeam || "Home"}</span>
+                <span>·</span>
+                <span>{session.awayTeam || "Away"}</span>
+              </div>
+            </div>
+          );
+        })()}
+
         <StatSummaryCard player={tracked} />
 
         {/* Set scores */}
