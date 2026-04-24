@@ -1,6 +1,6 @@
 export type Position = "S" | "MB" | "OH" | "RS" | "L" | "DS";
 export type StatType = "kill" | "error" | "dig" | "block" | "ace" | "assist" | "dug";
-export type KillZone = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export type KillZone = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface PlayerStats {
   kills: number;
