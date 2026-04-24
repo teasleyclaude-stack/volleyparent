@@ -81,7 +81,7 @@ export function Scoreboard(props: ScoreboardProps) {
           </div>
           <span
             key={homeKey}
-            className="vp-bounce font-display text-[64px] font-black leading-none tracking-tight text-foreground tabular-nums"
+            className={scoreClass(homeLeading)}
           >
             {homeScore}
           </span>
