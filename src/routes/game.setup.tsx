@@ -197,35 +197,90 @@ function SetupPage() {
         {/* Roster + tracked player */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">My Player</h2>
-            <span className="text-[11px] text-muted-foreground">Tap to mark</span>
+            <h2 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+              Roster · {roster.length}
+            </h2>
+            <span className="text-[11px] text-muted-foreground">Tap to mark your player</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {roster.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setTracked(p.id)}
-                className={cn(
-                  "relative flex items-center gap-3 rounded-2xl border bg-card p-3 text-left transition-all",
-                  p.isTracked ? "border-primary shadow-md shadow-primary/20" : "border-border",
-                )}
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-popover text-base font-black text-foreground tabular-nums">
-                  {p.number}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-foreground">{p.name}</div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    {p.position}
-                  </div>
-                </div>
-                {p.isTracked && (
-                  <Star className="h-4 w-4 fill-primary text-primary" strokeWidth={1.5} />
-                )}
-              </button>
-            ))}
+
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAdd(true)}
+              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-card text-[11px] font-black uppercase tracking-widest text-foreground active:scale-[0.98]"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowLoad(true)}
+              disabled={pastSessions.length === 0}
+              className={cn(
+                "flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border text-[11px] font-black uppercase tracking-widest active:scale-[0.98]",
+                pastSessions.length === 0 ? "bg-card/50 text-muted-foreground/50" : "bg-card text-foreground",
+              )}
+            >
+              <Users className="h-3.5 w-3.5" /> Load
+            </button>
+            <button
+              type="button"
+              onClick={clearRoster}
+              disabled={roster.length === 0}
+              className={cn(
+                "flex h-11 items-center justify-center gap-1.5 rounded-xl border text-[11px] font-black uppercase tracking-widest active:scale-[0.98]",
+                roster.length === 0
+                  ? "border-border bg-card/50 text-muted-foreground/50"
+                  : "border-destructive/40 bg-card text-destructive",
+              )}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Clear
+            </button>
           </div>
+
+          {roster.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+              No players yet. Add your own or load from a previous game.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {roster.map((p) => (
+                <div
+                  key={p.id}
+                  className={cn(
+                    "relative flex items-center gap-2 rounded-2xl border bg-card p-3 transition-all",
+                    p.isTracked ? "border-primary shadow-md shadow-primary/20" : "border-border",
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setTracked(p.id)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-popover text-base font-black text-foreground tabular-nums">
+                      {p.number}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold text-foreground">{p.name}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {p.position}
+                      </div>
+                    </div>
+                    {p.isTracked && (
+                      <Star className="h-4 w-4 fill-primary text-primary" strokeWidth={1.5} />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removePlayer(p.id)}
+                    aria-label={`Remove ${p.name}`}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-popover text-muted-foreground active:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Starting rotation */}
