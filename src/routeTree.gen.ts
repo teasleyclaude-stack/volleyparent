@@ -9,9 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RosterRouteImport } from './routes/roster'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GameSetupRouteImport } from './routes/game.setup'
+import { Route as GameLiveRouteImport } from './routes/game.live'
+import { Route as GameReportSessionIdRouteImport } from './routes/game.report.$sessionId'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RosterRoute = RosterRouteImport.update({
+  id: '/roster',
+  path: '/roster',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -22,35 +42,108 @@ const GameSetupRoute = GameSetupRouteImport.update({
   path: '/game/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GameLiveRoute = GameLiveRouteImport.update({
+  id: '/game/live',
+  path: '/game/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GameReportSessionIdRoute = GameReportSessionIdRouteImport.update({
+  id: '/game/report/$sessionId',
+  path: '/game/report/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/roster': typeof RosterRoute
+  '/settings': typeof SettingsRoute
+  '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
+  '/game/report/$sessionId': typeof GameReportSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/roster': typeof RosterRoute
+  '/settings': typeof SettingsRoute
+  '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
+  '/game/report/$sessionId': typeof GameReportSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/roster': typeof RosterRoute
+  '/settings': typeof SettingsRoute
+  '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
+  '/game/report/$sessionId': typeof GameReportSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/game/setup'
+  fullPaths:
+    | '/'
+    | '/history'
+    | '/roster'
+    | '/settings'
+    | '/game/live'
+    | '/game/setup'
+    | '/game/report/$sessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/game/setup'
-  id: '__root__' | '/' | '/game/setup'
+  to:
+    | '/'
+    | '/history'
+    | '/roster'
+    | '/settings'
+    | '/game/live'
+    | '/game/setup'
+    | '/game/report/$sessionId'
+  id:
+    | '__root__'
+    | '/'
+    | '/history'
+    | '/roster'
+    | '/settings'
+    | '/game/live'
+    | '/game/setup'
+    | '/game/report/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HistoryRoute: typeof HistoryRoute
+  RosterRoute: typeof RosterRoute
+  SettingsRoute: typeof SettingsRoute
+  GameLiveRoute: typeof GameLiveRoute
   GameSetupRoute: typeof GameSetupRoute
+  GameReportSessionIdRoute: typeof GameReportSessionIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roster': {
+      id: '/roster'
+      path: '/roster'
+      fullPath: '/roster'
+      preLoaderRoute: typeof RosterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -65,12 +158,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/game/live': {
+      id: '/game/live'
+      path: '/game/live'
+      fullPath: '/game/live'
+      preLoaderRoute: typeof GameLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/game/report/$sessionId': {
+      id: '/game/report/$sessionId'
+      path: '/game/report/$sessionId'
+      fullPath: '/game/report/$sessionId'
+      preLoaderRoute: typeof GameReportSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HistoryRoute: HistoryRoute,
+  RosterRoute: RosterRoute,
+  SettingsRoute: SettingsRoute,
+  GameLiveRoute: GameLiveRoute,
   GameSetupRoute: GameSetupRoute,
+  GameReportSessionIdRoute: GameReportSessionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
