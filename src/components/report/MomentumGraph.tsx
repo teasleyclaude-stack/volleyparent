@@ -48,7 +48,10 @@ export function MomentumGraph({ events, homeTeam, awayTeam, isHomeOurs }: Moment
                 fontSize: 12,
               }}
               labelFormatter={(p) => `Point ${p}`}
-              formatter={(v: number) => [v > 0 ? `+${v}` : v, "Differential"]}
+              formatter={(v) => {
+                const n = Number(v);
+                return [n > 0 ? `+${n}` : `${n}`, "Differential"];
+              }}
             />
             <Line
               type="monotone"
