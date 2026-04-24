@@ -64,7 +64,7 @@ export const useGameStore = create<GameStore>()(
           rotationState: rotation,
           roster: roster.map((p) => ({
             ...p,
-            stats: { kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0 },
+            stats: { kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0 },
           })),
           events: [],
           completedSets: [],
@@ -114,6 +114,9 @@ export const useGameStore = create<GameStore>()(
           player.stats.totalAttempts += 1;
         } else if (stat === "error") {
           player.stats.errors += 1;
+          player.stats.totalAttempts += 1;
+        } else if (stat === "dug") {
+          player.stats.dugAttempts += 1;
           player.stats.totalAttempts += 1;
         } else if (stat === "dig") player.stats.digs += 1;
         else if (stat === "block") player.stats.blocks += 1;
@@ -204,6 +207,9 @@ export const useGameStore = create<GameStore>()(
               p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
             } else if (st === "error") {
               p.stats.errors = Math.max(0, p.stats.errors - 1);
+              p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+            } else if (st === "dug") {
+              p.stats.dugAttempts = Math.max(0, p.stats.dugAttempts - 1);
               p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
             } else if (st === "dig") p.stats.digs = Math.max(0, p.stats.digs - 1);
             else if (st === "block") p.stats.blocks = Math.max(0, p.stats.blocks - 1);
