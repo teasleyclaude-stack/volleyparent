@@ -1,11 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Star, Volleyball } from "lucide-react";
+import { ArrowLeft, Plus, Star, Trash2, Users, Volleyball, X } from "lucide-react";
 import { useState } from "react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useGameStore } from "@/store/gameStore";
+import { useHistoryStore } from "@/store/historyStore";
 import { SAMPLE_ROSTER } from "@/data/sampleRoster";
-import type { Player, RotationState } from "@/types";
+import { defaultStats, type Player, type Position, type RotationState } from "@/types";
+import { uid } from "@/utils/stats";
 import { cn } from "@/lib/utils";
+
+const POSITIONS: Position[] = ["S", "MB", "OH", "RS", "L", "DS"];
 
 export const Route = createFileRoute("/game/setup")({
   head: () => ({
