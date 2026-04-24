@@ -1,11 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Star, Volleyball } from "lucide-react";
+import { ArrowLeft, Plus, Star, Trash2, Users, Volleyball, X } from "lucide-react";
 import { useState } from "react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useGameStore } from "@/store/gameStore";
+import { useHistoryStore } from "@/store/historyStore";
 import { SAMPLE_ROSTER } from "@/data/sampleRoster";
-import type { Player, RotationState } from "@/types";
+import { defaultStats, type Player, type Position, type RotationState } from "@/types";
+import { uid } from "@/utils/stats";
 import { cn } from "@/lib/utils";
+
+const POSITIONS: Position[] = ["S", "MB", "OH", "RS", "L", "DS"];
 
 export const Route = createFileRoute("/game/setup")({
   head: () => ({
@@ -20,6 +24,7 @@ export const Route = createFileRoute("/game/setup")({
 function SetupPage() {
   const navigate = useNavigate();
   const startSession = useGameStore((s) => s.startSession);
+  const pastSessions = useHistoryStore((s) => s.sessions);
 
   const [homeTeam, setHomeTeam] = useState("Horizon Thunder");
   const [awayTeam, setAwayTeam] = useState("Lake Ridge Storm");
@@ -29,6 +34,8 @@ function SetupPage() {
   const [rotation, setRotation] = useState<(string | null)[]>(
     SAMPLE_ROSTER.slice(0, 6).map((p) => p.id),
   );
+  const [showAdd, setShowAdd] = useState(false);
+  const [showLoad, setShowLoad] = useState(false);
 
   const trackedId = roster.find((p) => p.isTracked)?.id ?? null;
   const rotationFull = rotation.every((x) => x);
@@ -40,13 +47,58 @@ function SetupPage() {
   const setRotationAt = (idx: number, playerId: string | null) => {
     setRotation((r) => {
       const next = [...r];
-      // Remove the player from any other slot
       for (let i = 0; i < next.length; i++) {
         if (next[i] === playerId) next[i] = null;
       }
       next[idx] = playerId;
       return next;
     });
+  };
+
+  const clearRoster = () => {
+    setRoster([]);
+    setRotation([null, null, null, null, null, null]);
+  };
+
+  const addPlayer = (name: string, number: number, position: Position) => {
+    const newPlayer: Player = {
+      id: uid(),
+      name: name.trim(),
+      number,
+      position,
+      isTracked: roster.length === 0,
+      stats: defaultStats(),
+    };
+    setRoster((r) => [...r, newPlayer]);
+  };
+
+  const removePlayer = (id: string) => {
+    setRoster((r) => {
+      const filtered = r.filter((p) => p.id !== id);
+      // ensure one tracked
+      if (!filtered.some((p) => p.isTracked) && filtered.length > 0) {
+        filtered[0] = { ...filtered[0], isTracked: true };
+      }
+      return filtered;
+    });
+    setRotation((rot) => rot.map((x) => (x === id ? null : x)));
+  };
+
+  const loadFromSession = (sessionId: string) => {
+    const s = pastSessions.find((x) => x.id === sessionId);
+    if (!s) return;
+    // Reset stats, keep player identities
+    const fresh: Player[] = s.roster.map((p) => ({
+      ...p,
+      stats: defaultStats(),
+    }));
+    // ensure exactly one tracked
+    if (!fresh.some((p) => p.isTracked) && fresh.length > 0) {
+      fresh[0].isTracked = true;
+    }
+    setRoster(fresh);
+    setRotation(fresh.slice(0, 6).map((p) => p.id).concat(Array(Math.max(0, 6 - fresh.length)).fill(null)).slice(0, 6));
+    setShowLoad(false);
   };
 
   const handleStart = () => {
@@ -145,35 +197,90 @@ function SetupPage() {
         {/* Roster + tracked player */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">My Player</h2>
-            <span className="text-[11px] text-muted-foreground">Tap to mark</span>
+            <h2 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+              Roster · {roster.length}
+            </h2>
+            <span className="text-[11px] text-muted-foreground">Tap to mark your player</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {roster.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setTracked(p.id)}
-                className={cn(
-                  "relative flex items-center gap-3 rounded-2xl border bg-card p-3 text-left transition-all",
-                  p.isTracked ? "border-primary shadow-md shadow-primary/20" : "border-border",
-                )}
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-popover text-base font-black text-foreground tabular-nums">
-                  {p.number}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-foreground">{p.name}</div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    {p.position}
-                  </div>
-                </div>
-                {p.isTracked && (
-                  <Star className="h-4 w-4 fill-primary text-primary" strokeWidth={1.5} />
-                )}
-              </button>
-            ))}
+
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAdd(true)}
+              className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border bg-card text-[11px] font-black uppercase tracking-widest text-foreground active:scale-[0.98]"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowLoad(true)}
+              disabled={pastSessions.length === 0}
+              className={cn(
+                "flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border text-[11px] font-black uppercase tracking-widest active:scale-[0.98]",
+                pastSessions.length === 0 ? "bg-card/50 text-muted-foreground/50" : "bg-card text-foreground",
+              )}
+            >
+              <Users className="h-3.5 w-3.5" /> Load
+            </button>
+            <button
+              type="button"
+              onClick={clearRoster}
+              disabled={roster.length === 0}
+              className={cn(
+                "flex h-11 items-center justify-center gap-1.5 rounded-xl border text-[11px] font-black uppercase tracking-widest active:scale-[0.98]",
+                roster.length === 0
+                  ? "border-border bg-card/50 text-muted-foreground/50"
+                  : "border-destructive/40 bg-card text-destructive",
+              )}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Clear
+            </button>
           </div>
+
+          {roster.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+              No players yet. Add your own or load from a previous game.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {roster.map((p) => (
+                <div
+                  key={p.id}
+                  className={cn(
+                    "relative flex items-center gap-2 rounded-2xl border bg-card p-3 transition-all",
+                    p.isTracked ? "border-primary shadow-md shadow-primary/20" : "border-border",
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setTracked(p.id)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-popover text-base font-black text-foreground tabular-nums">
+                      {p.number}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold text-foreground">{p.name}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {p.position}
+                      </div>
+                    </div>
+                    {p.isTracked && (
+                      <Star className="h-4 w-4 fill-primary text-primary" strokeWidth={1.5} />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removePlayer(p.id)}
+                    aria-label={`Remove ${p.name}`}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-popover text-muted-foreground active:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Starting rotation */}
@@ -237,6 +344,25 @@ function SetupPage() {
           </p>
         )}
       </footer>
+
+      {showAdd && (
+        <AddPlayerModal
+          existingNumbers={roster.map((p) => p.number)}
+          onClose={() => setShowAdd(false)}
+          onAdd={(name, num, pos) => {
+            addPlayer(name, num, pos);
+            setShowAdd(false);
+          }}
+        />
+      )}
+
+      {showLoad && (
+        <LoadRosterModal
+          sessions={pastSessions}
+          onClose={() => setShowLoad(false)}
+          onLoad={loadFromSession}
+        />
+      )}
     </PhoneShell>
   );
 }
@@ -338,6 +464,166 @@ function RotationSlot({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AddPlayerModal({
+  existingNumbers,
+  onClose,
+  onAdd,
+}: {
+  existingNumbers: number[];
+  onClose: () => void;
+  onAdd: (name: string, number: number, position: Position) => void;
+}) {
+  const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
+  const [position, setPosition] = useState<Position>("OH");
+
+  const num = parseInt(number, 10);
+  const numValid = !isNaN(num) && num >= 0 && num <= 99 && !existingNumbers.includes(num);
+  const valid = name.trim().length > 0 && numValid;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[440px] space-y-4 rounded-t-3xl border border-border bg-popover p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Add Player</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Player name"
+            autoFocus
+            className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+          />
+          <input
+            value={number}
+            onChange={(e) => setNumber(e.target.value.replace(/\D/g, "").slice(0, 2))}
+            inputMode="numeric"
+            placeholder="Jersey #"
+            className={cn(
+              "h-12 w-full rounded-2xl border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none",
+              number && !numValid ? "border-destructive" : "border-border focus:border-primary",
+            )}
+          />
+          {number && !numValid && (
+            <p className="text-[11px] text-destructive">
+              {existingNumbers.includes(num) ? "Number already used" : "Enter 0–99"}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            Position
+          </div>
+          <div className="grid grid-cols-6 gap-1.5">
+            {POSITIONS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPosition(p)}
+                className={cn(
+                  "h-11 rounded-xl text-[11px] font-black uppercase tracking-wider transition-colors",
+                  position === p ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          disabled={!valid}
+          onClick={() => onAdd(name, num, position)}
+          className={cn(
+            "h-13 flex h-13 w-full items-center justify-center rounded-2xl py-4 text-sm font-black uppercase tracking-widest transition-all",
+            valid
+              ? "bg-primary text-primary-foreground active:scale-[0.98]"
+              : "bg-card text-muted-foreground",
+          )}
+        >
+          Add Player
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LoadRosterModal({
+  sessions,
+  onClose,
+  onLoad,
+}: {
+  sessions: import("@/types").GameSession[];
+  onClose: () => void;
+  onLoad: (id: string) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[80vh] w-full max-w-[440px] space-y-3 overflow-y-auto rounded-t-3xl border border-border bg-popover p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">
+            Load Roster
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Players carry over with fresh stats. Tracked player and rotation are preserved.
+        </p>
+
+        <div className="space-y-2">
+          {sessions.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onLoad(s.id)}
+              className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-3 text-left active:scale-[0.99]"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-bold text-foreground">
+                  {s.homeTeam} vs {s.awayTeam}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {new Date(s.date).toLocaleDateString()} · {s.roster.length} players
+                </div>
+              </div>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
