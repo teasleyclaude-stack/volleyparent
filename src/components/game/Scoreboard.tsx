@@ -10,6 +10,9 @@ interface ScoreboardProps {
   setNumber: number;
   isHomeServing: boolean;
   isHomeOurs: boolean;
+  homeSetsWon: number;
+  awaySetsWon: number;
+  pointTarget: number;
   onScoreHome: () => void;
   onScoreAway: () => void;
 }
@@ -31,6 +34,9 @@ export function Scoreboard(props: ScoreboardProps) {
     setNumber,
     isHomeServing,
     isHomeOurs,
+    homeSetsWon,
+    awaySetsWon,
+    pointTarget,
     onScoreHome,
     onScoreAway,
   } = props;
@@ -56,10 +62,21 @@ export function Scoreboard(props: ScoreboardProps) {
     <div className="border-b border-border bg-popover px-4 pt-4 pb-3">
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Set {setNumber}
+          Set {setNumber} <span className="text-muted-foreground/60">· to {pointTarget}</span>
         </span>
         <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
           ● Live
+        </span>
+      </div>
+
+      {/* Set wins tracker */}
+      <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <span className={isHomeOurs ? "text-foreground" : ""}>
+          {homeTeam || "Home"} <span className="tabular-nums text-[var(--gold)]">{homeSetsWon}</span>
+        </span>
+        <span className="text-muted-foreground/40">—</span>
+        <span className={!isHomeOurs ? "text-foreground" : ""}>
+          <span className="tabular-nums text-[var(--gold)]">{awaySetsWon}</span> {awayTeam || "Away"}
         </span>
       </div>
 

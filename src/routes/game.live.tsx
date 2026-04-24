@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag } from "lucide-react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { Scoreboard } from "@/components/game/Scoreboard";
@@ -40,6 +40,7 @@ function LivePage() {
   const [errorMode, setErrorMode] = useState(false);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  const [matchWinPromptShown, setMatchWinPromptShown] = useState(false);
 
   const previousByZone = useMemo(() => {
     const m: Record<number, number> = {};
@@ -50,6 +51,35 @@ function LivePage() {
     });
     return m;
   }, [session?.events]);
+
+  // Set wins
+  const homeSetsWon = useMemo(
+    () => session?.completedSets.filter((s) => s.homeScore > s.awayScore).length ?? 0,
+    [session?.completedSets],
+  );
+  const awaySetsWon = useMemo(
+    () => session?.completedSets.filter((s) => s.awayScore > s.homeScore).length ?? 0,
+    [session?.completedSets],
+  );
+
+  const currentSet = session?.currentSet ?? 1;
+  const isDecidingSet = currentSet === 5;
+  const pointTarget = isDecidingSet ? 15 : 25;
+  const matchWinner =
+    homeSetsWon >= 3
+      ? session?.homeTeam || "Home"
+      : awaySetsWon >= 3
+        ? session?.awayTeam || "Away"
+        : null;
+  const isFinalSet = currentSet >= 5 || matchWinner !== null;
+
+  // Auto-prompt when a team reaches 3 set wins
+  useEffect(() => {
+    if (matchWinner && !matchWinPromptShown && !endConfirmOpen) {
+      setMatchWinPromptShown(true);
+      setEndConfirmOpen(true);
+    }
+  }, [matchWinner, matchWinPromptShown, endConfirmOpen]);
 
   if (!session) {
     return (
@@ -125,6 +155,9 @@ function LivePage() {
           setNumber={session.currentSet}
           isHomeServing={session.isHomeServing}
           isHomeOurs={session.isHomeTeam}
+          homeSetsWon={homeSetsWon}
+          awaySetsWon={awaySetsWon}
+          pointTarget={pointTarget}
           onScoreHome={() => {
             tapHaptic("light");
             addPoint("home");
@@ -261,13 +294,23 @@ function LivePage() {
           >
             <Undo2 className="h-4 w-4" /> Undo
           </button>
-          <button
-            type="button"
-            onClick={() => endSet()}
-            className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
-          >
-            End Set {session.currentSet}
-          </button>
+          {isFinalSet ? (
+            <button
+              type="button"
+              onClick={() => setEndConfirmOpen(true)}
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-destructive text-sm font-black uppercase tracking-widest text-destructive-foreground active:scale-95"
+            >
+              End Match
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => endSet()}
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
+            >
+              End Set {session.currentSet}
+            </button>
+          )}
         </section>
       </main>
 
@@ -297,9 +340,13 @@ function LivePage() {
             className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-black text-foreground">End the game?</h3>
+            <h3 className="text-lg font-black text-foreground">
+              {matchWinner ? `Match over — ${matchWinner} wins!` : "End the game?"}
+            </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              The match will be saved to history and you'll see the post-game report.
+              {matchWinner
+                ? `Final: ${session.homeTeam} ${homeSetsWon} — ${awaySetsWon} ${session.awayTeam}. End match and view the report?`
+                : "The match will be saved to history and you'll see the post-game report."}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button
