@@ -467,3 +467,163 @@ function RotationSlot({
     </div>
   );
 }
+
+function AddPlayerModal({
+  existingNumbers,
+  onClose,
+  onAdd,
+}: {
+  existingNumbers: number[];
+  onClose: () => void;
+  onAdd: (name: string, number: number, position: Position) => void;
+}) {
+  const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
+  const [position, setPosition] = useState<Position>("OH");
+
+  const num = parseInt(number, 10);
+  const numValid = !isNaN(num) && num >= 0 && num <= 99 && !existingNumbers.includes(num);
+  const valid = name.trim().length > 0 && numValid;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[440px] space-y-4 rounded-t-3xl border border-border bg-popover p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Add Player</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Player name"
+            autoFocus
+            className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+          />
+          <input
+            value={number}
+            onChange={(e) => setNumber(e.target.value.replace(/\D/g, "").slice(0, 2))}
+            inputMode="numeric"
+            placeholder="Jersey #"
+            className={cn(
+              "h-12 w-full rounded-2xl border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none",
+              number && !numValid ? "border-destructive" : "border-border focus:border-primary",
+            )}
+          />
+          {number && !numValid && (
+            <p className="text-[11px] text-destructive">
+              {existingNumbers.includes(num) ? "Number already used" : "Enter 0–99"}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            Position
+          </div>
+          <div className="grid grid-cols-6 gap-1.5">
+            {POSITIONS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPosition(p)}
+                className={cn(
+                  "h-11 rounded-xl text-[11px] font-black uppercase tracking-wider transition-colors",
+                  position === p ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          disabled={!valid}
+          onClick={() => onAdd(name, num, position)}
+          className={cn(
+            "h-13 flex h-13 w-full items-center justify-center rounded-2xl py-4 text-sm font-black uppercase tracking-widest transition-all",
+            valid
+              ? "bg-primary text-primary-foreground active:scale-[0.98]"
+              : "bg-card text-muted-foreground",
+          )}
+        >
+          Add Player
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LoadRosterModal({
+  sessions,
+  onClose,
+  onLoad,
+}: {
+  sessions: import("@/types").GameSession[];
+  onClose: () => void;
+  onLoad: (id: string) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[80vh] w-full max-w-[440px] space-y-3 overflow-y-auto rounded-t-3xl border border-border bg-popover p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">
+            Load Roster
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Players carry over with fresh stats. Tracked player and rotation are preserved.
+        </p>
+
+        <div className="space-y-2">
+          {sessions.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onLoad(s.id)}
+              className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-3 text-left active:scale-[0.99]"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-bold text-foreground">
+                  {s.homeTeam} vs {s.awayTeam}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {new Date(s.date).toLocaleDateString()} · {s.roster.length} players
+                </div>
+              </div>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
