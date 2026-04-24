@@ -294,13 +294,23 @@ function LivePage() {
           >
             <Undo2 className="h-4 w-4" /> Undo
           </button>
-          <button
-            type="button"
-            onClick={() => endSet()}
-            className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
-          >
-            End Set {session.currentSet}
-          </button>
+          {isFinalSet ? (
+            <button
+              type="button"
+              onClick={() => setEndConfirmOpen(true)}
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-destructive text-sm font-black uppercase tracking-widest text-destructive-foreground active:scale-95"
+            >
+              End Match
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => endSet()}
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
+            >
+              End Set {session.currentSet}
+            </button>
+          )}
         </section>
       </main>
 
