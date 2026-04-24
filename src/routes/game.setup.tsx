@@ -24,6 +24,7 @@ export const Route = createFileRoute("/game/setup")({
 function SetupPage() {
   const navigate = useNavigate();
   const startSession = useGameStore((s) => s.startSession);
+  const pastSessions = useHistoryStore((s) => s.sessions);
 
   const [homeTeam, setHomeTeam] = useState("Horizon Thunder");
   const [awayTeam, setAwayTeam] = useState("Lake Ridge Storm");
@@ -33,6 +34,8 @@ function SetupPage() {
   const [rotation, setRotation] = useState<(string | null)[]>(
     SAMPLE_ROSTER.slice(0, 6).map((p) => p.id),
   );
+  const [showAdd, setShowAdd] = useState(false);
+  const [showLoad, setShowLoad] = useState(false);
 
   const trackedId = roster.find((p) => p.isTracked)?.id ?? null;
   const rotationFull = rotation.every((x) => x);
@@ -44,13 +47,58 @@ function SetupPage() {
   const setRotationAt = (idx: number, playerId: string | null) => {
     setRotation((r) => {
       const next = [...r];
-      // Remove the player from any other slot
       for (let i = 0; i < next.length; i++) {
         if (next[i] === playerId) next[i] = null;
       }
       next[idx] = playerId;
       return next;
     });
+  };
+
+  const clearRoster = () => {
+    setRoster([]);
+    setRotation([null, null, null, null, null, null]);
+  };
+
+  const addPlayer = (name: string, number: number, position: Position) => {
+    const newPlayer: Player = {
+      id: uid(),
+      name: name.trim(),
+      number,
+      position,
+      isTracked: roster.length === 0,
+      stats: defaultStats(),
+    };
+    setRoster((r) => [...r, newPlayer]);
+  };
+
+  const removePlayer = (id: string) => {
+    setRoster((r) => {
+      const filtered = r.filter((p) => p.id !== id);
+      // ensure one tracked
+      if (!filtered.some((p) => p.isTracked) && filtered.length > 0) {
+        filtered[0] = { ...filtered[0], isTracked: true };
+      }
+      return filtered;
+    });
+    setRotation((rot) => rot.map((x) => (x === id ? null : x)));
+  };
+
+  const loadFromSession = (sessionId: string) => {
+    const s = pastSessions.find((x) => x.id === sessionId);
+    if (!s) return;
+    // Reset stats, keep player identities
+    const fresh: Player[] = s.roster.map((p) => ({
+      ...p,
+      stats: defaultStats(),
+    }));
+    // ensure exactly one tracked
+    if (!fresh.some((p) => p.isTracked) && fresh.length > 0) {
+      fresh[0].isTracked = true;
+    }
+    setRoster(fresh);
+    setRotation(fresh.slice(0, 6).map((p) => p.id).concat(Array(Math.max(0, 6 - fresh.length)).fill(null)).slice(0, 6));
+    setShowLoad(false);
   };
 
   const handleStart = () => {
