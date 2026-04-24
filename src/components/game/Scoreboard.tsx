@@ -10,6 +10,9 @@ interface ScoreboardProps {
   setNumber: number;
   isHomeServing: boolean;
   isHomeOurs: boolean;
+  homeSetsWon: number;
+  awaySetsWon: number;
+  pointTarget: number;
   onScoreHome: () => void;
   onScoreAway: () => void;
 }
