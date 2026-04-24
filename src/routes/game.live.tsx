@@ -340,9 +340,13 @@ function LivePage() {
             className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-black text-foreground">End the game?</h3>
+            <h3 className="text-lg font-black text-foreground">
+              {matchWinner ? `Match over — ${matchWinner} wins!` : "End the game?"}
+            </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              The match will be saved to history and you'll see the post-game report.
+              {matchWinner
+                ? `Final: ${session.homeTeam} ${homeSetsWon} — ${awaySetsWon} ${session.awayTeam}. End match and view the report?`
+                : "The match will be saved to history and you'll see the post-game report."}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button
