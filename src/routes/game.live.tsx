@@ -40,6 +40,16 @@ function LivePage() {
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
 
+  const previousByZone = useMemo(() => {
+    const m: Record<number, number> = {};
+    session?.events.forEach((e) => {
+      if (e.type === "STAT" && e.statType === "kill" && e.killZone) {
+        m[e.killZone] = (m[e.killZone] ?? 0) + 1;
+      }
+    });
+    return m;
+  }, [session?.events]);
+
   if (!session) {
     return (
       <PhoneShell>
@@ -57,16 +67,6 @@ function LivePage() {
   }
 
   const tracked = session.roster.find((p) => p.isTracked) ?? session.roster[0];
-
-  const previousByZone = useMemo(() => {
-    const m: Record<number, number> = {};
-    session.events.forEach((e) => {
-      if (e.type === "STAT" && e.statType === "kill" && e.killZone) {
-        m[e.killZone] = (m[e.killZone] ?? 0) + 1;
-      }
-    });
-    return m;
-  }, [session.events]);
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
