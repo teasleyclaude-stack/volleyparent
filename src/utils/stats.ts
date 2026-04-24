@@ -10,8 +10,10 @@ export function hittingPercentage(stats: PlayerStats): string {
 }
 
 export function applyRotation(state: RotationState): RotationState {
+  // Clockwise rotation on side out:
+  // P2 → P1 (new server), P3 → P2, P4 → P3, P5 → P4, P6 → P5, P1 → P6
   const [P1, P2, P3, P4, P5, P6] = state;
-  return [P6, P1, P2, P3, P4, P5];
+  return [P2, P3, P4, P5, P6, P1];
 }
 
 export function uid(): string {
