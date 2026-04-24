@@ -155,6 +155,9 @@ function LivePage() {
           setNumber={session.currentSet}
           isHomeServing={session.isHomeServing}
           isHomeOurs={session.isHomeTeam}
+          homeSetsWon={homeSetsWon}
+          awaySetsWon={awaySetsWon}
+          pointTarget={pointTarget}
           onScoreHome={() => {
             tapHaptic("light");
             addPoint("home");
