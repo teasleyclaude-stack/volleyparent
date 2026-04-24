@@ -38,6 +38,20 @@ export function Scoreboard(props: ScoreboardProps) {
   const homeKey = useBounce(homeScore);
   const awayKey = useBounce(awayScore);
 
+  const homeLeading = homeScore > awayScore;
+  const awayLeading = awayScore > homeScore;
+  const tied = homeScore === awayScore;
+
+  const scoreClass = (leading: boolean) =>
+    cn(
+      "vp-bounce font-display font-black leading-none tracking-tight tabular-nums transition-all duration-200",
+      tied
+        ? "text-[64px] text-foreground"
+        : leading
+          ? "text-[78px] text-[var(--gold)] [text-shadow:0_0_24px_color-mix(in_oklab,var(--gold)_55%,transparent)]"
+          : "text-[64px] text-muted-foreground",
+    );
+
   return (
     <div className="border-b border-border bg-popover px-4 pt-4 pb-3">
       <div className="mb-1 flex items-center justify-between">
