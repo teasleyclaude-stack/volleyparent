@@ -1,5 +1,5 @@
 export type Position = "S" | "MB" | "OH" | "RS" | "L" | "DS";
-export type StatType = "kill" | "error" | "dig" | "block" | "ace" | "assist";
+export type StatType = "kill" | "error" | "dig" | "block" | "ace" | "assist" | "dug";
 export type KillZone = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export interface PlayerStats {
@@ -10,6 +10,7 @@ export interface PlayerStats {
   blocks: number;
   aces: number;
   assists: number;
+  dugAttempts: number;
 }
 
 export interface Player {
@@ -79,4 +80,5 @@ export const defaultStats = (): PlayerStats => ({
   blocks: 0,
   aces: 0,
   assists: 0,
+  dugAttempts: 0,
 });

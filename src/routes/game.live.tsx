@@ -36,6 +36,7 @@ function LivePage() {
   const saveSession = useHistoryStore((s) => s.saveSession);
 
   const [killModalOpen, setKillModalOpen] = useState(false);
+  const [attemptMenuOpen, setAttemptMenuOpen] = useState(false);
   const [errorMode, setErrorMode] = useState(false);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
@@ -70,10 +71,19 @@ function LivePage() {
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
-      setKillModalOpen(true);
+      setAttemptMenuOpen((v) => !v);
       return;
     }
     recordStat(tracked.id, stat);
+  };
+
+  const handleAttemptOutcome = (outcome: "kill" | "dug" | "error") => {
+    setAttemptMenuOpen(false);
+    if (outcome === "kill") {
+      setKillModalOpen(true);
+      return;
+    }
+    recordStat(tracked.id, outcome);
   };
 
   const handleKillZone = (zone: KillZone | null) => {
@@ -169,11 +179,42 @@ function LivePage() {
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2.5">
-            <StatButton stat="kill" label="Kill" onPress={() => handleStat("kill")} />
+            <StatButton stat="kill" label="Attempt" onPress={() => handleStat("kill")} />
             <StatButton stat="dig" label="Dig" onPress={() => handleStat("dig")} />
             <StatButton stat="block" label="Block" onPress={() => handleStat("block")} />
             <StatButton stat="ace" label="Ace" onPress={() => handleStat("ace")} />
           </div>
+
+          {attemptMenuOpen && (
+            <div className="mt-2.5 rounded-2xl border border-border bg-popover p-2.5">
+              <div className="mb-1.5 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Attempt outcome
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAttemptOutcome("kill")}
+                  className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--kill)] text-[var(--kill-foreground)] shadow-lg shadow-black/30"
+                >
+                  <span className="text-[13px] font-black uppercase tracking-widest">Kill</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAttemptOutcome("dug")}
+                  className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--timeout)] text-black shadow-lg shadow-black/30"
+                >
+                  <span className="text-[13px] font-black uppercase tracking-widest">Dug</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAttemptOutcome("error")}
+                  className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--error)] text-[var(--error-foreground)] shadow-lg shadow-black/30"
+                >
+                  <span className="text-[13px] font-black uppercase tracking-widest">Error</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {errorMode && (
             <div className="mt-2.5">

@@ -49,6 +49,7 @@ export function StatSummaryCard({ player }: StatSummaryCardProps) {
         <StatCell label="Aces" value={player.stats.aces} accent="text-[var(--ace)]" />
         <StatCell label="Errors" value={player.stats.errors} accent="text-[var(--error)]" />
         <StatCell label="Att" value={player.stats.totalAttempts} />
+        <StatCell label="Opp. Digs" value={player.stats.dugAttempts ?? 0} accent="text-[var(--timeout)]" />
       </div>
     </div>
   );
