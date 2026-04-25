@@ -103,19 +103,21 @@ export function Scoreboard(props: ScoreboardProps) {
   const awayLeading = awayScore > homeScore;
   const tied = homeScore === awayScore;
 
-  const scoreClass = (leading: boolean, flash: boolean) =>
-    cn(
+  const scoreClass = (leading: boolean, flash: boolean) => {
+    const size = tied ? "text-[64px]" : leading ? "text-[78px]" : "text-[64px]";
+    const color = flash
+      ? "text-[#FF4D4D] [text-shadow:0_0_24px_rgba(255,77,77,0.55)]"
+      : tied
+        ? "text-foreground"
+        : leading
+          ? "text-[var(--gold)] [text-shadow:0_0_24px_color-mix(in_oklab,var(--gold)_55%,transparent)]"
+          : "text-muted-foreground";
+    return cn(
       "vp-bounce font-display font-black leading-none tracking-tight tabular-nums transition-colors duration-200 select-none",
-      flash
-        ? "text-[#FF4D4D] [text-shadow:0_0_24px_rgba(255,77,77,0.55)]"
-        : tied
-          ? "text-[64px] text-foreground"
-          : leading
-            ? "text-[78px] text-[var(--gold)] [text-shadow:0_0_24px_color-mix(in_oklab,var(--gold)_55%,transparent)]"
-            : "text-[64px] text-muted-foreground",
-      !flash && (tied ? "text-[64px]" : leading ? "text-[78px]" : "text-[64px]"),
-      flash && (leading ? "text-[78px]" : "text-[64px]"),
+      size,
+      color,
     );
+  };
 
   return (
     <div className="border-b border-border bg-popover px-4 pt-4 pb-3">
