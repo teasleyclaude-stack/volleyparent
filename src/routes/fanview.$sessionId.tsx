@@ -179,9 +179,9 @@ function LiveView({ row }: { row: SessionRow }) {
   return (
     <div className="flex-1 px-4 pb-4">
       <Scoreboard state={state} meta={meta} />
-      <Court state={state} />
+      <Court state={state} meta={meta} />
       <TrackedStatsBar state={state} />
-      <ActivityFeed items={recent} />
+      <ActivityFeed items={recent} meta={meta} />
     </div>
   );
 }
@@ -277,8 +277,11 @@ function TeamCell({
   );
 }
 
-function Court({ state }: { state: FanviewState }) {
+function Court({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
   const cellOrder = [3, 2, 1, 4, 5, 0]; // front L→R, back L→R
+  // Our team owns the displayed court; serve indicator only relevant when WE serve.
+  const ourColor = meta.isHomeTeam ? meta.homeColor : meta.awayColor;
+  const weServe = meta.isHomeTeam ? state.isHomeServing : !state.isHomeServing;
   return (
     <section className="mt-4">
       <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
@@ -289,21 +292,25 @@ function Court({ state }: { state: FanviewState }) {
           {cellOrder.map((rotIdx, gridIdx) => {
             const id = state.rotationState[rotIdx];
             const p = id ? state.players[id] : undefined;
-            const isServer = rotIdx === 0;
+            const isServer = rotIdx === 0 && weServe;
             const isFront = gridIdx < 3;
             return (
               <div
                 key={gridIdx}
                 className={cn(
                   "relative flex aspect-square flex-col items-center justify-center rounded-xl border bg-card px-1 py-2 text-center transition-all duration-300",
-                  isServer ? "border-[var(--gold)] vp-serving" : "border-border",
+                  isServer ? "vp-serving" : "border-border",
                 )}
+                style={isServer ? { borderColor: ourColor } : undefined}
               >
                 {p?.isTracked && (
                   <Star className="absolute right-1.5 top-1.5 h-3.5 w-3.5 fill-primary text-primary" strokeWidth={1.5} />
                 )}
                 {isServer && (
-                  <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--gold)]" />
+                  <span
+                    className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: ourColor }}
+                  />
                 )}
                 <span className="text-[20px] font-black leading-none tabular-nums">
                   {p?.number ?? "—"}
@@ -365,7 +372,7 @@ function Chip({ label, value, accent }: { label: string; value: number | string;
   );
 }
 
-function ActivityFeed({ items }: { items: FanviewFeedItem[] }) {
+function ActivityFeed({ items, meta }: { items: FanviewFeedItem[]; meta: FanviewMeta }) {
   return (
     <section className="mt-4">
       <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
@@ -378,7 +385,7 @@ function ActivityFeed({ items }: { items: FanviewFeedItem[] }) {
       ) : (
         <ul className="space-y-1.5">
           {items.map((it) => (
-            <FeedRow key={it.id} item={it} />
+            <FeedRow key={it.id} item={it} meta={meta} />
           ))}
         </ul>
       )}
@@ -386,8 +393,14 @@ function ActivityFeed({ items }: { items: FanviewFeedItem[] }) {
   );
 }
 
-function FeedRow({ item }: { item: FanviewFeedItem }) {
-  const borderClass = {
+function FeedRow({ item, meta }: { item: FanviewFeedItem; meta: FanviewMeta }) {
+  // Team color trumps tone color when the event has a team.
+  const teamColor = item.team
+    ? item.team === "home"
+      ? meta.homeColor
+      : meta.awayColor
+    : null;
+  const fallbackBorder = {
     kill: "border-l-[var(--kill)]",
     error: "border-l-[var(--error)]",
     score: "border-l-[var(--gold)]",
@@ -396,7 +409,13 @@ function FeedRow({ item }: { item: FanviewFeedItem }) {
     neutral: "border-l-border",
   }[item.tone];
   return (
-    <li className={cn("rounded-xl border border-border border-l-4 bg-card px-3 py-2", borderClass)}>
+    <li
+      className={cn(
+        "rounded-xl border border-border border-l-4 bg-card px-3 py-2",
+        !teamColor && fallbackBorder,
+      )}
+      style={teamColor ? { borderLeftColor: teamColor } : undefined}
+    >
       <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
         Set {item.setNumber} · {item.homeScore}-{item.awayScore}
       </div>
