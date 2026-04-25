@@ -335,6 +335,18 @@ export const useGameStore = create<GameStore>()(
           s.rotationState = newRot;
         }
 
+        // Reverse a SCORE_CORRECTION: re-add the point and re-apply rotation if it was reversed.
+        if (last.type === "SCORE_CORRECTION" && last.correctionTeam) {
+          if (last.correctionTeam === "home") s.homeScore += 1;
+          else s.awayScore += 1;
+          if (last.rotationReversed) {
+            s.rotationState = applyRotation(s.rotationState);
+          }
+          if (last.servingFlipped) {
+            s.isHomeServing = !s.isHomeServing;
+          }
+        }
+
         set({ session: s });
       },
 
