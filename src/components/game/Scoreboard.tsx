@@ -160,7 +160,6 @@ export function Scoreboard(props: ScoreboardProps) {
           <button
             type="button"
             onClick={() => handleTap("home")}
-            onDoubleClick={() => triggerCorrection("home")}
             className="bg-transparent p-0 text-left"
             aria-label="Double-tap to correct home score"
           >
@@ -193,7 +192,6 @@ export function Scoreboard(props: ScoreboardProps) {
           <button
             type="button"
             onClick={() => handleTap("away")}
-            onDoubleClick={() => triggerCorrection("away")}
             className="bg-transparent p-0 text-right"
             aria-label="Double-tap to correct away score"
           >
