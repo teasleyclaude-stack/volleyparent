@@ -7,6 +7,7 @@ import { StatSummaryCard } from "@/components/report/StatSummaryCard";
 import { ShotChart } from "@/components/report/ShotChart";
 import { MomentumGraph } from "@/components/report/MomentumGraph";
 import { useMemo } from "react";
+import { readableTextColor } from "@/lib/colorContrast";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
@@ -119,6 +120,8 @@ function ReportPage() {
           const homeWon = homeSetsWon > awaySetsWon;
           const winner = homeWon ? session.homeTeam : session.awayTeam;
           const ourWin = homeWon === session.isHomeTeam;
+          const homeText = readableTextColor(session.homeColor);
+          const awayText = readableTextColor(session.awayColor);
           return (
             <div
               className={`rounded-2xl border p-4 text-center ${ourWin ? "border-primary/50 bg-primary/10" : "border-border bg-card"}`}
@@ -128,23 +131,23 @@ function ReportPage() {
               </div>
               <div
                 className="mt-1 text-xl font-black"
-                style={{ color: homeWon ? session.homeColor : session.awayColor }}
+                style={{ color: homeWon ? homeText : awayText }}
               >
                 {winner || "—"} wins
               </div>
               <div className="mt-2 flex items-center justify-center gap-3 text-3xl font-black tabular-nums">
-                <span style={{ color: homeWon ? session.homeColor : "var(--muted-foreground)" }}>
+                <span style={{ color: homeWon ? homeText : "var(--muted-foreground)" }}>
                   {homeSetsWon}
                 </span>
                 <span className="text-muted-foreground/40">—</span>
-                <span style={{ color: !homeWon ? session.awayColor : "var(--muted-foreground)" }}>
+                <span style={{ color: !homeWon ? awayText : "var(--muted-foreground)" }}>
                   {awaySetsWon}
                 </span>
               </div>
               <div className="mt-1 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest">
-                <span style={{ color: session.homeColor }}>{session.homeTeam || "Home"}</span>
+                <span style={{ color: homeText }}>{session.homeTeam || "Home"}</span>
                 <span className="text-muted-foreground">·</span>
-                <span style={{ color: session.awayColor }}>{session.awayTeam || "Away"}</span>
+                <span style={{ color: awayText }}>{session.awayTeam || "Away"}</span>
               </div>
             </div>
           );

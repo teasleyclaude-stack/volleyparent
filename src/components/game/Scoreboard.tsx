@@ -1,7 +1,8 @@
 import { Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { tapHaptic } from "@/utils/haptics";
+import { readableTextColor } from "@/lib/colorContrast";
 
 interface ScoreboardProps {
   homeTeam: string;
@@ -107,12 +108,16 @@ export function Scoreboard(props: ScoreboardProps) {
   const awayLeading = awayScore > homeScore;
   const tied = homeScore === awayScore;
 
-  const scoreStyle = (leading: boolean, flash: boolean, color: string): React.CSSProperties => {
+  const homeText = useMemo(() => readableTextColor(homeColor), [homeColor]);
+  const awayText = useMemo(() => readableTextColor(awayColor), [awayColor]);
+
+  const scoreStyle = (leading: boolean, flash: boolean, color: string, textColor: string): React.CSSProperties => {
     if (flash) return {};
     if (tied) return {};
     if (leading) {
       return {
-        color,
+        color: textColor,
+        // Glow can use the original team color — it's translucent and decorative.
         textShadow: `0 0 24px color-mix(in oklab, ${color} 55%, transparent)`,
       };
     }
@@ -149,13 +154,13 @@ export function Scoreboard(props: ScoreboardProps) {
       {/* Set wins tracker */}
       <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
         <span className={isHomeOurs ? "text-foreground" : ""}>
-          <span style={{ color: homeColor }}>{homeTeam || "Home"}</span>{" "}
-          <span className="tabular-nums" style={{ color: homeColor }}>{homeSetsWon}</span>
+          <span style={{ color: homeText }}>{homeTeam || "Home"}</span>{" "}
+          <span className="tabular-nums" style={{ color: homeText }}>{homeSetsWon}</span>
         </span>
         <span className="text-muted-foreground/40">—</span>
         <span className={!isHomeOurs ? "text-foreground" : ""}>
-          <span className="tabular-nums" style={{ color: awayColor }}>{awaySetsWon}</span>{" "}
-          <span style={{ color: awayColor }}>{awayTeam || "Away"}</span>
+          <span className="tabular-nums" style={{ color: awayText }}>{awaySetsWon}</span>{" "}
+          <span style={{ color: awayText }}>{awayTeam || "Away"}</span>
         </span>
       </div>
 
@@ -165,7 +170,7 @@ export function Scoreboard(props: ScoreboardProps) {
           <div className="flex items-center gap-1.5">
             <span
               className="max-w-[110px] truncate text-[13px] font-semibold"
-              style={{ color: homeColor }}
+              style={{ color: homeText }}
             >
               {homeTeam || "Home"}
             </span>
@@ -186,7 +191,7 @@ export function Scoreboard(props: ScoreboardProps) {
             <span
               key={homeKey}
               className={scoreClass(homeLeading, flashHome)}
-              style={scoreStyle(homeLeading, flashHome, homeColor)}
+              style={scoreStyle(homeLeading, flashHome, homeColor, homeText)}
             >
               {homeScore}
             </span>
@@ -210,7 +215,7 @@ export function Scoreboard(props: ScoreboardProps) {
             )}
             <span
               className="max-w-[110px] truncate text-[13px] font-semibold"
-              style={{ color: awayColor }}
+              style={{ color: awayText }}
             >
               {awayTeam || "Away"}
             </span>
@@ -224,7 +229,7 @@ export function Scoreboard(props: ScoreboardProps) {
             <span
               key={awayKey}
               className={scoreClass(awayLeading, flashAway)}
-              style={scoreStyle(awayLeading, flashAway, awayColor)}
+              style={scoreStyle(awayLeading, flashAway, awayColor, awayText)}
             >
               {awayScore}
             </span>
