@@ -252,6 +252,8 @@ export const useGameStore = create<GameStore>()(
         s.rotationState = [...rotation] as RotationState;
         set({ session: s });
       },
+
+      undoLastAction: () => {
         const cur = get().session;
         if (!cur || cur.events.length === 0) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
