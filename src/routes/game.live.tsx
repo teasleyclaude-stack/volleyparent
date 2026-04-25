@@ -164,6 +164,8 @@ function LivePage() {
         <Scoreboard
           homeTeam={session.homeTeam}
           awayTeam={session.awayTeam}
+          homeColor={session.homeColor}
+          awayColor={session.awayColor}
           homeScore={session.homeScore}
           awayScore={session.awayScore}
           setNumber={session.currentSet}
@@ -189,6 +191,7 @@ function LivePage() {
           roster={session.roster}
           isHomeServing={session.isHomeServing}
           isHomeOurs={session.isHomeTeam}
+          ourColor={session.isHomeTeam ? session.homeColor : session.awayColor}
         />
 
         {/* Tracked player + stat buttons */}

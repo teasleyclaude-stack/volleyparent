@@ -7,6 +7,7 @@ interface RotationCourtProps {
   roster: Player[];
   isHomeServing: boolean;
   isHomeOurs: boolean;
+  ourColor: string;
 }
 
 /**
@@ -15,7 +16,7 @@ interface RotationCourtProps {
  *     [P4 OH] [P3 MB] [P2 RS]   <- front row (at net)
  *     [P5 OH] [P6 MB] [P1 S ]   <- back row (P1 = server)
  */
-export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs }: RotationCourtProps) {
+export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs, ourColor }: RotationCourtProps) {
   const find = (id: string) => roster.find((p) => p.id === id);
   const cellOrder: number[] = [3, 2, 1, 4, 5, 0]; // indices into rotation for the 6 grid cells (front L→R, back L→R)
   const oursServing = isHomeServing === isHomeOurs;
@@ -27,7 +28,7 @@ export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs }: R
           On Court
         </span>
         <span className="text-[10px] font-medium text-muted-foreground">
-          ★ tracked · <span className="text-[var(--gold)]">●</span> serving
+          ★ tracked · <span style={{ color: ourColor }}>●</span> serving
         </span>
       </div>
 
@@ -52,8 +53,9 @@ export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs }: R
                 className={cn(
                   "relative flex aspect-square flex-col items-center justify-center rounded-xl border bg-card px-1 py-2 text-center transition-all",
                   "border-border",
-                  isServer && oursServing && "vp-serving border-[var(--gold)]",
+                  isServer && oursServing && "vp-serving",
                 )}
+                style={isServer && oursServing ? { borderColor: ourColor } : undefined}
               >
                 {player?.isTracked && (
                   <Star
@@ -62,7 +64,10 @@ export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs }: R
                   />
                 )}
                 {isServer && (
-                  <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--gold)]" />
+                  <span
+                    className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: oursServing ? ourColor : "var(--muted-foreground)" }}
+                  />
                 )}
                 <span className="text-[20px] font-black leading-none tabular-nums text-foreground">
                   {player?.number ?? "—"}
