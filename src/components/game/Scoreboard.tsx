@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { tapHaptic } from "@/utils/haptics";
 
 interface ScoreboardProps {
   homeTeam: string;
@@ -15,6 +16,8 @@ interface ScoreboardProps {
   pointTarget: number;
   onScoreHome: () => void;
   onScoreAway: () => void;
+  onCorrectHome: () => void;
+  onCorrectAway: () => void;
 }
 
 function useBounce(value: number) {
@@ -24,6 +27,8 @@ function useBounce(value: number) {
   }, [value]);
   return key;
 }
+
+const HINT_KEY = "vp_doubletap_hint_seen";
 
 export function Scoreboard(props: ScoreboardProps) {
   const {
@@ -39,23 +44,77 @@ export function Scoreboard(props: ScoreboardProps) {
     pointTarget,
     onScoreHome,
     onScoreAway,
+    onCorrectHome,
+    onCorrectAway,
   } = props;
 
   const homeKey = useBounce(homeScore);
   const awayKey = useBounce(awayScore);
 
+  const [flashHome, setFlashHome] = useState(false);
+  const [flashAway, setFlashAway] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
+  const lastTapHome = useRef<number>(0);
+  const lastTapAway = useRef<number>(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!window.localStorage.getItem(HINT_KEY)) {
+      setShowHint(true);
+    }
+  }, []);
+
+  const dismissHint = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(HINT_KEY, "1");
+    }
+    setShowHint(false);
+  };
+
+  const triggerCorrection = (team: "home" | "away") => {
+    const score = team === "home" ? homeScore : awayScore;
+    if (score <= 0) return;
+    tapHaptic("heavy");
+    if (team === "home") {
+      onCorrectHome();
+      setFlashHome(true);
+      setTimeout(() => setFlashHome(false), 200);
+    } else {
+      onCorrectAway();
+      setFlashAway(true);
+      setTimeout(() => setFlashAway(false), 200);
+    }
+    dismissHint();
+  };
+
+  const handleTap = (team: "home" | "away") => {
+    const now = Date.now();
+    const ref = team === "home" ? lastTapHome : lastTapAway;
+    if (now - ref.current < 300) {
+      ref.current = 0;
+      triggerCorrection(team);
+    } else {
+      ref.current = now;
+    }
+  };
+
   const homeLeading = homeScore > awayScore;
   const awayLeading = awayScore > homeScore;
   const tied = homeScore === awayScore;
 
-  const scoreClass = (leading: boolean) =>
+  const scoreClass = (leading: boolean, flash: boolean) =>
     cn(
-      "vp-bounce font-display font-black leading-none tracking-tight tabular-nums transition-all duration-200",
-      tied
-        ? "text-[64px] text-foreground"
-        : leading
-          ? "text-[78px] text-[var(--gold)] [text-shadow:0_0_24px_color-mix(in_oklab,var(--gold)_55%,transparent)]"
-          : "text-[64px] text-muted-foreground",
+      "vp-bounce font-display font-black leading-none tracking-tight tabular-nums transition-colors duration-200 select-none",
+      flash
+        ? "text-[#FF4D4D] [text-shadow:0_0_24px_rgba(255,77,77,0.55)]"
+        : tied
+          ? "text-[64px] text-foreground"
+          : leading
+            ? "text-[78px] text-[var(--gold)] [text-shadow:0_0_24px_color-mix(in_oklab,var(--gold)_55%,transparent)]"
+            : "text-[64px] text-muted-foreground",
+      !flash && (tied ? "text-[64px]" : leading ? "text-[78px]" : "text-[64px]"),
+      flash && (leading ? "text-[78px]" : "text-[64px]"),
     );
 
   return (
@@ -96,11 +155,19 @@ export function Scoreboard(props: ScoreboardProps) {
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold)]" aria-label="serving" />
             )}
           </div>
-          <span
-            key={homeKey}
-            className={scoreClass(homeLeading)}
+          <button
+            type="button"
+            onClick={() => handleTap("home")}
+            onDoubleClick={() => triggerCorrection("home")}
+            className="bg-transparent p-0 text-left"
+            aria-label="Double-tap to correct home score"
           >
-            {homeScore}
+            <span key={homeKey} className={scoreClass(homeLeading, flashHome)}>
+              {homeScore}
+            </span>
+          </button>
+          <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-muted-foreground/60">
+            2× to correct
           </span>
         </div>
 
@@ -121,14 +188,32 @@ export function Scoreboard(props: ScoreboardProps) {
               {awayTeam || "Away"}
             </span>
           </div>
-          <span
-            key={awayKey}
-            className={scoreClass(awayLeading)}
+          <button
+            type="button"
+            onClick={() => handleTap("away")}
+            onDoubleClick={() => triggerCorrection("away")}
+            className="bg-transparent p-0 text-right"
+            aria-label="Double-tap to correct away score"
           >
-            {awayScore}
+            <span key={awayKey} className={scoreClass(awayLeading, flashAway)}>
+              {awayScore}
+            </span>
+          </button>
+          <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-muted-foreground/60">
+            2× to correct
           </span>
         </div>
       </div>
+
+      {showHint && (
+        <button
+          type="button"
+          onClick={dismissHint}
+          className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground active:scale-[0.98]"
+        >
+          Tip: Double-tap a score to correct it · tap to dismiss
+        </button>
+      )}
 
       <div className="mt-3 grid grid-cols-2 gap-3">
         <button
