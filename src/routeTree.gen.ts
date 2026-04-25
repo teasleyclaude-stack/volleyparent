@@ -15,6 +15,7 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GameSetupRouteImport } from './routes/game.setup'
 import { Route as GameLiveRouteImport } from './routes/game.live'
+import { Route as FanviewSessionIdRouteImport } from './routes/fanview.$sessionId'
 import { Route as GameReportSessionIdRouteImport } from './routes/game.report.$sessionId'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -47,6 +48,11 @@ const GameLiveRoute = GameLiveRouteImport.update({
   path: '/game/live',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FanviewSessionIdRoute = FanviewSessionIdRouteImport.update({
+  id: '/fanview/$sessionId',
+  path: '/fanview/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GameReportSessionIdRoute = GameReportSessionIdRouteImport.update({
   id: '/game/report/$sessionId',
   path: '/game/report/$sessionId',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
+  '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
   '/game/report/$sessionId': typeof GameReportSessionIdRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
+  '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
   '/game/report/$sessionId': typeof GameReportSessionIdRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
+  '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
   '/game/report/$sessionId': typeof GameReportSessionIdRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/roster'
     | '/settings'
+    | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
     | '/game/report/$sessionId'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/roster'
     | '/settings'
+    | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
     | '/game/report/$sessionId'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/roster'
     | '/settings'
+    | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
     | '/game/report/$sessionId'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   RosterRoute: typeof RosterRoute
   SettingsRoute: typeof SettingsRoute
+  FanviewSessionIdRoute: typeof FanviewSessionIdRoute
   GameLiveRoute: typeof GameLiveRoute
   GameSetupRoute: typeof GameSetupRoute
   GameReportSessionIdRoute: typeof GameReportSessionIdRoute
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fanview/$sessionId': {
+      id: '/fanview/$sessionId'
+      path: '/fanview/$sessionId'
+      fullPath: '/fanview/$sessionId'
+      preLoaderRoute: typeof FanviewSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/game/report/$sessionId': {
       id: '/game/report/$sessionId'
       path: '/game/report/$sessionId'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   RosterRoute: RosterRoute,
   SettingsRoute: SettingsRoute,
+  FanviewSessionIdRoute: FanviewSessionIdRoute,
   GameLiveRoute: GameLiveRoute,
   GameSetupRoute: GameSetupRoute,
   GameReportSessionIdRoute: GameReportSessionIdRoute,
