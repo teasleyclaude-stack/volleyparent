@@ -107,7 +107,7 @@ function FanviewPage() {
   const isFinal = !row.is_live || !row.state.isLive;
 
   return (
-    <Shell isLive={!isFinal}>
+    <Shell isLive={!isFinal} homeColor={row.meta.homeColor} awayColor={row.meta.awayColor}>
       {isFinal ? <SummaryView row={row} /> : <LiveView row={row} />}
       <Footer />
     </Shell>
@@ -119,12 +119,20 @@ function FanviewPage() {
 function Shell({
   children,
   isLive,
+  homeColor,
+  awayColor,
 }: {
   children: React.ReactNode;
   isLive?: boolean;
+  homeColor?: string;
+  awayColor?: string;
 }) {
+  const styleVars = {
+    ["--home-color" as string]: homeColor ?? "#F4B400",
+    ["--away-color" as string]: awayColor ?? "#3B82F6",
+  } as React.CSSProperties;
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" style={styleVars}>
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-popover px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-black tracking-wide">
           <Radio className="h-4 w-4 text-primary" />
