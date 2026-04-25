@@ -4,6 +4,8 @@ import { hittingPercentage } from "@/utils/stats";
 export interface FanviewMeta {
   homeTeam: string;
   awayTeam: string;
+  homeColor: string;
+  awayColor: string;
   isHomeTeam: boolean;
   trackedPlayer: { name: string; number: number; position: string } | null;
   createdAt: number;
@@ -76,6 +78,8 @@ export function buildMeta(session: GameSession): FanviewMeta {
   return {
     homeTeam: session.homeTeam,
     awayTeam: session.awayTeam,
+    homeColor: session.homeColor ?? "#F4B400",
+    awayColor: session.awayColor ?? "#3B82F6",
     isHomeTeam: session.isHomeTeam,
     trackedPlayer: tracked
       ? { name: tracked.name, number: tracked.number, position: tracked.position }
