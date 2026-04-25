@@ -52,6 +52,7 @@ export interface FanviewFeedItem {
   awayScore: number;
   message: string;
   tone: "kill" | "error" | "score" | "rotation" | "set" | "neutral";
+  team?: "home" | "away";
 }
 
 export interface FanviewSummary {
@@ -168,6 +169,7 @@ export function eventToFeedItem(
         ? `Side out — ${teamName} scores → ${ev.homeScore}-${ev.awayScore}`
         : `${teamName} scores → ${ev.homeScore}-${ev.awayScore}`,
       tone: "score",
+      team: ev.scoringTeam,
     };
   }
 
