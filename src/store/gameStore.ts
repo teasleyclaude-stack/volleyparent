@@ -8,7 +8,7 @@ import type {
   RotationState,
   StatType,
 } from "@/types";
-import { applyRotation, uid } from "@/utils/stats";
+import { applyRotation, reverseRotation, uid } from "@/utils/stats";
 
 interface GameStore {
   session: GameSession | null;
@@ -26,6 +26,8 @@ interface GameStore {
   recordStat: (playerId: string, stat: StatType, killZone?: KillZone | null) => void;
   recordTimeout: (team: "home" | "away") => void;
   makeSubstitution: (benchPlayerId: string, courtPositionIndex: number) => void;
+  correctScore: (team: "home" | "away") => void;
+  setRotation: (rotation: RotationState) => void;
   undoLastAction: () => void;
   endSet: () => void;
   endGame: () => void;
