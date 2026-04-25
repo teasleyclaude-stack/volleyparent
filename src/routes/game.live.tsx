@@ -380,6 +380,18 @@ function LivePage() {
           </div>
         </div>
       )}
+
+      <SetLineupModal
+        open={lineupModalOpen}
+        setNumber={session.currentSet}
+        rotation={session.rotationState}
+        roster={session.roster}
+        onKeep={() => setLineupModalOpen(false)}
+        onConfirm={(newRot) => {
+          setRotationStore(newRot);
+          setLineupModalOpen(false);
+        }}
+      />
     </PhoneShell>
   );
 }
