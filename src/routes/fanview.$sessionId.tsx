@@ -1,0 +1,485 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Star, Radio, Trophy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  FanviewFeedItem,
+  FanviewMeta,
+  FanviewState,
+  FanviewSummary,
+} from "@/lib/fanview";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/fanview/$sessionId")({
+  head: ({ params }) => ({
+    meta: [
+      { title: "FanView — VolleyParent" },
+      { name: "description", content: "Follow this volleyball match live." },
+      { property: "og:title", content: "VolleyParent FanView — Live Match" },
+      { property: "og:description", content: "Follow the game in real time, no app required." },
+    ],
+  }),
+  component: FanviewPage,
+});
+
+interface SessionRow {
+  id: string;
+  meta: FanviewMeta;
+  state: FanviewState;
+  feed: FanviewFeedItem[];
+  summary: FanviewSummary | null;
+  is_live: boolean;
+}
+
+function FanviewPage() {
+  const { sessionId } = Route.useParams();
+  const [row, setRow] = useState<SessionRow | null>(null);
+  const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchRow = async () => {
+      const { data, error } = await supabase
+        .from("fanview_sessions")
+        .select("id, meta, state, feed, summary, is_live")
+        .eq("id", sessionId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        setStatus("missing");
+        return;
+      }
+      setRow(data as unknown as SessionRow);
+      setStatus("ok");
+    };
+    fetchRow();
+
+    const channel = supabase
+      .channel(`fanview-${sessionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "fanview_sessions",
+          filter: `id=eq.${sessionId}`,
+        },
+        (payload) => {
+          const next = (payload.new ?? null) as unknown as SessionRow | null;
+          if (next) {
+            setRow(next);
+            setStatus("ok");
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId]);
+
+  if (status === "loading") {
+    return (
+      <Shell>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Connecting to FanView…</p>
+        </div>
+      </Shell>
+    );
+  }
+
+  if (status === "missing" || !row) {
+    return (
+      <Shell>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            This FanView link is no longer active or does not exist.
+          </p>
+        </div>
+      </Shell>
+    );
+  }
+
+  const isFinal = !row.is_live || !row.state.isLive;
+
+  return (
+    <Shell isLive={!isFinal}>
+      {isFinal ? <SummaryView row={row} /> : <LiveView row={row} />}
+      <Footer />
+    </Shell>
+  );
+}
+
+/* ------------------------------ shell ------------------------------ */
+
+function Shell({
+  children,
+  isLive,
+}: {
+  children: React.ReactNode;
+  isLive?: boolean;
+}) {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-popover px-4 py-3">
+        <div className="flex items-center gap-2 text-sm font-black tracking-wide">
+          <Radio className="h-4 w-4 text-primary" />
+          <span>🏐 FanView</span>
+        </div>
+        {isLive === undefined ? null : isLive ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-destructive/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-destructive">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+            </span>
+            Live
+          </span>
+        ) : (
+          <span className="rounded-full bg-card px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            Final
+          </span>
+        )}
+      </header>
+      <div className="mx-auto flex min-h-[calc(100vh-49px)] max-w-[640px] flex-col">{children}</div>
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="mt-6 border-t border-border px-4 py-5 text-center">
+      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+        Powered by VolleyParent
+      </p>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        You are viewing a live read-only FanView.
+      </p>
+    </footer>
+  );
+}
+
+/* ------------------------------ live view ------------------------------ */
+
+function LiveView({ row }: { row: SessionRow }) {
+  const { state, feed, meta } = row;
+  const recent = useMemo(() => [...feed].reverse().slice(0, 50), [feed]);
+
+  return (
+    <div className="flex-1 px-4 pb-4">
+      <Scoreboard state={state} meta={meta} />
+      <Court state={state} />
+      <TrackedStatsBar state={state} />
+      <ActivityFeed items={recent} />
+    </div>
+  );
+}
+
+function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
+  const homeLeads = state.homeScore > state.awayScore;
+  const awayLeads = state.awayScore > state.homeScore;
+  return (
+    <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+      <div className="grid grid-cols-3 items-center gap-2">
+        <TeamCell name={meta.homeTeam} sets={state.homeSetsWon} serving={state.isHomeServing} align="left" />
+        <div className="text-center">
+          <div className="flex items-baseline justify-center gap-2 tabular-nums">
+            <span
+              className={cn(
+                "font-black leading-none",
+                homeLeads ? "text-[var(--gold)] text-5xl" : "text-muted-foreground text-4xl",
+              )}
+            >
+              {state.homeScore}
+            </span>
+            <span className="text-xl font-black text-muted-foreground">:</span>
+            <span
+              className={cn(
+                "font-black leading-none",
+                awayLeads ? "text-[var(--gold)] text-5xl" : "text-muted-foreground text-4xl",
+              )}
+            >
+              {state.awayScore}
+            </span>
+          </div>
+        </div>
+        <TeamCell name={meta.awayTeam} sets={state.awaySetsWon} serving={!state.isHomeServing} align="right" />
+      </div>
+      <div className="mt-3 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+        <span>Set {state.currentSet}</span>
+        <span>·</span>
+        <span>
+          {meta.homeTeam} {state.homeSetsWon} — {state.awaySetsWon} {meta.awayTeam}
+        </span>
+      </div>
+      <div className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-[var(--gold)]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold)]" />
+        {(state.isHomeServing ? meta.homeTeam : meta.awayTeam)} serving
+      </div>
+    </section>
+  );
+}
+
+function TeamCell({
+  name,
+  sets,
+  serving,
+  align,
+}: {
+  name: string;
+  sets: number;
+  serving: boolean;
+  align: "left" | "right";
+}) {
+  return (
+    <div className={cn("min-w-0", align === "right" && "text-right")}>
+      <div className="truncate text-xs font-black uppercase tracking-widest text-foreground">
+        {name}
+      </div>
+      <div className="mt-1 text-[10px] font-bold text-muted-foreground">
+        Sets: {sets}
+        {serving && <span className="ml-1 text-[var(--gold)]">●</span>}
+      </div>
+    </div>
+  );
+}
+
+function Court({ state }: { state: FanviewState }) {
+  const cellOrder = [3, 2, 1, 4, 5, 0]; // front L→R, back L→R
+  return (
+    <section className="mt-4">
+      <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+        Court — Live Rotation
+      </div>
+      <div className="rounded-2xl border border-border bg-popover p-3">
+        <div className="grid grid-cols-3 gap-2">
+          {cellOrder.map((rotIdx, gridIdx) => {
+            const id = state.rotationState[rotIdx];
+            const p = id ? state.players[id] : undefined;
+            const isServer = rotIdx === 0;
+            const isFront = gridIdx < 3;
+            return (
+              <div
+                key={gridIdx}
+                className={cn(
+                  "relative flex aspect-square flex-col items-center justify-center rounded-xl border bg-card px-1 py-2 text-center transition-all duration-300",
+                  isServer ? "border-[var(--gold)] vp-serving" : "border-border",
+                )}
+              >
+                {p?.isTracked && (
+                  <Star className="absolute right-1.5 top-1.5 h-3.5 w-3.5 fill-primary text-primary" strokeWidth={1.5} />
+                )}
+                {isServer && (
+                  <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--gold)]" />
+                )}
+                <span className="text-[20px] font-black leading-none tabular-nums">
+                  {p?.number ?? "—"}
+                </span>
+                <span className="mt-0.5 max-w-full truncate text-[10px] font-medium text-muted-foreground">
+                  {p?.name?.split(" ")[0] ?? "Empty"}
+                </span>
+                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                  P{rotIdx + 1} · {isFront ? "Front" : "Back"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          NET
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TrackedStatsBar({ state }: { state: FanviewState }) {
+  const trackedId = Object.entries(state.players).find(([, p]) => p.isTracked)?.[0];
+  const tracked = trackedId ? state.players[trackedId] : undefined;
+  const s = state.trackedStats;
+  if (!tracked) return null;
+  return (
+    <section className="mt-4 rounded-2xl border border-border bg-card p-3">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-black text-foreground">
+          {tracked.name} <span className="text-muted-foreground">#{tracked.number}</span>{" "}
+          <span className="text-xs font-bold text-muted-foreground">· {tracked.position}</span>
+        </div>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-black tabular-nums">
+        <Chip label="K" value={s.kills} />
+        <Chip label="D" value={s.digs} />
+        <Chip label="B" value={s.blocks} />
+        <Chip label="A" value={s.aces} />
+        <Chip label="Hit%" value={s.hittingPct} accent />
+      </div>
+    </section>
+  );
+}
+
+function Chip({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2.5 py-1 uppercase tracking-widest",
+        accent ? "bg-primary/15 text-primary" : "bg-popover text-foreground",
+      )}
+    >
+      {label}: {value}
+    </span>
+  );
+}
+
+function ActivityFeed({ items }: { items: FanviewFeedItem[] }) {
+  return (
+    <section className="mt-4">
+      <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+        Live Activity
+      </div>
+      {items.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+          Waiting for the first play…
+        </div>
+      ) : (
+        <ul className="space-y-1.5">
+          {items.map((it) => (
+            <FeedRow key={it.id} item={it} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function FeedRow({ item }: { item: FanviewFeedItem }) {
+  const borderClass = {
+    kill: "border-l-[var(--kill)]",
+    error: "border-l-[var(--error)]",
+    score: "border-l-[var(--gold)]",
+    rotation: "border-l-[#00B4FF]",
+    set: "border-l-[#8B5CF6]",
+    neutral: "border-l-border",
+  }[item.tone];
+  return (
+    <li className={cn("rounded-xl border border-border border-l-4 bg-card px-3 py-2", borderClass)}>
+      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        Set {item.setNumber} · {item.homeScore}-{item.awayScore}
+      </div>
+      <div className="mt-0.5 text-sm text-foreground">{item.message}</div>
+    </li>
+  );
+}
+
+/* ------------------------------ summary view ------------------------------ */
+
+function SummaryView({ row }: { row: SessionRow }) {
+  const summary = row.summary;
+  const meta = row.meta;
+  return (
+    <div className="flex-1 px-4 pb-4">
+      <section className="mt-4 rounded-2xl border border-border bg-card p-4 text-center">
+        <div className="flex items-center justify-center gap-2 text-[var(--gold)]">
+          <Trophy className="h-5 w-5" />
+          <span className="text-xs font-black uppercase tracking-widest">Final</span>
+        </div>
+        <div className="mt-2 text-lg font-black text-foreground">
+          {summary?.winner ?? "Match ended"}
+        </div>
+        <div className="mt-3 grid grid-cols-3 items-center gap-2">
+          <div className="text-left text-xs font-black uppercase tracking-widest">{meta.homeTeam}</div>
+          <div className="text-3xl font-black tabular-nums text-foreground">
+            {summary?.finalScore.homeSetsWon ?? 0} : {summary?.finalScore.awaySetsWon ?? 0}
+          </div>
+          <div className="text-right text-xs font-black uppercase tracking-widest">{meta.awayTeam}</div>
+        </div>
+        {summary && summary.finalScore.sets.length > 0 && (
+          <div className="mt-4 overflow-hidden rounded-xl border border-border">
+            <table className="w-full text-xs">
+              <thead className="bg-popover text-muted-foreground">
+                <tr>
+                  <th className="px-2 py-1.5 text-left font-bold">Set</th>
+                  <th className="px-2 py-1.5 text-right font-bold">{meta.homeTeam}</th>
+                  <th className="px-2 py-1.5 text-right font-bold">{meta.awayTeam}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.finalScore.sets.map((s) => (
+                  <tr key={s.setNumber} className="border-t border-border">
+                    <td className="px-2 py-1.5 font-bold">{s.setNumber}</td>
+                    <td className="px-2 py-1.5 text-right tabular-nums">{s.homeScore}</td>
+                    <td className="px-2 py-1.5 text-right tabular-nums">{s.awayScore}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {summary?.trackedPlayer && (
+        <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-black text-foreground">
+              {summary.trackedPlayer.name}{" "}
+              <span className="text-muted-foreground">#{summary.trackedPlayer.number}</span>
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {summary.trackedPlayer.position}
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+            <StatBox label="Kills" value={summary.trackedPlayer.stats.kills} />
+            <StatBox label="Digs" value={summary.trackedPlayer.stats.digs} />
+            <StatBox label="Blocks" value={summary.trackedPlayer.stats.blocks} />
+            <StatBox label="Aces" value={summary.trackedPlayer.stats.aces} />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+            <div className="rounded-xl bg-popover py-2">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Opp. Digs (Att)
+              </div>
+              <div className="text-lg font-black tabular-nums text-foreground">
+                {summary.trackedPlayer.stats.dugAttempts}
+              </div>
+            </div>
+            <div className="rounded-xl bg-primary/10 py-2">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                Hitting %
+              </div>
+              <div className="text-lg font-black tabular-nums text-primary">
+                {summary.trackedPlayer.hittingPct}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="mt-4">
+        <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+          Full Activity Log
+        </div>
+        <ul className="space-y-1.5">
+          {[...row.feed].reverse().map((it) => (
+            <FeedRow key={it.id} item={it} />
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function StatBox({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="rounded-xl bg-popover py-2">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </div>
+      <div className="text-xl font-black tabular-nums text-foreground">{value}</div>
+    </div>
+  );
+}

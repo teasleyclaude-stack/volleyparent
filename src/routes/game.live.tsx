@@ -7,6 +7,8 @@ import { RotationCourt } from "@/components/game/RotationCourt";
 import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
+import { FanviewButton } from "@/components/game/FanviewButton";
+import { useFanview } from "@/hooks/useFanview";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { hittingPercentage } from "@/utils/stats";
@@ -37,6 +39,7 @@ function LivePage() {
   const correctScore = useGameStore((s) => s.correctScore);
   const setRotationStore = useGameStore((s) => s.setRotation);
   const saveSession = useHistoryStore((s) => s.saveSession);
+  const fanview = useFanview();
 
   const [killModalOpen, setKillModalOpen] = useState(false);
   const [attemptMenuOpen, setAttemptMenuOpen] = useState(false);
@@ -125,9 +128,15 @@ function LivePage() {
     recordStat(tracked.id, "kill", zone);
   };
 
-  const handleEndGame = () => {
+  const handleEndGame = async () => {
     endGame();
-    saveSession({ ...useGameStore.getState().session! });
+    const finalSession = useGameStore.getState().session!;
+    saveSession({ ...finalSession });
+    try {
+      await fanview.finalize();
+    } catch (e) {
+      console.error("fanview finalize failed", e);
+    }
     navigate({ to: "/game/report/$sessionId", params: { sessionId: session.id } });
   };
 
@@ -138,8 +147,9 @@ function LivePage() {
         <Link to="/" className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="text-center">
+        <div className="flex items-center gap-2">
           <div className="text-[10px] font-black uppercase tracking-widest text-primary">● Live</div>
+          <FanviewButton />
         </div>
         <button
           type="button"
