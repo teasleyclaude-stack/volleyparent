@@ -62,6 +62,8 @@ export interface GameSession {
   date: string;
   homeTeam: string;
   awayTeam: string;
+  homeColor: string;
+  awayColor: string;
   isHomeTeam: boolean;
   currentSet: number;
   homeScore: number;

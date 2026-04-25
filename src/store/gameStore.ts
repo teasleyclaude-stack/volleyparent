@@ -16,6 +16,8 @@ interface GameStore {
   startSession: (args: {
     homeTeam: string;
     awayTeam: string;
+    homeColor: string;
+    awayColor: string;
     isHomeTeam: boolean;
     roster: Player[];
     rotation: RotationState;
@@ -52,12 +54,14 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       session: null,
 
-      startSession: ({ homeTeam, awayTeam, isHomeTeam, roster, rotation, isHomeServing }) => {
+      startSession: ({ homeTeam, awayTeam, homeColor, awayColor, isHomeTeam, roster, rotation, isHomeServing }) => {
         const s: GameSession = {
           id: uid(),
           date: new Date().toISOString(),
           homeTeam,
           awayTeam,
+          homeColor,
+          awayColor,
           isHomeTeam,
           currentSet: 1,
           homeScore: 0,

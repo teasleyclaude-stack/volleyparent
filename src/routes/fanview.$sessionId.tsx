@@ -107,7 +107,7 @@ function FanviewPage() {
   const isFinal = !row.is_live || !row.state.isLive;
 
   return (
-    <Shell isLive={!isFinal}>
+    <Shell isLive={!isFinal} homeColor={row.meta.homeColor} awayColor={row.meta.awayColor}>
       {isFinal ? <SummaryView row={row} /> : <LiveView row={row} />}
       <Footer />
     </Shell>
@@ -119,12 +119,20 @@ function FanviewPage() {
 function Shell({
   children,
   isLive,
+  homeColor,
+  awayColor,
 }: {
   children: React.ReactNode;
   isLive?: boolean;
+  homeColor?: string;
+  awayColor?: string;
 }) {
+  const styleVars = {
+    ["--home-color" as string]: homeColor ?? "#F4B400",
+    ["--away-color" as string]: awayColor ?? "#3B82F6",
+  } as React.CSSProperties;
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" style={styleVars}>
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-popover px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-black tracking-wide">
           <Radio className="h-4 w-4 text-primary" />
@@ -171,9 +179,9 @@ function LiveView({ row }: { row: SessionRow }) {
   return (
     <div className="flex-1 px-4 pb-4">
       <Scoreboard state={state} meta={meta} />
-      <Court state={state} />
+      <Court state={state} meta={meta} />
       <TrackedStatsBar state={state} />
-      <ActivityFeed items={recent} />
+      <ActivityFeed items={recent} meta={meta} />
     </div>
   );
 }
@@ -181,32 +189,44 @@ function LiveView({ row }: { row: SessionRow }) {
 function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
   const homeLeads = state.homeScore > state.awayScore;
   const awayLeads = state.awayScore > state.homeScore;
+  const servingColor = state.isHomeServing ? meta.homeColor : meta.awayColor;
   return (
-    <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+    <section
+      className="mt-4 rounded-2xl border bg-card p-4"
+      style={{ borderColor: `color-mix(in oklab, ${servingColor} 35%, var(--border))` }}
+    >
       <div className="grid grid-cols-3 items-center gap-2">
-        <TeamCell name={meta.homeTeam} sets={state.homeSetsWon} serving={state.isHomeServing} align="left" />
+        <TeamCell
+          name={meta.homeTeam}
+          sets={state.homeSetsWon}
+          serving={state.isHomeServing}
+          align="left"
+          color={meta.homeColor}
+        />
         <div className="text-center">
           <div className="flex items-baseline justify-center gap-2 tabular-nums">
             <span
-              className={cn(
-                "font-black leading-none",
-                homeLeads ? "text-[var(--gold)] text-5xl" : "text-muted-foreground text-4xl",
-              )}
+              className={cn("font-black leading-none", homeLeads ? "text-5xl" : "text-4xl text-muted-foreground")}
+              style={homeLeads ? { color: meta.homeColor } : undefined}
             >
               {state.homeScore}
             </span>
             <span className="text-xl font-black text-muted-foreground">:</span>
             <span
-              className={cn(
-                "font-black leading-none",
-                awayLeads ? "text-[var(--gold)] text-5xl" : "text-muted-foreground text-4xl",
-              )}
+              className={cn("font-black leading-none", awayLeads ? "text-5xl" : "text-4xl text-muted-foreground")}
+              style={awayLeads ? { color: meta.awayColor } : undefined}
             >
               {state.awayScore}
             </span>
           </div>
         </div>
-        <TeamCell name={meta.awayTeam} sets={state.awaySetsWon} serving={!state.isHomeServing} align="right" />
+        <TeamCell
+          name={meta.awayTeam}
+          sets={state.awaySetsWon}
+          serving={!state.isHomeServing}
+          align="right"
+          color={meta.awayColor}
+        />
       </div>
       <div className="mt-3 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
         <span>Set {state.currentSet}</span>
@@ -215,8 +235,11 @@ function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta })
           {meta.homeTeam} {state.homeSetsWon} — {state.awaySetsWon} {meta.awayTeam}
         </span>
       </div>
-      <div className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-[var(--gold)]">
-        <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold)]" />
+      <div
+        className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest"
+        style={{ color: servingColor }}
+      >
+        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: servingColor }} />
         {(state.isHomeServing ? meta.homeTeam : meta.awayTeam)} serving
       </div>
     </section>
@@ -228,27 +251,37 @@ function TeamCell({
   sets,
   serving,
   align,
+  color,
 }: {
   name: string;
   sets: number;
   serving: boolean;
   align: "left" | "right";
+  color: string;
 }) {
   return (
     <div className={cn("min-w-0", align === "right" && "text-right")}>
-      <div className="truncate text-xs font-black uppercase tracking-widest text-foreground">
+      <div
+        className="truncate text-xs font-black uppercase tracking-widest"
+        style={{ color }}
+      >
         {name}
       </div>
       <div className="mt-1 text-[10px] font-bold text-muted-foreground">
         Sets: {sets}
-        {serving && <span className="ml-1 text-[var(--gold)]">●</span>}
+        {serving && (
+          <span className="ml-1" style={{ color }}>●</span>
+        )}
       </div>
     </div>
   );
 }
 
-function Court({ state }: { state: FanviewState }) {
+function Court({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
   const cellOrder = [3, 2, 1, 4, 5, 0]; // front L→R, back L→R
+  // Our team owns the displayed court; serve indicator only relevant when WE serve.
+  const ourColor = meta.isHomeTeam ? meta.homeColor : meta.awayColor;
+  const weServe = meta.isHomeTeam ? state.isHomeServing : !state.isHomeServing;
   return (
     <section className="mt-4">
       <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
@@ -259,21 +292,25 @@ function Court({ state }: { state: FanviewState }) {
           {cellOrder.map((rotIdx, gridIdx) => {
             const id = state.rotationState[rotIdx];
             const p = id ? state.players[id] : undefined;
-            const isServer = rotIdx === 0;
+            const isServer = rotIdx === 0 && weServe;
             const isFront = gridIdx < 3;
             return (
               <div
                 key={gridIdx}
                 className={cn(
                   "relative flex aspect-square flex-col items-center justify-center rounded-xl border bg-card px-1 py-2 text-center transition-all duration-300",
-                  isServer ? "border-[var(--gold)] vp-serving" : "border-border",
+                  isServer ? "vp-serving" : "border-border",
                 )}
+                style={isServer ? { borderColor: ourColor } : undefined}
               >
                 {p?.isTracked && (
                   <Star className="absolute right-1.5 top-1.5 h-3.5 w-3.5 fill-primary text-primary" strokeWidth={1.5} />
                 )}
                 {isServer && (
-                  <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--gold)]" />
+                  <span
+                    className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: ourColor }}
+                  />
                 )}
                 <span className="text-[20px] font-black leading-none tabular-nums">
                   {p?.number ?? "—"}
@@ -335,7 +372,7 @@ function Chip({ label, value, accent }: { label: string; value: number | string;
   );
 }
 
-function ActivityFeed({ items }: { items: FanviewFeedItem[] }) {
+function ActivityFeed({ items, meta }: { items: FanviewFeedItem[]; meta: FanviewMeta }) {
   return (
     <section className="mt-4">
       <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
@@ -348,7 +385,7 @@ function ActivityFeed({ items }: { items: FanviewFeedItem[] }) {
       ) : (
         <ul className="space-y-1.5">
           {items.map((it) => (
-            <FeedRow key={it.id} item={it} />
+            <FeedRow key={it.id} item={it} meta={meta} />
           ))}
         </ul>
       )}
@@ -356,8 +393,14 @@ function ActivityFeed({ items }: { items: FanviewFeedItem[] }) {
   );
 }
 
-function FeedRow({ item }: { item: FanviewFeedItem }) {
-  const borderClass = {
+function FeedRow({ item, meta }: { item: FanviewFeedItem; meta: FanviewMeta }) {
+  // Team color trumps tone color when the event has a team.
+  const teamColor = item.team
+    ? item.team === "home"
+      ? meta.homeColor
+      : meta.awayColor
+    : null;
+  const fallbackBorder = {
     kill: "border-l-[var(--kill)]",
     error: "border-l-[var(--error)]",
     score: "border-l-[var(--gold)]",
@@ -366,7 +409,13 @@ function FeedRow({ item }: { item: FanviewFeedItem }) {
     neutral: "border-l-border",
   }[item.tone];
   return (
-    <li className={cn("rounded-xl border border-border border-l-4 bg-card px-3 py-2", borderClass)}>
+    <li
+      className={cn(
+        "rounded-xl border border-border border-l-4 bg-card px-3 py-2",
+        !teamColor && fallbackBorder,
+      )}
+      style={teamColor ? { borderLeftColor: teamColor } : undefined}
+    >
       <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
         Set {item.setNumber} · {item.homeScore}-{item.awayScore}
       </div>
@@ -380,22 +429,56 @@ function FeedRow({ item }: { item: FanviewFeedItem }) {
 function SummaryView({ row }: { row: SessionRow }) {
   const summary = row.summary;
   const meta = row.meta;
+  const homeWon =
+    (summary?.finalScore.homeSetsWon ?? 0) > (summary?.finalScore.awaySetsWon ?? 0);
+  const awayWon =
+    (summary?.finalScore.awaySetsWon ?? 0) > (summary?.finalScore.homeSetsWon ?? 0);
+  const winnerColor = homeWon ? meta.homeColor : awayWon ? meta.awayColor : undefined;
   return (
     <div className="flex-1 px-4 pb-4">
-      <section className="mt-4 rounded-2xl border border-border bg-card p-4 text-center">
-        <div className="flex items-center justify-center gap-2 text-[var(--gold)]">
+      <section
+        className="mt-4 rounded-2xl border bg-card p-4 text-center"
+        style={{
+          borderColor: winnerColor
+            ? `color-mix(in oklab, ${winnerColor} 45%, var(--border))`
+            : undefined,
+        }}
+      >
+        <div
+          className="flex items-center justify-center gap-2"
+          style={{ color: winnerColor ?? "var(--gold)" }}
+        >
           <Trophy className="h-5 w-5" />
           <span className="text-xs font-black uppercase tracking-widest">Final</span>
         </div>
-        <div className="mt-2 text-lg font-black text-foreground">
+        <div
+          className="mt-2 text-lg font-black"
+          style={{ color: winnerColor ?? "var(--foreground)" }}
+        >
           {summary?.winner ?? "Match ended"}
         </div>
         <div className="mt-3 grid grid-cols-3 items-center gap-2">
-          <div className="text-left text-xs font-black uppercase tracking-widest">{meta.homeTeam}</div>
-          <div className="text-3xl font-black tabular-nums text-foreground">
-            {summary?.finalScore.homeSetsWon ?? 0} : {summary?.finalScore.awaySetsWon ?? 0}
+          <div
+            className="text-left text-xs font-black uppercase tracking-widest"
+            style={{ color: meta.homeColor }}
+          >
+            {meta.homeTeam}
           </div>
-          <div className="text-right text-xs font-black uppercase tracking-widest">{meta.awayTeam}</div>
+          <div className="text-3xl font-black tabular-nums">
+            <span style={{ color: homeWon ? meta.homeColor : "var(--muted-foreground)" }}>
+              {summary?.finalScore.homeSetsWon ?? 0}
+            </span>
+            <span className="text-muted-foreground"> : </span>
+            <span style={{ color: awayWon ? meta.awayColor : "var(--muted-foreground)" }}>
+              {summary?.finalScore.awaySetsWon ?? 0}
+            </span>
+          </div>
+          <div
+            className="text-right text-xs font-black uppercase tracking-widest"
+            style={{ color: meta.awayColor }}
+          >
+            {meta.awayTeam}
+          </div>
         </div>
         {summary && summary.finalScore.sets.length > 0 && (
           <div className="mt-4 overflow-hidden rounded-xl border border-border">
@@ -403,8 +486,18 @@ function SummaryView({ row }: { row: SessionRow }) {
               <thead className="bg-popover text-muted-foreground">
                 <tr>
                   <th className="px-2 py-1.5 text-left font-bold">Set</th>
-                  <th className="px-2 py-1.5 text-right font-bold">{meta.homeTeam}</th>
-                  <th className="px-2 py-1.5 text-right font-bold">{meta.awayTeam}</th>
+                  <th
+                    className="px-2 py-1.5 text-right font-bold"
+                    style={{ color: meta.homeColor }}
+                  >
+                    {meta.homeTeam}
+                  </th>
+                  <th
+                    className="px-2 py-1.5 text-right font-bold"
+                    style={{ color: meta.awayColor }}
+                  >
+                    {meta.awayTeam}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -465,7 +558,7 @@ function SummaryView({ row }: { row: SessionRow }) {
         </div>
         <ul className="space-y-1.5">
           {[...row.feed].reverse().map((it) => (
-            <FeedRow key={it.id} item={it} />
+            <FeedRow key={it.id} item={it} meta={meta} />
           ))}
         </ul>
       </section>

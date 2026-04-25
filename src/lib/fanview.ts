@@ -4,6 +4,8 @@ import { hittingPercentage } from "@/utils/stats";
 export interface FanviewMeta {
   homeTeam: string;
   awayTeam: string;
+  homeColor: string;
+  awayColor: string;
   isHomeTeam: boolean;
   trackedPlayer: { name: string; number: number; position: string } | null;
   createdAt: number;
@@ -50,6 +52,7 @@ export interface FanviewFeedItem {
   awayScore: number;
   message: string;
   tone: "kill" | "error" | "score" | "rotation" | "set" | "neutral";
+  team?: "home" | "away";
 }
 
 export interface FanviewSummary {
@@ -76,6 +79,8 @@ export function buildMeta(session: GameSession): FanviewMeta {
   return {
     homeTeam: session.homeTeam,
     awayTeam: session.awayTeam,
+    homeColor: session.homeColor ?? "#F4B400",
+    awayColor: session.awayColor ?? "#3B82F6",
     isHomeTeam: session.isHomeTeam,
     trackedPlayer: tracked
       ? { name: tracked.name, number: tracked.number, position: tracked.position }
@@ -164,6 +169,7 @@ export function eventToFeedItem(
         ? `Side out — ${teamName} scores → ${ev.homeScore}-${ev.awayScore}`
         : `${teamName} scores → ${ev.homeScore}-${ev.awayScore}`,
       tone: "score",
+      team: ev.scoringTeam,
     };
   }
 
@@ -205,7 +211,8 @@ export function eventToFeedItem(
       default:
         return null;
     }
-    return { ...base, type: "STAT", message, tone };
+    const ourTeam: "home" | "away" = session.isHomeTeam ? "home" : "away";
+    return { ...base, type: "STAT", message, tone, team: ourTeam };
   }
 
   if (ev.type === "TIMEOUT" && ev.timeoutTeam) {
@@ -217,6 +224,7 @@ export function eventToFeedItem(
       type: "TIMEOUT",
       message: `Timeout — ${teamName} (${remaining} remaining)`,
       tone: "score",
+      team: ev.timeoutTeam,
     };
   }
 

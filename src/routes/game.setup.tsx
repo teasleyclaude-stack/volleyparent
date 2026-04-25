@@ -28,6 +28,8 @@ function SetupPage() {
 
   const [homeTeam, setHomeTeam] = useState("");
   const [awayTeam, setAwayTeam] = useState("");
+  const [homeColor, setHomeColor] = useState("#F4B400");
+  const [awayColor, setAwayColor] = useState("#3B82F6");
   const [isHomeTeam, setIsHomeTeam] = useState(true);
   const [isHomeServing, setIsHomeServing] = useState(true);
   const [roster, setRoster] = useState<Player[]>(() => {
@@ -119,6 +121,8 @@ function SetupPage() {
     startSession({
       homeTeam: homeTeam.trim() || "Home",
       awayTeam: awayTeam.trim() || "Away",
+      homeColor,
+      awayColor,
       isHomeTeam,
       roster,
       rotation: rotation as RotationState,
@@ -156,6 +160,19 @@ function SetupPage() {
               placeholder="Away team"
               className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
             />
+          </div>
+
+          <div>
+            <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Team colors
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <ColorPicker label={homeTeam.trim() || "Home"} value={homeColor} onChange={setHomeColor} />
+              <ColorPicker label={awayTeam.trim() || "Away"} value={awayColor} onChange={setAwayColor} />
+            </div>
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              These tint the FanView scoreboard, court, and feed for watchers.
+            </p>
           </div>
 
           <div>
@@ -649,6 +666,61 @@ function LoadRosterModal({
             </button>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+const SWATCHES = [
+  "#F4B400", "#3B82F6", "#EF4444", "#10B981", "#8B5CF6",
+  "#EC4899", "#F97316", "#06B6D4", "#84CC16", "#FFFFFF",
+];
+
+function ColorPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-2.5">
+      <div className="mb-2 flex items-center gap-2">
+        <span
+          className="inline-block h-5 w-5 rounded-full border border-border"
+          style={{ backgroundColor: value }}
+        />
+        <span className="truncate text-[11px] font-black uppercase tracking-widest text-foreground">
+          {label}
+        </span>
+        <label className="ml-auto inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-popover text-[10px] text-muted-foreground">
+          +
+          <input
+            type="color"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="sr-only"
+          />
+        </label>
+      </div>
+      <div className="grid grid-cols-5 gap-1.5">
+        {SWATCHES.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            aria-label={`Pick ${c}`}
+            className={cn(
+              "h-7 w-full rounded-md border transition-transform active:scale-95",
+              value.toLowerCase() === c.toLowerCase()
+                ? "border-foreground ring-2 ring-foreground/40"
+                : "border-border",
+            )}
+            style={{ backgroundColor: c }}
+          />
+        ))}
       </div>
     </div>
   );
