@@ -44,6 +44,7 @@ function LivePage() {
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [matchWinPromptShown, setMatchWinPromptShown] = useState(false);
+  const [lineupModalOpen, setLineupModalOpen] = useState(false);
 
   const previousByZone = useMemo(() => {
     const m: Record<number, number> = {};
