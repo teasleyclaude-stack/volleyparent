@@ -107,6 +107,18 @@ export function Scoreboard(props: ScoreboardProps) {
   const awayLeading = awayScore > homeScore;
   const tied = homeScore === awayScore;
 
+  const scoreStyle = (leading: boolean, flash: boolean, color: string): React.CSSProperties => {
+    if (flash) return {};
+    if (tied) return {};
+    if (leading) {
+      return {
+        color,
+        textShadow: `0 0 24px color-mix(in oklab, ${color} 55%, transparent)`,
+      };
+    }
+    return {};
+  };
+
   const scoreClass = (leading: boolean, flash: boolean) => {
     const size = tied ? "text-[64px]" : leading ? "text-[78px]" : "text-[64px]";
     const color = flash
@@ -114,7 +126,7 @@ export function Scoreboard(props: ScoreboardProps) {
       : tied
         ? "text-foreground"
         : leading
-          ? "text-[var(--gold)] [text-shadow:0_0_24px_color-mix(in_oklab,var(--gold)_55%,transparent)]"
+          ? ""
           : "text-muted-foreground";
     return cn(
       "vp-bounce font-display font-black leading-none tracking-tight tabular-nums transition-colors duration-200 select-none",
