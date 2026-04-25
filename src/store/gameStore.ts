@@ -16,6 +16,8 @@ interface GameStore {
   startSession: (args: {
     homeTeam: string;
     awayTeam: string;
+    homeColor: string;
+    awayColor: string;
     isHomeTeam: boolean;
     roster: Player[];
     rotation: RotationState;
