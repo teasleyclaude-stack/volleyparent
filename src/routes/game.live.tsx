@@ -34,6 +34,8 @@ function LivePage() {
   const endSet = useGameStore((s) => s.endSet);
   const endGame = useGameStore((s) => s.endGame);
   const makeSub = useGameStore((s) => s.makeSubstitution);
+  const correctScore = useGameStore((s) => s.correctScore);
+  const setRotationStore = useGameStore((s) => s.setRotation);
   const saveSession = useHistoryStore((s) => s.saveSession);
 
   const [killModalOpen, setKillModalOpen] = useState(false);
