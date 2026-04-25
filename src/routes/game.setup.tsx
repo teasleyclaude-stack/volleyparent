@@ -251,8 +251,20 @@ function SetupPage() {
           </div>
 
           {roster.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-              No players yet. Add your own or load from a previous game.
+            <div className="space-y-3 rounded-2xl border border-dashed border-border bg-card p-6 text-center">
+              <div className="text-sm font-bold text-foreground">
+                Add your first player to get started
+              </div>
+              <p className="text-xs text-muted-foreground">
+                You need at least 6 players assigned to court positions before you can start a game.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowAdd(true)}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-black uppercase tracking-widest text-primary-foreground active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" /> Add Player
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
