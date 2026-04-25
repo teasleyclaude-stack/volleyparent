@@ -4,7 +4,6 @@ import { useState } from "react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
-import { SAMPLE_ROSTER } from "@/data/sampleRoster";
 import { defaultStats, type Player, type Position, type RotationState } from "@/types";
 import { uid } from "@/utils/stats";
 import { cn } from "@/lib/utils";
@@ -25,15 +24,29 @@ function SetupPage() {
   const navigate = useNavigate();
   const startSession = useGameStore((s) => s.startSession);
   const pastSessions = useHistoryStore((s) => s.sessions);
+  const lastRoster = useHistoryStore((s) => s.lastRoster);
 
-  const [homeTeam, setHomeTeam] = useState("Horizon Thunder");
-  const [awayTeam, setAwayTeam] = useState("Lake Ridge Storm");
+  const [homeTeam, setHomeTeam] = useState("");
+  const [awayTeam, setAwayTeam] = useState("");
   const [isHomeTeam, setIsHomeTeam] = useState(true);
   const [isHomeServing, setIsHomeServing] = useState(true);
-  const [roster, setRoster] = useState<Player[]>(SAMPLE_ROSTER);
-  const [rotation, setRotation] = useState<(string | null)[]>(
-    SAMPLE_ROSTER.slice(0, 6).map((p) => p.id),
-  );
+  const [roster, setRoster] = useState<Player[]>(() => {
+    // Auto-populate from the most recent saved roster (stats reset).
+    const source = lastRoster ?? pastSessions[0]?.roster ?? null;
+    if (!source || source.length === 0) return [];
+    const fresh = source.map((p) => ({ ...p, stats: defaultStats() }));
+    if (!fresh.some((p) => p.isTracked)) {
+      fresh[0] = { ...fresh[0], isTracked: true };
+    }
+    return fresh;
+  });
+  const [rotation, setRotation] = useState<(string | null)[]>(() => {
+    const source = lastRoster ?? pastSessions[0]?.roster ?? null;
+    if (!source || source.length === 0) return [null, null, null, null, null, null];
+    const ids = source.slice(0, 6).map((p) => p.id);
+    while (ids.length < 6) ids.push(null as unknown as string);
+    return ids.slice(0, 6);
+  });
   const [showAdd, setShowAdd] = useState(false);
   const [showLoad, setShowLoad] = useState(false);
 
