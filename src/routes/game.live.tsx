@@ -170,6 +170,8 @@ function LivePage() {
             tapHaptic("light");
             addPoint("away");
           }}
+          onCorrectHome={() => correctScore("home")}
+          onCorrectAway={() => correctScore("away")}
         />
 
         <RotationCourt
