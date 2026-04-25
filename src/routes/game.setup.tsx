@@ -164,6 +164,19 @@ function SetupPage() {
 
           <div>
             <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Team colors
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <ColorPicker label={homeTeam.trim() || "Home"} value={homeColor} onChange={setHomeColor} />
+              <ColorPicker label={awayTeam.trim() || "Away"} value={awayColor} onChange={setAwayColor} />
+            </div>
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              These tint the FanView scoreboard, court, and feed for watchers.
+            </p>
+          </div>
+
+          <div>
+            <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
               We are the
             </div>
             <div className="grid grid-cols-2 gap-2 rounded-2xl bg-card p-1">
