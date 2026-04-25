@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      fanview_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          feed: Json
+          id: string
+          is_live: boolean
+          meta: Json
+          state: Json
+          summary: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          feed?: Json
+          id: string
+          is_live?: boolean
+          meta?: Json
+          state?: Json
+          summary?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          feed?: Json
+          id?: string
+          is_live?: boolean
+          meta?: Json
+          state?: Json
+          summary?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
