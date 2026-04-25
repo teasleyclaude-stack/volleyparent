@@ -193,7 +193,65 @@ export const useGameStore = create<GameStore>()(
         set({ session: s });
       },
 
-      undoLastAction: () => {
+      correctScore: (team) => {
+        const cur = get().session;
+        if (!cur) return;
+        const current = team === "home" ? cur.homeScore : cur.awayScore;
+        if (current <= 0) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+
+        // Inspect the most recent SCORE event for this team to detect side-out rotation.
+        let rotationReversed = false;
+        let servingFlipped = false;
+        const lastEvent = s.events[s.events.length - 1];
+        if (
+          lastEvent &&
+          lastEvent.type === "SCORE" &&
+          lastEvent.scoringTeam === team
+        ) {
+          // Find the SCORE event before this one (or fall back to start defaults)
+          let prevIsHomeServing = s.isHomeServing;
+          for (let i = s.events.length - 2; i >= 0; i--) {
+            const ev = s.events[i];
+            if (ev.type === "SCORE" || ev.type === "SET_END") {
+              prevIsHomeServing = ev.isHomeServing;
+              break;
+            }
+          }
+          // If the serving team flipped on this score, it was a side-out → reverse rotation.
+          if (lastEvent.isHomeServing !== prevIsHomeServing) {
+            s.rotationState = reverseRotation(s.rotationState);
+            s.isHomeServing = prevIsHomeServing;
+            rotationReversed = true;
+            servingFlipped = true;
+          }
+        }
+
+        if (team === "home") s.homeScore = Math.max(0, s.homeScore - 1);
+        else s.awayScore = Math.max(0, s.awayScore - 1);
+
+        pushEvent(s, {
+          type: "SCORE_CORRECTION",
+          correctionTeam: team,
+          delta: -1,
+          rotationReversed,
+          servingFlipped,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          rotationState: s.rotationState,
+          isHomeServing: s.isHomeServing,
+        });
+        set({ session: s });
+      },
+
+      setRotation: (rotation) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        s.rotationState = [...rotation] as RotationState;
+        set({ session: s });
+      },
         const cur = get().session;
         if (!cur || cur.events.length === 0) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
