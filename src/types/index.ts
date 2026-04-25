@@ -24,7 +24,7 @@ export interface Player {
 
 export type RotationState = [string, string, string, string, string, string];
 
-export type EventType = "STAT" | "SCORE" | "ROTATION" | "SUB" | "TIMEOUT" | "SET_END";
+export type EventType = "STAT" | "SCORE" | "ROTATION" | "SUB" | "TIMEOUT" | "SET_END" | "SCORE_CORRECTION";
 
 export interface MatchEvent {
   id: string;
