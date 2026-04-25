@@ -16,6 +16,14 @@ export function applyRotation(state: RotationState): RotationState {
   return [P2, P3, P4, P5, P6, P1];
 }
 
+export function reverseRotation(state: RotationState): RotationState {
+  // Inverse of applyRotation: returns the previous rotation state.
+  // applyRotation: [P1,P2,P3,P4,P5,P6] -> [P2,P3,P4,P5,P6,P1]
+  // reverseRotation: [P1,P2,P3,P4,P5,P6] -> [P6,P1,P2,P3,P4,P5]
+  const [P1, P2, P3, P4, P5, P6] = state;
+  return [P6, P1, P2, P3, P4, P5];
+}
+
 export function uid(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
