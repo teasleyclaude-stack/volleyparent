@@ -443,11 +443,13 @@ function FeedRow({ item, meta }: { item: FanviewFeedItem; meta: FanviewMeta }) {
 function SummaryView({ row }: { row: SessionRow }) {
   const summary = row.summary;
   const meta = row.meta;
+  const { homeText, awayText } = teamTextColors(meta);
   const homeWon =
     (summary?.finalScore.homeSetsWon ?? 0) > (summary?.finalScore.awaySetsWon ?? 0);
   const awayWon =
     (summary?.finalScore.awaySetsWon ?? 0) > (summary?.finalScore.homeSetsWon ?? 0);
   const winnerColor = homeWon ? meta.homeColor : awayWon ? meta.awayColor : undefined;
+  const winnerText = homeWon ? homeText : awayWon ? awayText : undefined;
   return (
     <div className="flex-1 px-4 pb-4">
       <section
@@ -460,36 +462,36 @@ function SummaryView({ row }: { row: SessionRow }) {
       >
         <div
           className="flex items-center justify-center gap-2"
-          style={{ color: winnerColor ?? "var(--gold)" }}
+          style={{ color: winnerText ?? "var(--gold)" }}
         >
           <Trophy className="h-5 w-5" />
           <span className="text-xs font-black uppercase tracking-widest">Final</span>
         </div>
         <div
           className="mt-2 text-lg font-black"
-          style={{ color: winnerColor ?? "var(--foreground)" }}
+          style={{ color: winnerText ?? "var(--foreground)" }}
         >
           {summary?.winner ?? "Match ended"}
         </div>
         <div className="mt-3 grid grid-cols-3 items-center gap-2">
           <div
             className="text-left text-xs font-black uppercase tracking-widest"
-            style={{ color: meta.homeColor }}
+            style={{ color: homeText }}
           >
             {meta.homeTeam}
           </div>
           <div className="text-3xl font-black tabular-nums">
-            <span style={{ color: homeWon ? meta.homeColor : "var(--muted-foreground)" }}>
+            <span style={{ color: homeWon ? homeText : "var(--muted-foreground)" }}>
               {summary?.finalScore.homeSetsWon ?? 0}
             </span>
             <span className="text-muted-foreground"> : </span>
-            <span style={{ color: awayWon ? meta.awayColor : "var(--muted-foreground)" }}>
+            <span style={{ color: awayWon ? awayText : "var(--muted-foreground)" }}>
               {summary?.finalScore.awaySetsWon ?? 0}
             </span>
           </div>
           <div
             className="text-right text-xs font-black uppercase tracking-widest"
-            style={{ color: meta.awayColor }}
+            style={{ color: awayText }}
           >
             {meta.awayTeam}
           </div>
@@ -502,13 +504,13 @@ function SummaryView({ row }: { row: SessionRow }) {
                   <th className="px-2 py-1.5 text-left font-bold">Set</th>
                   <th
                     className="px-2 py-1.5 text-right font-bold"
-                    style={{ color: meta.homeColor }}
+                    style={{ color: homeText }}
                   >
                     {meta.homeTeam}
                   </th>
                   <th
                     className="px-2 py-1.5 text-right font-bold"
-                    style={{ color: meta.awayColor }}
+                    style={{ color: awayText }}
                   >
                     {meta.awayTeam}
                   </th>
