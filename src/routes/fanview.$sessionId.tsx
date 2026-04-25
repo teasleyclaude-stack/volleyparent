@@ -189,32 +189,44 @@ function LiveView({ row }: { row: SessionRow }) {
 function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
   const homeLeads = state.homeScore > state.awayScore;
   const awayLeads = state.awayScore > state.homeScore;
+  const servingColor = state.isHomeServing ? meta.homeColor : meta.awayColor;
   return (
-    <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+    <section
+      className="mt-4 rounded-2xl border bg-card p-4"
+      style={{ borderColor: `color-mix(in oklab, ${servingColor} 35%, var(--border))` }}
+    >
       <div className="grid grid-cols-3 items-center gap-2">
-        <TeamCell name={meta.homeTeam} sets={state.homeSetsWon} serving={state.isHomeServing} align="left" />
+        <TeamCell
+          name={meta.homeTeam}
+          sets={state.homeSetsWon}
+          serving={state.isHomeServing}
+          align="left"
+          color={meta.homeColor}
+        />
         <div className="text-center">
           <div className="flex items-baseline justify-center gap-2 tabular-nums">
             <span
-              className={cn(
-                "font-black leading-none",
-                homeLeads ? "text-[var(--gold)] text-5xl" : "text-muted-foreground text-4xl",
-              )}
+              className={cn("font-black leading-none", homeLeads ? "text-5xl" : "text-4xl text-muted-foreground")}
+              style={homeLeads ? { color: meta.homeColor } : undefined}
             >
               {state.homeScore}
             </span>
             <span className="text-xl font-black text-muted-foreground">:</span>
             <span
-              className={cn(
-                "font-black leading-none",
-                awayLeads ? "text-[var(--gold)] text-5xl" : "text-muted-foreground text-4xl",
-              )}
+              className={cn("font-black leading-none", awayLeads ? "text-5xl" : "text-4xl text-muted-foreground")}
+              style={awayLeads ? { color: meta.awayColor } : undefined}
             >
               {state.awayScore}
             </span>
           </div>
         </div>
-        <TeamCell name={meta.awayTeam} sets={state.awaySetsWon} serving={!state.isHomeServing} align="right" />
+        <TeamCell
+          name={meta.awayTeam}
+          sets={state.awaySetsWon}
+          serving={!state.isHomeServing}
+          align="right"
+          color={meta.awayColor}
+        />
       </div>
       <div className="mt-3 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
         <span>Set {state.currentSet}</span>
@@ -223,8 +235,11 @@ function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta })
           {meta.homeTeam} {state.homeSetsWon} — {state.awaySetsWon} {meta.awayTeam}
         </span>
       </div>
-      <div className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-[var(--gold)]">
-        <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold)]" />
+      <div
+        className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest"
+        style={{ color: servingColor }}
+      >
+        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: servingColor }} />
         {(state.isHomeServing ? meta.homeTeam : meta.awayTeam)} serving
       </div>
     </section>
@@ -236,20 +251,27 @@ function TeamCell({
   sets,
   serving,
   align,
+  color,
 }: {
   name: string;
   sets: number;
   serving: boolean;
   align: "left" | "right";
+  color: string;
 }) {
   return (
     <div className={cn("min-w-0", align === "right" && "text-right")}>
-      <div className="truncate text-xs font-black uppercase tracking-widest text-foreground">
+      <div
+        className="truncate text-xs font-black uppercase tracking-widest"
+        style={{ color }}
+      >
         {name}
       </div>
       <div className="mt-1 text-[10px] font-bold text-muted-foreground">
         Sets: {sets}
-        {serving && <span className="ml-1 text-[var(--gold)]">●</span>}
+        {serving && (
+          <span className="ml-1" style={{ color }}>●</span>
+        )}
       </div>
     </div>
   );
