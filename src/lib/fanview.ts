@@ -211,7 +211,8 @@ export function eventToFeedItem(
       default:
         return null;
     }
-    return { ...base, type: "STAT", message, tone };
+    const ourTeam: "home" | "away" = session.isHomeTeam ? "home" : "away";
+    return { ...base, type: "STAT", message, tone, team: ourTeam };
   }
 
   if (ev.type === "TIMEOUT" && ev.timeoutTeam) {
