@@ -6,6 +6,8 @@ import { tapHaptic } from "@/utils/haptics";
 interface ScoreboardProps {
   homeTeam: string;
   awayTeam: string;
+  homeColor: string;
+  awayColor: string;
   homeScore: number;
   awayScore: number;
   setNumber: number;
@@ -34,6 +36,8 @@ export function Scoreboard(props: ScoreboardProps) {
   const {
     homeTeam,
     awayTeam,
+    homeColor,
+    awayColor,
     homeScore,
     awayScore,
     setNumber,
