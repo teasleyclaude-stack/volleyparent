@@ -126,20 +126,25 @@ function ReportPage() {
               <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 Final · Best of 5
               </div>
-              <div className="mt-1 text-xl font-black text-foreground">{winner || "—"} wins</div>
+              <div
+                className="mt-1 text-xl font-black"
+                style={{ color: homeWon ? session.homeColor : session.awayColor }}
+              >
+                {winner || "—"} wins
+              </div>
               <div className="mt-2 flex items-center justify-center gap-3 text-3xl font-black tabular-nums">
-                <span className={homeWon ? "text-[var(--gold)]" : "text-muted-foreground"}>
+                <span style={{ color: homeWon ? session.homeColor : "var(--muted-foreground)" }}>
                   {homeSetsWon}
                 </span>
                 <span className="text-muted-foreground/40">—</span>
-                <span className={!homeWon ? "text-[var(--gold)]" : "text-muted-foreground"}>
+                <span style={{ color: !homeWon ? session.awayColor : "var(--muted-foreground)" }}>
                   {awaySetsWon}
                 </span>
               </div>
-              <div className="mt-1 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                <span>{session.homeTeam || "Home"}</span>
-                <span>·</span>
-                <span>{session.awayTeam || "Away"}</span>
+              <div className="mt-1 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest">
+                <span style={{ color: session.homeColor }}>{session.homeTeam || "Home"}</span>
+                <span className="text-muted-foreground">·</span>
+                <span style={{ color: session.awayColor }}>{session.awayTeam || "Away"}</span>
               </div>
             </div>
           );

@@ -6,6 +6,8 @@ import { tapHaptic } from "@/utils/haptics";
 interface ScoreboardProps {
   homeTeam: string;
   awayTeam: string;
+  homeColor: string;
+  awayColor: string;
   homeScore: number;
   awayScore: number;
   setNumber: number;
@@ -34,6 +36,8 @@ export function Scoreboard(props: ScoreboardProps) {
   const {
     homeTeam,
     awayTeam,
+    homeColor,
+    awayColor,
     homeScore,
     awayScore,
     setNumber,
@@ -103,6 +107,18 @@ export function Scoreboard(props: ScoreboardProps) {
   const awayLeading = awayScore > homeScore;
   const tied = homeScore === awayScore;
 
+  const scoreStyle = (leading: boolean, flash: boolean, color: string): React.CSSProperties => {
+    if (flash) return {};
+    if (tied) return {};
+    if (leading) {
+      return {
+        color,
+        textShadow: `0 0 24px color-mix(in oklab, ${color} 55%, transparent)`,
+      };
+    }
+    return {};
+  };
+
   const scoreClass = (leading: boolean, flash: boolean) => {
     const size = tied ? "text-[64px]" : leading ? "text-[78px]" : "text-[64px]";
     const color = flash
@@ -110,7 +126,7 @@ export function Scoreboard(props: ScoreboardProps) {
       : tied
         ? "text-foreground"
         : leading
-          ? "text-[var(--gold)] [text-shadow:0_0_24px_color-mix(in_oklab,var(--gold)_55%,transparent)]"
+          ? ""
           : "text-muted-foreground";
     return cn(
       "vp-bounce font-display font-black leading-none tracking-tight tabular-nums transition-colors duration-200 select-none",
@@ -133,11 +149,13 @@ export function Scoreboard(props: ScoreboardProps) {
       {/* Set wins tracker */}
       <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
         <span className={isHomeOurs ? "text-foreground" : ""}>
-          {homeTeam || "Home"} <span className="tabular-nums text-[var(--gold)]">{homeSetsWon}</span>
+          <span style={{ color: homeColor }}>{homeTeam || "Home"}</span>{" "}
+          <span className="tabular-nums" style={{ color: homeColor }}>{homeSetsWon}</span>
         </span>
         <span className="text-muted-foreground/40">—</span>
         <span className={!isHomeOurs ? "text-foreground" : ""}>
-          <span className="tabular-nums text-[var(--gold)]">{awaySetsWon}</span> {awayTeam || "Away"}
+          <span className="tabular-nums" style={{ color: awayColor }}>{awaySetsWon}</span>{" "}
+          <span style={{ color: awayColor }}>{awayTeam || "Away"}</span>
         </span>
       </div>
 
@@ -146,15 +164,17 @@ export function Scoreboard(props: ScoreboardProps) {
         <div className="flex flex-col items-start">
           <div className="flex items-center gap-1.5">
             <span
-              className={cn(
-                "max-w-[110px] truncate text-[13px] font-semibold",
-                isHomeOurs ? "text-foreground" : "text-muted-foreground",
-              )}
+              className="max-w-[110px] truncate text-[13px] font-semibold"
+              style={{ color: homeColor }}
             >
               {homeTeam || "Home"}
             </span>
             {isHomeServing && (
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold)]" aria-label="serving" />
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: homeColor }}
+                aria-label="serving"
+              />
             )}
           </div>
           <button
@@ -163,7 +183,11 @@ export function Scoreboard(props: ScoreboardProps) {
             className="bg-transparent p-0 text-left"
             aria-label="Double-tap to correct home score"
           >
-            <span key={homeKey} className={scoreClass(homeLeading, flashHome)}>
+            <span
+              key={homeKey}
+              className={scoreClass(homeLeading, flashHome)}
+              style={scoreStyle(homeLeading, flashHome, homeColor)}
+            >
               {homeScore}
             </span>
           </button>
@@ -178,13 +202,15 @@ export function Scoreboard(props: ScoreboardProps) {
         <div className="flex flex-col items-end">
           <div className="flex items-center gap-1.5">
             {!isHomeServing && (
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold)]" aria-label="serving" />
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: awayColor }}
+                aria-label="serving"
+              />
             )}
             <span
-              className={cn(
-                "max-w-[110px] truncate text-[13px] font-semibold",
-                !isHomeOurs ? "text-foreground" : "text-muted-foreground",
-              )}
+              className="max-w-[110px] truncate text-[13px] font-semibold"
+              style={{ color: awayColor }}
             >
               {awayTeam || "Away"}
             </span>
@@ -195,7 +221,11 @@ export function Scoreboard(props: ScoreboardProps) {
             className="bg-transparent p-0 text-right"
             aria-label="Double-tap to correct away score"
           >
-            <span key={awayKey} className={scoreClass(awayLeading, flashAway)}>
+            <span
+              key={awayKey}
+              className={scoreClass(awayLeading, flashAway)}
+              style={scoreStyle(awayLeading, flashAway, awayColor)}
+            >
               {awayScore}
             </span>
           </button>
