@@ -429,22 +429,56 @@ function FeedRow({ item, meta }: { item: FanviewFeedItem; meta: FanviewMeta }) {
 function SummaryView({ row }: { row: SessionRow }) {
   const summary = row.summary;
   const meta = row.meta;
+  const homeWon =
+    (summary?.finalScore.homeSetsWon ?? 0) > (summary?.finalScore.awaySetsWon ?? 0);
+  const awayWon =
+    (summary?.finalScore.awaySetsWon ?? 0) > (summary?.finalScore.homeSetsWon ?? 0);
+  const winnerColor = homeWon ? meta.homeColor : awayWon ? meta.awayColor : undefined;
   return (
     <div className="flex-1 px-4 pb-4">
-      <section className="mt-4 rounded-2xl border border-border bg-card p-4 text-center">
-        <div className="flex items-center justify-center gap-2 text-[var(--gold)]">
+      <section
+        className="mt-4 rounded-2xl border bg-card p-4 text-center"
+        style={{
+          borderColor: winnerColor
+            ? `color-mix(in oklab, ${winnerColor} 45%, var(--border))`
+            : undefined,
+        }}
+      >
+        <div
+          className="flex items-center justify-center gap-2"
+          style={{ color: winnerColor ?? "var(--gold)" }}
+        >
           <Trophy className="h-5 w-5" />
           <span className="text-xs font-black uppercase tracking-widest">Final</span>
         </div>
-        <div className="mt-2 text-lg font-black text-foreground">
+        <div
+          className="mt-2 text-lg font-black"
+          style={{ color: winnerColor ?? "var(--foreground)" }}
+        >
           {summary?.winner ?? "Match ended"}
         </div>
         <div className="mt-3 grid grid-cols-3 items-center gap-2">
-          <div className="text-left text-xs font-black uppercase tracking-widest">{meta.homeTeam}</div>
-          <div className="text-3xl font-black tabular-nums text-foreground">
-            {summary?.finalScore.homeSetsWon ?? 0} : {summary?.finalScore.awaySetsWon ?? 0}
+          <div
+            className="text-left text-xs font-black uppercase tracking-widest"
+            style={{ color: meta.homeColor }}
+          >
+            {meta.homeTeam}
           </div>
-          <div className="text-right text-xs font-black uppercase tracking-widest">{meta.awayTeam}</div>
+          <div className="text-3xl font-black tabular-nums">
+            <span style={{ color: homeWon ? meta.homeColor : "var(--muted-foreground)" }}>
+              {summary?.finalScore.homeSetsWon ?? 0}
+            </span>
+            <span className="text-muted-foreground"> : </span>
+            <span style={{ color: awayWon ? meta.awayColor : "var(--muted-foreground)" }}>
+              {summary?.finalScore.awaySetsWon ?? 0}
+            </span>
+          </div>
+          <div
+            className="text-right text-xs font-black uppercase tracking-widest"
+            style={{ color: meta.awayColor }}
+          >
+            {meta.awayTeam}
+          </div>
         </div>
         {summary && summary.finalScore.sets.length > 0 && (
           <div className="mt-4 overflow-hidden rounded-xl border border-border">
@@ -452,8 +486,18 @@ function SummaryView({ row }: { row: SessionRow }) {
               <thead className="bg-popover text-muted-foreground">
                 <tr>
                   <th className="px-2 py-1.5 text-left font-bold">Set</th>
-                  <th className="px-2 py-1.5 text-right font-bold">{meta.homeTeam}</th>
-                  <th className="px-2 py-1.5 text-right font-bold">{meta.awayTeam}</th>
+                  <th
+                    className="px-2 py-1.5 text-right font-bold"
+                    style={{ color: meta.homeColor }}
+                  >
+                    {meta.homeTeam}
+                  </th>
+                  <th
+                    className="px-2 py-1.5 text-right font-bold"
+                    style={{ color: meta.awayColor }}
+                  >
+                    {meta.awayTeam}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -514,7 +558,7 @@ function SummaryView({ row }: { row: SessionRow }) {
         </div>
         <ul className="space-y-1.5">
           {[...row.feed].reverse().map((it) => (
-            <FeedRow key={it.id} item={it} />
+            <FeedRow key={it.id} item={it} meta={meta} />
           ))}
         </ul>
       </section>
