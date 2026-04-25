@@ -6,6 +6,7 @@ import { Scoreboard } from "@/components/game/Scoreboard";
 import { RotationCourt } from "@/components/game/RotationCourt";
 import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
+import { SetLineupModal } from "@/components/game/SetLineupModal";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { hittingPercentage } from "@/utils/stats";
