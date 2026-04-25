@@ -224,6 +224,7 @@ export function eventToFeedItem(
       type: "TIMEOUT",
       message: `Timeout — ${teamName} (${remaining} remaining)`,
       tone: "score",
+      team: ev.timeoutTeam,
     };
   }
 
