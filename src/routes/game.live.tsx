@@ -147,8 +147,9 @@ function LivePage() {
         <Link to="/" className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="text-center">
+        <div className="flex items-center gap-2">
           <div className="text-[10px] font-black uppercase tracking-widest text-primary">● Live</div>
+          <FanviewButton />
         </div>
         <button
           type="button"
