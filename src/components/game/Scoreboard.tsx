@@ -108,12 +108,16 @@ export function Scoreboard(props: ScoreboardProps) {
   const awayLeading = awayScore > homeScore;
   const tied = homeScore === awayScore;
 
-  const scoreStyle = (leading: boolean, flash: boolean, color: string): React.CSSProperties => {
+  const homeText = useMemo(() => readableTextColor(homeColor), [homeColor]);
+  const awayText = useMemo(() => readableTextColor(awayColor), [awayColor]);
+
+  const scoreStyle = (leading: boolean, flash: boolean, color: string, textColor: string): React.CSSProperties => {
     if (flash) return {};
     if (tied) return {};
     if (leading) {
       return {
-        color,
+        color: textColor,
+        // Glow can use the original team color — it's translucent and decorative.
         textShadow: `0 0 24px color-mix(in oklab, ${color} 55%, transparent)`,
       };
     }
