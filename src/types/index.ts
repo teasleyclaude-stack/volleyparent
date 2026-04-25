@@ -43,8 +43,12 @@ export interface MatchEvent {
   subInId?: string;
   subOutId?: string;
   subPosition?: number;
-  // for timeout
+  // for timeout / score correction
   timeoutTeam?: "home" | "away";
+  correctionTeam?: "home" | "away";
+  delta?: number;
+  rotationReversed?: boolean;
+  servingFlipped?: boolean;
 }
 
 export interface SetSummary {
