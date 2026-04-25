@@ -367,6 +367,13 @@ export const useGameStore = create<GameStore>()(
           rotationState: s.rotationState,
           isHomeServing: s.isHomeServing,
         });
+        // Losing team serves first in the next set (per standard rules).
+        // If scores are equal (shouldn't happen for completed set), keep current.
+        const homeWonSet = s.homeScore > s.awayScore;
+        const awayWonSet = s.awayScore > s.homeScore;
+        if (homeWonSet) s.isHomeServing = false;
+        else if (awayWonSet) s.isHomeServing = true;
+
         s.currentSet += 1;
         s.homeScore = 0;
         s.awayScore = 0;
