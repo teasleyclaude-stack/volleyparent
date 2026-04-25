@@ -7,6 +7,7 @@ import { StatSummaryCard } from "@/components/report/StatSummaryCard";
 import { ShotChart } from "@/components/report/ShotChart";
 import { MomentumGraph } from "@/components/report/MomentumGraph";
 import { useMemo } from "react";
+import { readableTextColor } from "@/lib/colorContrast";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
