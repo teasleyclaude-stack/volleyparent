@@ -199,6 +199,7 @@ function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta })
   const homeLeads = state.homeScore > state.awayScore;
   const awayLeads = state.awayScore > state.homeScore;
   const servingColor = state.isHomeServing ? meta.homeColor : meta.awayColor;
+  const { homeText, awayText } = teamTextColors(meta);
   return (
     <section
       className="mt-4 rounded-2xl border bg-card p-4"
@@ -211,19 +212,20 @@ function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta })
           serving={state.isHomeServing}
           align="left"
           color={meta.homeColor}
+          textColor={homeText}
         />
         <div className="text-center">
           <div className="flex items-baseline justify-center gap-2 tabular-nums">
             <span
               className={cn("font-black leading-none", homeLeads ? "text-5xl" : "text-4xl text-muted-foreground")}
-              style={homeLeads ? { color: meta.homeColor } : undefined}
+              style={homeLeads ? { color: homeText } : undefined}
             >
               {state.homeScore}
             </span>
             <span className="text-xl font-black text-muted-foreground">:</span>
             <span
               className={cn("font-black leading-none", awayLeads ? "text-5xl" : "text-4xl text-muted-foreground")}
-              style={awayLeads ? { color: meta.awayColor } : undefined}
+              style={awayLeads ? { color: awayText } : undefined}
             >
               {state.awayScore}
             </span>
@@ -235,6 +237,7 @@ function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta })
           serving={!state.isHomeServing}
           align="right"
           color={meta.awayColor}
+          textColor={awayText}
         />
       </div>
       <div className="mt-3 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -246,7 +249,7 @@ function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta })
       </div>
       <div
         className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest"
-        style={{ color: servingColor }}
+        style={{ color: state.isHomeServing ? homeText : awayText }}
       >
         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: servingColor }} />
         {(state.isHomeServing ? meta.homeTeam : meta.awayTeam)} serving
@@ -261,18 +264,20 @@ function TeamCell({
   serving,
   align,
   color,
+  textColor,
 }: {
   name: string;
   sets: number;
   serving: boolean;
   align: "left" | "right";
   color: string;
+  textColor: string;
 }) {
   return (
     <div className={cn("min-w-0", align === "right" && "text-right")}>
       <div
         className="truncate text-xs font-black uppercase tracking-widest"
-        style={{ color }}
+        style={{ color: textColor }}
       >
         {name}
       </div>
