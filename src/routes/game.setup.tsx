@@ -28,6 +28,8 @@ function SetupPage() {
 
   const [homeTeam, setHomeTeam] = useState("");
   const [awayTeam, setAwayTeam] = useState("");
+  const [homeColor, setHomeColor] = useState("#F4B400");
+  const [awayColor, setAwayColor] = useState("#3B82F6");
   const [isHomeTeam, setIsHomeTeam] = useState(true);
   const [isHomeServing, setIsHomeServing] = useState(true);
   const [roster, setRoster] = useState<Player[]>(() => {
@@ -119,6 +121,8 @@ function SetupPage() {
     startSession({
       homeTeam: homeTeam.trim() || "Home",
       awayTeam: awayTeam.trim() || "Away",
+      homeColor,
+      awayColor,
       isHomeTeam,
       roster,
       rotation: rotation as RotationState,
