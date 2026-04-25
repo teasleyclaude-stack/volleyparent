@@ -24,7 +24,7 @@ export interface Player {
 
 export type RotationState = [string, string, string, string, string, string];
 
-export type EventType = "STAT" | "SCORE" | "ROTATION" | "SUB" | "TIMEOUT" | "SET_END";
+export type EventType = "STAT" | "SCORE" | "ROTATION" | "SUB" | "TIMEOUT" | "SET_END" | "SCORE_CORRECTION";
 
 export interface MatchEvent {
   id: string;
@@ -43,8 +43,12 @@ export interface MatchEvent {
   subInId?: string;
   subOutId?: string;
   subPosition?: number;
-  // for timeout
+  // for timeout / score correction
   timeoutTeam?: "home" | "away";
+  correctionTeam?: "home" | "away";
+  delta?: number;
+  rotationReversed?: boolean;
+  servingFlipped?: boolean;
 }
 
 export interface SetSummary {

@@ -6,6 +6,7 @@ import { Scoreboard } from "@/components/game/Scoreboard";
 import { RotationCourt } from "@/components/game/RotationCourt";
 import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
+import { SetLineupModal } from "@/components/game/SetLineupModal";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { hittingPercentage } from "@/utils/stats";
@@ -33,6 +34,8 @@ function LivePage() {
   const endSet = useGameStore((s) => s.endSet);
   const endGame = useGameStore((s) => s.endGame);
   const makeSub = useGameStore((s) => s.makeSubstitution);
+  const correctScore = useGameStore((s) => s.correctScore);
+  const setRotationStore = useGameStore((s) => s.setRotation);
   const saveSession = useHistoryStore((s) => s.saveSession);
 
   const [killModalOpen, setKillModalOpen] = useState(false);
@@ -41,6 +44,7 @@ function LivePage() {
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [matchWinPromptShown, setMatchWinPromptShown] = useState(false);
+  const [lineupModalOpen, setLineupModalOpen] = useState(false);
 
   const previousByZone = useMemo(() => {
     const m: Record<number, number> = {};
@@ -166,6 +170,8 @@ function LivePage() {
             tapHaptic("light");
             addPoint("away");
           }}
+          onCorrectHome={() => correctScore("home")}
+          onCorrectAway={() => correctScore("away")}
         />
 
         <RotationCourt
@@ -305,7 +311,14 @@ function LivePage() {
           ) : (
             <button
               type="button"
-              onClick={() => endSet()}
+              onClick={() => {
+                endSet();
+                // Open lineup modal for the upcoming set if match isn't over.
+                const after = useGameStore.getState().session;
+                if (after && after.currentSet <= 5) {
+                  setLineupModalOpen(true);
+                }
+              }}
               className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
             >
               End Set {session.currentSet}
@@ -367,6 +380,18 @@ function LivePage() {
           </div>
         </div>
       )}
+
+      <SetLineupModal
+        open={lineupModalOpen}
+        setNumber={session.currentSet}
+        rotation={session.rotationState}
+        roster={session.roster}
+        onKeep={() => setLineupModalOpen(false)}
+        onConfirm={(newRot) => {
+          setRotationStore(newRot);
+          setLineupModalOpen(false);
+        }}
+      />
     </PhoneShell>
   );
 }

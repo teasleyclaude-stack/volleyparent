@@ -8,7 +8,7 @@ import type {
   RotationState,
   StatType,
 } from "@/types";
-import { applyRotation, uid } from "@/utils/stats";
+import { applyRotation, reverseRotation, uid } from "@/utils/stats";
 
 interface GameStore {
   session: GameSession | null;
@@ -26,6 +26,8 @@ interface GameStore {
   recordStat: (playerId: string, stat: StatType, killZone?: KillZone | null) => void;
   recordTimeout: (team: "home" | "away") => void;
   makeSubstitution: (benchPlayerId: string, courtPositionIndex: number) => void;
+  correctScore: (team: "home" | "away") => void;
+  setRotation: (rotation: RotationState) => void;
   undoLastAction: () => void;
   endSet: () => void;
   endGame: () => void;
@@ -191,6 +193,66 @@ export const useGameStore = create<GameStore>()(
         set({ session: s });
       },
 
+      correctScore: (team) => {
+        const cur = get().session;
+        if (!cur) return;
+        const current = team === "home" ? cur.homeScore : cur.awayScore;
+        if (current <= 0) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+
+        // Inspect the most recent SCORE event for this team to detect side-out rotation.
+        let rotationReversed = false;
+        let servingFlipped = false;
+        const lastEvent = s.events[s.events.length - 1];
+        if (
+          lastEvent &&
+          lastEvent.type === "SCORE" &&
+          lastEvent.scoringTeam === team
+        ) {
+          // Find the SCORE event before this one (or fall back to start defaults)
+          let prevIsHomeServing = s.isHomeServing;
+          for (let i = s.events.length - 2; i >= 0; i--) {
+            const ev = s.events[i];
+            if (ev.type === "SCORE" || ev.type === "SET_END") {
+              prevIsHomeServing = ev.isHomeServing;
+              break;
+            }
+          }
+          // If the serving team flipped on this score, it was a side-out → reverse rotation.
+          if (lastEvent.isHomeServing !== prevIsHomeServing) {
+            s.rotationState = reverseRotation(s.rotationState);
+            s.isHomeServing = prevIsHomeServing;
+            rotationReversed = true;
+            servingFlipped = true;
+          }
+        }
+
+        if (team === "home") s.homeScore = Math.max(0, s.homeScore - 1);
+        else s.awayScore = Math.max(0, s.awayScore - 1);
+
+        pushEvent(s, {
+          type: "SCORE_CORRECTION",
+          correctionTeam: team,
+          delta: -1,
+          rotationReversed,
+          servingFlipped,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          rotationState: s.rotationState,
+          isHomeServing: s.isHomeServing,
+        });
+        set({ session: s });
+      },
+
+      setRotation: (rotation) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        s.rotationState = [...rotation] as RotationState;
+        set({ session: s });
+      },
+
       undoLastAction: () => {
         const cur = get().session;
         if (!cur || cur.events.length === 0) return;
@@ -273,6 +335,18 @@ export const useGameStore = create<GameStore>()(
           s.rotationState = newRot;
         }
 
+        // Reverse a SCORE_CORRECTION: re-add the point and re-apply rotation if it was reversed.
+        if (last.type === "SCORE_CORRECTION" && last.correctionTeam) {
+          if (last.correctionTeam === "home") s.homeScore += 1;
+          else s.awayScore += 1;
+          if (last.rotationReversed) {
+            s.rotationState = applyRotation(s.rotationState);
+          }
+          if (last.servingFlipped) {
+            s.isHomeServing = !s.isHomeServing;
+          }
+        }
+
         set({ session: s });
       },
 
@@ -293,6 +367,13 @@ export const useGameStore = create<GameStore>()(
           rotationState: s.rotationState,
           isHomeServing: s.isHomeServing,
         });
+        // Losing team serves first in the next set (per standard rules).
+        // If scores are equal (shouldn't happen for completed set), keep current.
+        const homeWonSet = s.homeScore > s.awayScore;
+        const awayWonSet = s.awayScore > s.homeScore;
+        if (homeWonSet) s.isHomeServing = false;
+        else if (awayWonSet) s.isHomeServing = true;
+
         s.currentSet += 1;
         s.homeScore = 0;
         s.awayScore = 0;

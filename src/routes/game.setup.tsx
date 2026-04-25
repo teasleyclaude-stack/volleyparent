@@ -4,7 +4,6 @@ import { useState } from "react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
-import { SAMPLE_ROSTER } from "@/data/sampleRoster";
 import { defaultStats, type Player, type Position, type RotationState } from "@/types";
 import { uid } from "@/utils/stats";
 import { cn } from "@/lib/utils";
@@ -25,15 +24,29 @@ function SetupPage() {
   const navigate = useNavigate();
   const startSession = useGameStore((s) => s.startSession);
   const pastSessions = useHistoryStore((s) => s.sessions);
+  const lastRoster = useHistoryStore((s) => s.lastRoster);
 
-  const [homeTeam, setHomeTeam] = useState("Horizon Thunder");
-  const [awayTeam, setAwayTeam] = useState("Lake Ridge Storm");
+  const [homeTeam, setHomeTeam] = useState("");
+  const [awayTeam, setAwayTeam] = useState("");
   const [isHomeTeam, setIsHomeTeam] = useState(true);
   const [isHomeServing, setIsHomeServing] = useState(true);
-  const [roster, setRoster] = useState<Player[]>(SAMPLE_ROSTER);
-  const [rotation, setRotation] = useState<(string | null)[]>(
-    SAMPLE_ROSTER.slice(0, 6).map((p) => p.id),
-  );
+  const [roster, setRoster] = useState<Player[]>(() => {
+    // Auto-populate from the most recent saved roster (stats reset).
+    const source = lastRoster ?? pastSessions[0]?.roster ?? null;
+    if (!source || source.length === 0) return [];
+    const fresh = source.map((p) => ({ ...p, stats: defaultStats() }));
+    if (!fresh.some((p) => p.isTracked)) {
+      fresh[0] = { ...fresh[0], isTracked: true };
+    }
+    return fresh;
+  });
+  const [rotation, setRotation] = useState<(string | null)[]>(() => {
+    const source = lastRoster ?? pastSessions[0]?.roster ?? null;
+    if (!source || source.length === 0) return [null, null, null, null, null, null];
+    const ids = source.slice(0, 6).map((p) => p.id);
+    while (ids.length < 6) ids.push(null as unknown as string);
+    return ids.slice(0, 6);
+  });
   const [showAdd, setShowAdd] = useState(false);
   const [showLoad, setShowLoad] = useState(false);
 
@@ -238,8 +251,20 @@ function SetupPage() {
           </div>
 
           {roster.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-              No players yet. Add your own or load from a previous game.
+            <div className="space-y-3 rounded-2xl border border-dashed border-border bg-card p-6 text-center">
+              <div className="text-sm font-bold text-foreground">
+                Add your first player to get started
+              </div>
+              <p className="text-xs text-muted-foreground">
+                You need at least 6 players assigned to court positions before you can start a game.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowAdd(true)}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-black uppercase tracking-widest text-primary-foreground active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" /> Add Player
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -325,11 +350,11 @@ function SetupPage() {
       <footer className="border-t border-border bg-popover p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         <button
           type="button"
-          disabled={!rotationFull || !trackedId}
+          disabled={!rotationFull || !trackedId || roster.length < 6}
           onClick={handleStart}
           className={cn(
             "flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-black uppercase tracking-widest transition-all",
-            rotationFull && trackedId
+            rotationFull && trackedId && roster.length >= 6
               ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 active:scale-[0.98]"
               : "bg-card text-muted-foreground",
           )}
@@ -337,10 +362,11 @@ function SetupPage() {
           <Volleyball className="h-5 w-5" />
           Start Game
         </button>
-        {(!rotationFull || !trackedId) && (
+        {(!rotationFull || !trackedId || roster.length < 6) && (
           <p className="mt-2 text-center text-[11px] text-muted-foreground">
+            {roster.length < 6 ? `Add at least ${6 - roster.length} more player${6 - roster.length === 1 ? "" : "s"}. ` : ""}
             {!trackedId ? "Pick your player. " : ""}
-            {!rotationFull ? "Set all 6 court positions." : ""}
+            {roster.length >= 6 && !rotationFull ? "Set all 6 court positions." : ""}
           </p>
         )}
       </footer>
