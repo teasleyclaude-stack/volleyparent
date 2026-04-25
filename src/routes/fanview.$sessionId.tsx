@@ -9,6 +9,15 @@ import type {
   FanviewSummary,
 } from "@/lib/fanview";
 import { cn } from "@/lib/utils";
+import { readableTextColor } from "@/lib/colorContrast";
+
+/** Pull team text colors from meta with auto-contrast applied. */
+function teamTextColors(meta: FanviewMeta) {
+  return {
+    homeText: readableTextColor(meta.homeColor),
+    awayText: readableTextColor(meta.awayColor),
+  };
+}
 
 export const Route = createFileRoute("/fanview/$sessionId")({
   head: ({ params }) => ({
