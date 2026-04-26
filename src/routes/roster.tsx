@@ -18,11 +18,11 @@ export const Route = createFileRoute("/roster")({
 
 function RosterPage() {
   const lastRoster = useHistoryStore((s) => s.lastRoster);
-  const pastSessions = useHistoryStore((s) => s.pastSessions);
+  const sessions = useHistoryStore((s) => s.sessions);
 
-  const source = lastRoster ?? pastSessions[0]?.roster ?? null;
+  const source = lastRoster ?? sessions[0]?.roster ?? null;
   const roster: Player[] = source
-    ? source.map((p) => ({ ...p, stats: defaultStats() }))
+    ? source.map((p: Player) => ({ ...p, stats: defaultStats() }))
     : [];
 
   return (
