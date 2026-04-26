@@ -16,7 +16,7 @@ import { useFanview } from "@/hooks/useFanview";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { hittingPercentage } from "@/utils/stats";
-import { checkSetWon, checkMatchWon, setTarget } from "@/utils/setRules";
+import { checkSetWon, checkMatchWon, setTarget, maxSets, decidingSet } from "@/utils/setRules";
 import { tapHaptic } from "@/utils/haptics";
 import { fireWinConfetti } from "@/utils/winConfetti";
 import type { KillZone, StatType } from "@/types";
@@ -78,15 +78,18 @@ function LivePage() {
     [session?.completedSets],
   );
 
+  const matchFormat = session?.matchFormat ?? "highschool";
   const currentSet = session?.currentSet ?? 1;
-  const pointTarget = setTarget(currentSet);
-  const isFinalSet = currentSet >= 5 || homeSetsWon >= 3 || awaySetsWon >= 3;
+  const pointTarget = setTarget(currentSet, matchFormat);
+  const totalSets = maxSets(matchFormat);
+  const winsNeeded = matchFormat === "club" ? 2 : 3;
+  const isFinalSet = currentSet >= totalSets || homeSetsWon >= winsNeeded || awaySetsWon >= winsNeeded;
 
   // Auto-detect set win after every score change.
   useEffect(() => {
     if (!session) return;
     if (setOverPopup || matchOverPopup || lineupModalOpen) return;
-    const winner = checkSetWon(session.homeScore, session.awayScore, session.currentSet);
+    const winner = checkSetWon(session.homeScore, session.awayScore, session.currentSet, session.matchFormat);
     if (!winner) return;
     if (dismissedSetWins.has(session.currentSet)) return;
     setSetOverPopup({
@@ -97,16 +100,13 @@ function LivePage() {
     });
   }, [session?.homeScore, session?.awayScore, session?.currentSet, setOverPopup, matchOverPopup, lineupModalOpen, dismissedSetWins, session]);
 
-  // Fire confetti ONLY when the match is fully completed (best-of-5 reached).
-  // Explicitly NOT triggered by set-over popups — set wins must never celebrate.
+  // Fire confetti ONLY when the match is fully completed.
   useEffect(() => {
     if (!matchOverPopup || !session) return;
 
-    // Double-guard: re-verify match completion from completedSets, not just popup state.
-    // This prevents any future caller from accidentally opening matchOverPopup mid-match.
     const homeSets = session.completedSets.filter((s) => s.homeScore > s.awayScore).length;
     const awaySets = session.completedSets.filter((s) => s.awayScore > s.homeScore).length;
-    const matchActuallyWon = checkMatchWon(homeSets, awaySets);
+    const matchActuallyWon = checkMatchWon(homeSets, awaySets, session.matchFormat);
     if (!matchActuallyWon) return;
     if (matchActuallyWon !== matchOverPopup.winner) return;
 
@@ -115,6 +115,7 @@ function LivePage() {
     fireWinConfetti(winnerColor || "#F4B400");
     tapHaptic("heavy");
   }, [matchOverPopup, session]);
+  void decidingSet;
 
   if (!session) {
     return (
@@ -183,7 +184,7 @@ function LivePage() {
     // Recompute set wins from the now-updated completedSets list.
     const newHomeSets = after.completedSets.filter((s) => s.homeScore > s.awayScore).length;
     const newAwaySets = after.completedSets.filter((s) => s.awayScore > s.homeScore).length;
-    const matchW = checkMatchWon(newHomeSets, newAwaySets);
+    const matchW = checkMatchWon(newHomeSets, newAwaySets, after.matchFormat);
 
     if (matchW) {
       setMatchOverPopup({ winner: matchW });
@@ -191,7 +192,7 @@ function LivePage() {
     }
 
     // Match continues — open the lineup editor for the new set.
-    if (after.currentSet <= 5) {
+    if (after.currentSet <= maxSets(after.matchFormat)) {
       setLineupModalOpen(true);
     }
     void winner;
