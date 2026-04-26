@@ -242,6 +242,7 @@ function LivePage() {
           homeSetsWon={homeSetsWon}
           awaySetsWon={awaySetsWon}
           pointTarget={pointTarget}
+          matchFormat={matchFormat}
           onScoreHome={() => {
             tapHaptic("light");
             addPoint("home");
@@ -411,7 +412,7 @@ function LivePage() {
                 endSet();
                 // Open lineup modal for the upcoming set if match isn't over.
                 const after = useGameStore.getState().session;
-                if (after && after.currentSet <= 5) {
+                if (after && after.currentSet <= maxSets(after.matchFormat)) {
                   setLineupModalOpen(true);
                 }
               }}
@@ -491,6 +492,7 @@ function LivePage() {
         }
         onConfirm={confirmEndSet}
         onKeepPlaying={keepPlayingSet}
+        matchFormat={matchFormat}
       />
 
       <MatchOverPopup
@@ -503,6 +505,7 @@ function LivePage() {
         homeSetsWon={homeSetsWon}
         awaySetsWon={awaySetsWon}
         completedSets={session.completedSets}
+        matchFormat={matchFormat}
         onEndGame={() => {
           setMatchOverPopup(null);
           handleEndGame();
