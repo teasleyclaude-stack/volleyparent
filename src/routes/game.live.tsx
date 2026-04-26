@@ -9,11 +9,14 @@ import { validateRotation } from "@/utils/rotationValidation";
 import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
+import { SetOverPopup } from "@/components/game/SetOverPopup";
+import { MatchOverPopup } from "@/components/game/MatchOverPopup";
 import { FanviewButton } from "@/components/game/FanviewButton";
 import { useFanview } from "@/hooks/useFanview";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { hittingPercentage } from "@/utils/stats";
+import { checkSetWon, checkMatchWon, setTarget } from "@/utils/setRules";
 import { tapHaptic } from "@/utils/haptics";
 import type { KillZone, StatType } from "@/types";
 import { cn } from "@/lib/utils";
@@ -48,8 +51,11 @@ function LivePage() {
   const [errorMode, setErrorMode] = useState(false);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
-  const [matchWinPromptShown, setMatchWinPromptShown] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
+  const [setOverPopup, setSetOverPopup] = useState<{ winner: "home" | "away"; setNumber: number; homeScore: number; awayScore: number } | null>(null);
+  const [matchOverPopup, setMatchOverPopup] = useState<{ winner: "home" | "away" } | null>(null);
+  /** Set numbers we've already prompted for, so re-entering the same score (e.g. after undo + redo) won't re-trigger. */
+  const [dismissedSetWins, setDismissedSetWins] = useState<Set<number>>(new Set());
 
   const previousByZone = useMemo(() => {
     const m: Record<number, number> = {};
@@ -72,23 +78,23 @@ function LivePage() {
   );
 
   const currentSet = session?.currentSet ?? 1;
-  const isDecidingSet = currentSet === 5;
-  const pointTarget = isDecidingSet ? 15 : 25;
-  const matchWinner =
-    homeSetsWon >= 3
-      ? session?.homeTeam || "Home"
-      : awaySetsWon >= 3
-        ? session?.awayTeam || "Away"
-        : null;
-  const isFinalSet = currentSet >= 5 || matchWinner !== null;
+  const pointTarget = setTarget(currentSet);
+  const isFinalSet = currentSet >= 5 || homeSetsWon >= 3 || awaySetsWon >= 3;
 
-  // Auto-prompt when a team reaches 3 set wins
+  // Auto-detect set win after every score change.
   useEffect(() => {
-    if (matchWinner && !matchWinPromptShown && !endConfirmOpen) {
-      setMatchWinPromptShown(true);
-      setEndConfirmOpen(true);
-    }
-  }, [matchWinner, matchWinPromptShown, endConfirmOpen]);
+    if (!session) return;
+    if (setOverPopup || matchOverPopup || lineupModalOpen) return;
+    const winner = checkSetWon(session.homeScore, session.awayScore, session.currentSet);
+    if (!winner) return;
+    if (dismissedSetWins.has(session.currentSet)) return;
+    setSetOverPopup({
+      winner,
+      setNumber: session.currentSet,
+      homeScore: session.homeScore,
+      awayScore: session.awayScore,
+    });
+  }, [session?.homeScore, session?.awayScore, session?.currentSet, setOverPopup, matchOverPopup, lineupModalOpen, dismissedSetWins, session]);
 
   if (!session) {
     return (
