@@ -9,11 +9,14 @@ import { validateRotation } from "@/utils/rotationValidation";
 import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
+import { SetOverPopup } from "@/components/game/SetOverPopup";
+import { MatchOverPopup } from "@/components/game/MatchOverPopup";
 import { FanviewButton } from "@/components/game/FanviewButton";
 import { useFanview } from "@/hooks/useFanview";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { hittingPercentage } from "@/utils/stats";
+import { checkSetWon, checkMatchWon, setTarget } from "@/utils/setRules";
 import { tapHaptic } from "@/utils/haptics";
 import type { KillZone, StatType } from "@/types";
 import { cn } from "@/lib/utils";
@@ -48,8 +51,11 @@ function LivePage() {
   const [errorMode, setErrorMode] = useState(false);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
-  const [matchWinPromptShown, setMatchWinPromptShown] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
+  const [setOverPopup, setSetOverPopup] = useState<{ winner: "home" | "away"; setNumber: number; homeScore: number; awayScore: number } | null>(null);
+  const [matchOverPopup, setMatchOverPopup] = useState<{ winner: "home" | "away" } | null>(null);
+  /** Set numbers we've already prompted for, so re-entering the same score (e.g. after undo + redo) won't re-trigger. */
+  const [dismissedSetWins, setDismissedSetWins] = useState<Set<number>>(new Set());
 
   const previousByZone = useMemo(() => {
     const m: Record<number, number> = {};
@@ -72,23 +78,23 @@ function LivePage() {
   );
 
   const currentSet = session?.currentSet ?? 1;
-  const isDecidingSet = currentSet === 5;
-  const pointTarget = isDecidingSet ? 15 : 25;
-  const matchWinner =
-    homeSetsWon >= 3
-      ? session?.homeTeam || "Home"
-      : awaySetsWon >= 3
-        ? session?.awayTeam || "Away"
-        : null;
-  const isFinalSet = currentSet >= 5 || matchWinner !== null;
+  const pointTarget = setTarget(currentSet);
+  const isFinalSet = currentSet >= 5 || homeSetsWon >= 3 || awaySetsWon >= 3;
 
-  // Auto-prompt when a team reaches 3 set wins
+  // Auto-detect set win after every score change.
   useEffect(() => {
-    if (matchWinner && !matchWinPromptShown && !endConfirmOpen) {
-      setMatchWinPromptShown(true);
-      setEndConfirmOpen(true);
-    }
-  }, [matchWinner, matchWinPromptShown, endConfirmOpen]);
+    if (!session) return;
+    if (setOverPopup || matchOverPopup || lineupModalOpen) return;
+    const winner = checkSetWon(session.homeScore, session.awayScore, session.currentSet);
+    if (!winner) return;
+    if (dismissedSetWins.has(session.currentSet)) return;
+    setSetOverPopup({
+      winner,
+      setNumber: session.currentSet,
+      homeScore: session.homeScore,
+      awayScore: session.awayScore,
+    });
+  }, [session?.homeScore, session?.awayScore, session?.currentSet, setOverPopup, matchOverPopup, lineupModalOpen, dismissedSetWins, session]);
 
   if (!session) {
     return (
@@ -142,6 +148,43 @@ function LivePage() {
       console.error("fanview finalize failed", e);
     }
     navigate({ to: "/game/report/$sessionId", params: { sessionId: session.id } });
+  };
+
+  const confirmEndSet = () => {
+    if (!setOverPopup) return;
+    const winner = setOverPopup.winner;
+    // Persist completed set + advance currentSet (resets scores, swaps serve to loser).
+    endSet();
+    setSetOverPopup(null);
+
+    const after = useGameStore.getState().session;
+    if (!after) return;
+
+    // Recompute set wins from the now-updated completedSets list.
+    const newHomeSets = after.completedSets.filter((s) => s.homeScore > s.awayScore).length;
+    const newAwaySets = after.completedSets.filter((s) => s.awayScore > s.homeScore).length;
+    const matchW = checkMatchWon(newHomeSets, newAwaySets);
+
+    if (matchW) {
+      setMatchOverPopup({ winner: matchW });
+      return;
+    }
+
+    // Match continues — open the lineup editor for the new set.
+    if (after.currentSet <= 5) {
+      setLineupModalOpen(true);
+    }
+    void winner;
+  };
+
+  const keepPlayingSet = () => {
+    if (!setOverPopup) return;
+    setDismissedSetWins((prev) => {
+      const next = new Set(prev);
+      next.add(setOverPopup.setNumber);
+      return next;
+    });
+    setSetOverPopup(null);
   };
 
   return (
@@ -385,13 +428,9 @@ function LivePage() {
             className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-black text-foreground">
-              {matchWinner ? `Match over — ${matchWinner} wins!` : "End the game?"}
-            </h3>
+            <h3 className="text-lg font-black text-foreground">End the game?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {matchWinner
-                ? `Final: ${session.homeTeam} ${homeSetsWon} — ${awaySetsWon} ${session.awayTeam}. End match and view the report?`
-                : "The match will be saved to history and you'll see the post-game report."}
+              The match will be saved to history and you'll see the post-game report.
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button
@@ -412,6 +451,42 @@ function LivePage() {
           </div>
         </div>
       )}
+
+      <SetOverPopup
+        open={setOverPopup !== null}
+        setNumber={setOverPopup?.setNumber ?? session.currentSet}
+        winner={setOverPopup?.winner ?? "home"}
+        homeTeam={session.homeTeam}
+        awayTeam={session.awayTeam}
+        homeColor={session.homeColor}
+        awayColor={session.awayColor}
+        homeScore={setOverPopup?.homeScore ?? session.homeScore}
+        awayScore={setOverPopup?.awayScore ?? session.awayScore}
+        homeSetsWon={
+          (setOverPopup?.winner === "home" ? 1 : 0) + homeSetsWon
+        }
+        awaySetsWon={
+          (setOverPopup?.winner === "away" ? 1 : 0) + awaySetsWon
+        }
+        onConfirm={confirmEndSet}
+        onKeepPlaying={keepPlayingSet}
+      />
+
+      <MatchOverPopup
+        open={matchOverPopup !== null}
+        winner={matchOverPopup?.winner ?? "home"}
+        homeTeam={session.homeTeam}
+        awayTeam={session.awayTeam}
+        homeColor={session.homeColor}
+        awayColor={session.awayColor}
+        homeSetsWon={homeSetsWon}
+        awaySetsWon={awaySetsWon}
+        completedSets={session.completedSets}
+        onEndGame={() => {
+          setMatchOverPopup(null);
+          handleEndGame();
+        }}
+      />
 
       <SetLineupModal
         open={lineupModalOpen}

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
+import { getSetLabel } from "@/utils/setRules";
 
 interface ScoreboardProps {
   homeTeam: string;
@@ -140,11 +141,19 @@ export function Scoreboard(props: ScoreboardProps) {
     );
   };
 
+  const setLabel = getSetLabel(homeScore, awayScore, setNumber);
+
   return (
     <div className="border-b border-border bg-popover px-4 pt-4 pb-3">
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Set {setNumber} <span className="text-muted-foreground/60">· to {pointTarget}</span>
+          Set {setNumber}{" "}
+          <span
+            className="font-black"
+            style={setLabel.color ? { color: setLabel.color } : undefined}
+          >
+            · {setLabel.text}
+          </span>
         </span>
         <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
           ● Live
