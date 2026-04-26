@@ -1,20 +1,35 @@
 /**
  * Volleyball set + match rules.
- * - Sets 1–4 play to 25; set 5 plays to 15.
+ * - Format-aware: 'club' (best of 3) or 'highschool' (best of 5).
+ * - Non-deciding sets play to 25; the deciding set plays to 15.
  * - Must win by 2 — no score cap. 25-24, 26-25, 27-26… all keep playing.
- * - Match is best of 5: first team to 3 sets wins.
  */
 
-export function setTarget(setNumber: number): number {
-  return setNumber === 5 ? 15 : 25;
+import type { MatchFormat } from "@/types";
+
+export function maxSets(matchFormat: MatchFormat): number {
+  return matchFormat === "club" ? 3 : 5;
+}
+
+export function setsToWin(matchFormat: MatchFormat): number {
+  return matchFormat === "club" ? 2 : 3;
+}
+
+export function decidingSet(matchFormat: MatchFormat): number {
+  return matchFormat === "club" ? 3 : 5;
+}
+
+export function setTarget(setNumber: number, matchFormat: MatchFormat): number {
+  return setNumber === decidingSet(matchFormat) ? 15 : 25;
 }
 
 export function checkSetWon(
   homeScore: number,
   awayScore: number,
   setNumber: number,
+  matchFormat: MatchFormat,
 ): "home" | "away" | null {
-  const target = setTarget(setNumber);
+  const target = setTarget(setNumber, matchFormat);
   const higher = Math.max(homeScore, awayScore);
   const lead = Math.abs(homeScore - awayScore);
   if (higher < target) return null;
@@ -25,9 +40,11 @@ export function checkSetWon(
 export function checkMatchWon(
   homeSetsWon: number,
   awaySetsWon: number,
+  matchFormat: MatchFormat,
 ): "home" | "away" | null {
-  if (homeSetsWon >= 3) return "home";
-  if (awaySetsWon >= 3) return "away";
+  const need = setsToWin(matchFormat);
+  if (homeSetsWon >= need) return "home";
+  if (awaySetsWon >= need) return "away";
   return null;
 }
 
@@ -41,15 +58,22 @@ export function getSetLabel(
   homeScore: number,
   awayScore: number,
   setNumber: number,
+  matchFormat: MatchFormat,
 ): SetLabel {
-  const target = setTarget(setNumber);
+  const target = setTarget(setNumber, matchFormat);
   const higher = Math.max(homeScore, awayScore);
   const lead = Math.abs(homeScore - awayScore);
   if (higher >= target && lead < 2) {
     return { text: "WIN BY 2", color: "#FF4D4D" };
   }
-  if (setNumber === 5) {
+  if (setNumber === decidingSet(matchFormat)) {
     return { text: "TO 15", color: "#F59E0B" };
   }
   return { text: `TO ${target}`, color: null };
 }
+
+export const formatLabel = (matchFormat: MatchFormat): string =>
+  matchFormat === "club" ? "Club" : "High School";
+
+export const formatLabelShort = (matchFormat: MatchFormat): string =>
+  matchFormat === "club" ? "CLUB" : "HS";
