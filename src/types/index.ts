@@ -35,7 +35,8 @@ export interface MatchEvent {
   setNumber: number;
   homeScore: number;
   awayScore: number;
-  rotationState: RotationState;
+  homeRotationState: RotationState;
+  awayRotationState: RotationState;
   isHomeServing: boolean;
   scoringTeam?: "home" | "away";
   timestamp: number;
@@ -69,7 +70,8 @@ export interface GameSession {
   homeScore: number;
   awayScore: number;
   isHomeServing: boolean;
-  rotationState: RotationState;
+  homeRotationState: RotationState;
+  awayRotationState: RotationState;
   roster: Player[];
   events: MatchEvent[];
   completedSets: SetSummary[];
