@@ -181,13 +181,16 @@ export function SplashScreen({ children }: SplashScreenProps) {
         >
           {/* Logo mark — animated video, with static fallback if it can't start */}
           <div className="relative h-40 w-40 sm:h-52 sm:w-52">
-            {showFallback && !videoStarted && (
-              <img
-                src={logoFallback}
-                alt="CourtsideView"
-                className="cv-splash-logo absolute inset-0 h-full w-full object-contain"
-              />
-            )}
+            {/* Static fallback — always mounted so it can fade in/out smoothly */}
+            <img
+              src={logoFallback}
+              alt="CourtsideView"
+              className="cv-splash-logo absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ease-out"
+              style={{
+                opacity: showFallback && !videoStarted ? 1 : 0,
+                pointerEvents: "none",
+              }}
+            />
             <video
               ref={videoRef}
               src={logoVideo}
@@ -196,8 +199,8 @@ export function SplashScreen({ children }: SplashScreenProps) {
               playsInline
               preload="auto"
               aria-label="CourtsideView"
-              className="cv-splash-logo absolute inset-0 h-full w-full object-contain"
-              style={{ opacity: showFallback && !videoStarted ? 0 : 1 }}
+              className="cv-splash-logo absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ease-out"
+              style={{ opacity: videoStarted ? 1 : showFallback ? 0 : 1 }}
             />
           </div>
           {/* Wordmark */}
