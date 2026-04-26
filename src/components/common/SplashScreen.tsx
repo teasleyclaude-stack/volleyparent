@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 const logoVideo = "/courtsideview-logo-animation.mp4";
+const logoFallback = "/courtsideview-logo.png";
 
 const SESSION_KEY = "courtsideview-splash-shown";
 // Animation is 8s; keep min ≥ animation length so it never cuts off.
@@ -8,6 +9,8 @@ const MIN_DISPLAY_MS = VIDEO_DURATION_MS; // 8000
 // Failsafe must exceed video + a small buffer in case `ended` never fires.
 const MAX_DISPLAY_MS = 10000;
 const EXIT_MS = 300;
+// If the video hasn't started playing within this window, show the static logo.
+const FALLBACK_GRACE_MS = 800;
 
 interface SplashScreenProps {
   children: React.ReactNode;
