@@ -58,6 +58,7 @@ function FanviewPage() {
     };
   }, []);
 
+  useEffect(() => {
     let cancelled = false;
 
     const fetchRow = async () => {
