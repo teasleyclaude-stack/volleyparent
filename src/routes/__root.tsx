@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { SplashScreen } from "@/components/common/SplashScreen";
 
 function NotFoundComponent() {
   return (
@@ -49,8 +50,8 @@ export const Route = createRootRoute({
       },
       {
         rel: "icon",
-        type: "image/jpeg",
-        href: "/courtsideview-logo.jpeg",
+        type: "image/png",
+        href: "/courtsideview-logo.png",
       },
     ],
   }),
@@ -74,5 +75,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <SplashScreen>
+      <Outlet />
+    </SplashScreen>
+  );
 }
