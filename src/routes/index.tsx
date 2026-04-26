@@ -4,7 +4,7 @@ import { PhoneShell } from "@/components/common/PhoneShell";
 import { BottomTabs } from "@/components/common/BottomTabs";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
-import logo from "@/assets/courtsideview-logo.jpeg";
+import logo from "@/assets/courtsideview-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,7 +30,7 @@ function HomePage() {
           <img
             src={logo}
             alt="CourtsideView logo"
-            className="h-12 w-12 rounded-xl bg-white object-contain p-1"
+            className="h-12 w-12 object-contain"
           />
           <h1 className="text-2xl font-black tracking-tight text-foreground">CourtsideView</h1>
         </div>
