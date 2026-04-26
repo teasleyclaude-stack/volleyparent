@@ -268,10 +268,7 @@ function SetupPage() {
                       : "bg-transparent text-muted-foreground",
                   )}
                 >
-                  <span>{isClub ? "Club" : "High School"}</span>
-                  <span className={cn("font-bold", active ? "opacity-80" : "opacity-60")}>
-                    · {isClub ? "Best of 3" : "Best of 5"}
-                  </span>
+                  <span>{isClub ? "Best of 3" : "Best of 5"}</span>
                 </button>
               );
             })}
