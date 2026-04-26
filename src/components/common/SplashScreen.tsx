@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 const logoVideo = "/courtsideview-logo-animation.mp4";
+const logoFallback = "/courtsideview-logo.png";
 
 const SESSION_KEY = "courtsideview-splash-shown";
 // Animation is 8s; keep min ≥ animation length so it never cuts off.
@@ -8,6 +9,8 @@ const MIN_DISPLAY_MS = VIDEO_DURATION_MS; // 8000
 // Failsafe must exceed video + a small buffer in case `ended` never fires.
 const MAX_DISPLAY_MS = 10000;
 const EXIT_MS = 300;
+// If the video hasn't started playing within this window, show the static logo.
+const FALLBACK_GRACE_MS = 800;
 
 interface SplashScreenProps {
   children: React.ReactNode;
@@ -24,6 +27,8 @@ interface SplashScreenProps {
 export function SplashScreen({ children }: SplashScreenProps) {
   const [show, setShow] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
+  const [videoStarted, setVideoStarted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -125,17 +130,38 @@ export function SplashScreen({ children }: SplashScreenProps) {
     };
     video?.addEventListener("ended", handleEnded);
 
-    // If the video errors/can't play, fall back to time-based dismissal.
+    // Mark video as started once it actually begins playing — clears fallback.
+    const handlePlaying = () => {
+      setVideoStarted(true);
+      setShowFallback(false);
+    };
+    video?.addEventListener("playing", handlePlaying);
+
+    // If the video errors/can't play, show the static fallback and fall back
+    // to time-based dismissal so the splash never gets stuck.
     const handleError = () => {
+      setShowFallback(true);
       startupTasks.then(scheduleExitAfterMin);
     };
     video?.addEventListener("error", handleError);
+
+    // Grace period: if the video hasn't actually started playing in time,
+    // reveal the static logo so the user always sees branding.
+    const fallbackTimer = setTimeout(() => {
+      const v = videoRef.current;
+      const playing = v && !v.paused && v.currentTime > 0 && v.readyState >= 2;
+      if (!playing) {
+        setShowFallback(true);
+      }
+    }, FALLBACK_GRACE_MS);
 
     return () => {
       if (exitTimer) clearTimeout(exitTimer);
       if (removeTimer) clearTimeout(removeTimer);
       clearTimeout(failsafe);
+      clearTimeout(fallbackTimer);
       video?.removeEventListener("ended", handleEnded);
+      video?.removeEventListener("playing", handlePlaying);
       video?.removeEventListener("error", handleError);
     };
   }, []);
@@ -153,18 +179,27 @@ export function SplashScreen({ children }: SplashScreenProps) {
           }}
           aria-hidden={exiting}
         >
-          {/* Logo mark — animated */}
-          <video
-            ref={videoRef}
-            src={logoVideo}
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            aria-label="CourtsideView"
-            className="cv-splash-logo h-40 w-40 object-contain sm:h-52 sm:w-52"
-          />
-
+          {/* Logo mark — animated video, with static fallback if it can't start */}
+          <div className="relative h-40 w-40 sm:h-52 sm:w-52">
+            {showFallback && !videoStarted && (
+              <img
+                src={logoFallback}
+                alt="CourtsideView"
+                className="cv-splash-logo absolute inset-0 h-full w-full object-contain"
+              />
+            )}
+            <video
+              ref={videoRef}
+              src={logoVideo}
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              aria-label="CourtsideView"
+              className="cv-splash-logo absolute inset-0 h-full w-full object-contain"
+              style={{ opacity: showFallback && !videoStarted ? 0 : 1 }}
+            />
+          </div>
           {/* Wordmark */}
           <h1
             className="cv-splash-wordmark mt-4 text-[32px] font-bold leading-none"
