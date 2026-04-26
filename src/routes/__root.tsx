@@ -44,6 +44,12 @@ export const Route = createRootRoute({
       { name: "twitter:description", content: "CourtsideView tracks volleyball stats in real-time for parents and coaches." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4313a71b-320b-49b7-92c0-c609da438d07/id-preview-35a7a4b1--c799cf4d-3540-42b9-b975-b6ce259f9a03.lovable.app-1776999967480.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4313a71b-320b-49b7-92c0-c609da438d07/id-preview-35a7a4b1--c799cf4d-3540-42b9-b975-b6ce259f9a03.lovable.app-1776999967480.png" },
+      // PWA / home screen
+      { name: "theme-color", content: "#0A0E1A" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Courtside" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       {
@@ -55,6 +61,11 @@ export const Route = createRootRoute({
         type: "image/png",
         href: "/courtsideview-logo.png",
       },
+      // Home-screen icons
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
