@@ -1,6 +1,6 @@
 {
   "name": "CourtsideView",
-  "short_name": "Courtside",
+  "short_name": "CourtsideView",
   "description": "CourtsideView tracks volleyball stats in real-time for parents and coaches.",
   "start_url": "/",
   "scope": "/",
