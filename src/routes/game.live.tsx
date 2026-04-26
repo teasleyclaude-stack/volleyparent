@@ -195,6 +195,12 @@ function LivePage() {
               requireTracked: true,
             }).issues
           }
+          rotation={session.rotationState}
+          roster={session.roster}
+          onRepair={(next) => {
+            tapHaptic("light");
+            setRotationStore(next);
+          }}
         />
 
         <RotationCourt
