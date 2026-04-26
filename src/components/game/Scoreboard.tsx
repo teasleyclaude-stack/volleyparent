@@ -204,7 +204,7 @@ export function Scoreboard(props: ScoreboardProps) {
           <span className="tabular-nums" style={{ color: awayText }}>{awaySetsWon}</span>{" "}
           <span style={{ color: awayText }}>{awayTeam || "Away"}</span>
         </span>
-        <span className="ml-1 rounded-full bg-card px-1.5 py-0.5 text-[9px] font-black tracking-widest text-muted-foreground">
+        <span className="ml-1 rounded-full bg-card px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
           {formatLabelShort(matchFormat)}
         </span>
       </div>

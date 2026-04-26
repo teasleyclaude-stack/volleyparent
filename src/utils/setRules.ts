@@ -76,4 +76,4 @@ export const formatLabel = (matchFormat: MatchFormat): string =>
   matchFormat === "club" ? "Club" : "High School";
 
 export const formatLabelShort = (matchFormat: MatchFormat): string =>
-  matchFormat === "club" ? "CLUB" : "HS";
+  matchFormat === "club" ? "Best of 3" : "Best of 5";
