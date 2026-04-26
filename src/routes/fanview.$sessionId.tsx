@@ -465,9 +465,13 @@ function SummaryView({ row }: { row: SessionRow }) {
   const winnerColor = homeWon ? meta.homeColor : awayWon ? meta.awayColor : undefined;
   const winnerText = homeWon ? homeText : awayWon ? awayText : undefined;
 
-  // Celebrate on the watcher's screen when the summary view first appears.
+  // Celebrate on the watcher's screen ONLY when the match is fully completed.
+  // SummaryView mounts only after is_live=false (match end), AND we re-verify
+  // a real winner exists in the summary — never fires for a set being completed.
   useEffect(() => {
-    if (!homeWon && !awayWon) return;
+    if (row.is_live) return; // match still in progress — never celebrate
+    if (!summary) return;
+    if (!homeWon && !awayWon) return; // tie / no winner → no confetti
     fireWinConfetti(winnerColor ?? "#F4B400");
     // Only run once per mount of the summary view.
     // eslint-disable-next-line react-hooks/exhaustive-deps
