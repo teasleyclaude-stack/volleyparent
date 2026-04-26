@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 const logoVideo = "/courtsideview-logo-animation.mp4";
 
 const SESSION_KEY = "courtsideview-splash-shown";
-const MIN_DISPLAY_MS = 2000;
-const MAX_DISPLAY_MS = 4000;
+// Animation is 8s; keep min ≥ animation length so it never cuts off.
+const VIDEO_DURATION_MS = 8000;
+const MIN_DISPLAY_MS = VIDEO_DURATION_MS; // 8000
+// Failsafe must exceed video + a small buffer in case `ended` never fires.
+const MAX_DISPLAY_MS = 10000;
 const EXIT_MS = 300;
 
 interface SplashScreenProps {
@@ -11,15 +14,17 @@ interface SplashScreenProps {
 }
 
 /**
- * Two-phase brand splash (web adaptation of the native spec).
+ * Brand splash with animated logo video.
  * - Always dark (#0A0E1A) regardless of user theme.
  * - Runs parallel startup tasks during the hold phase.
- * - Min 2000ms / Max 4000ms display, then 300ms fade-out.
+ * - Waits for BOTH the video `ended` event AND the min display before exiting,
+ *   so the animation always completes. Failsafe at MAX_DISPLAY_MS.
  * - Shows once per browser session.
  */
 export function SplashScreen({ children }: SplashScreenProps) {
   const [show, setShow] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     let seen = false;
@@ -38,17 +43,27 @@ export function SplashScreen({ children }: SplashScreenProps) {
     }
 
     const startedAt = performance.now();
-    let exitTimer: ReturnType<typeof setTimeout>;
-    let removeTimer: ReturnType<typeof setTimeout>;
+    let exitTimer: ReturnType<typeof setTimeout> | undefined;
+    let removeTimer: ReturnType<typeof setTimeout> | undefined;
+    let exited = false;
 
     const beginExit = () => {
+      if (exited) return;
+      exited = true;
       setExiting(true);
       removeTimer = setTimeout(() => setShow(false), EXIT_MS);
     };
 
+    // Schedule exit only after BOTH startup tasks settle AND video has played
+    // for at least MIN_DISPLAY_MS. Falls back to failsafe if video stalls.
+    const scheduleExitAfterMin = () => {
+      const elapsed = performance.now() - startedAt;
+      const wait = Math.max(0, MIN_DISPLAY_MS - elapsed);
+      exitTimer = setTimeout(beginExit, wait);
+    };
+
     // Run startup tasks in parallel; never block the UI on failure.
     const startupTasks = Promise.allSettled([
-      // Theme is already booted via inline script in __root; this is a noop read.
       Promise.resolve().then(() => {
         try {
           window.localStorage.getItem("courtsideview_theme");
@@ -56,27 +71,32 @@ export function SplashScreen({ children }: SplashScreenProps) {
           /* noop */
         }
       }),
-      // Touch persisted stores so they hydrate before nav appears.
       import("@/store/gameStore").catch(() => null),
       import("@/store/historyStore").catch(() => null),
     ]);
 
-    // Hard cap at MAX_DISPLAY_MS regardless of task state.
+    // Hard cap — guarantees the splash dismisses even if the video stalls.
     const failsafe = setTimeout(beginExit, MAX_DISPLAY_MS);
 
-    startupTasks.then(() => {
-      const elapsed = performance.now() - startedAt;
-      const wait = Math.max(0, MIN_DISPLAY_MS - elapsed);
-      exitTimer = setTimeout(() => {
-        clearTimeout(failsafe);
-        beginExit();
-      }, wait);
-    });
+    // When the video finishes, ensure the min hold is satisfied before exit.
+    const video = videoRef.current;
+    const handleEnded = () => {
+      startupTasks.then(scheduleExitAfterMin);
+    };
+    video?.addEventListener("ended", handleEnded);
+
+    // If the video errors/can't play, fall back to time-based dismissal.
+    const handleError = () => {
+      startupTasks.then(scheduleExitAfterMin);
+    };
+    video?.addEventListener("error", handleError);
 
     return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(removeTimer);
+      if (exitTimer) clearTimeout(exitTimer);
+      if (removeTimer) clearTimeout(removeTimer);
       clearTimeout(failsafe);
+      video?.removeEventListener("ended", handleEnded);
+      video?.removeEventListener("error", handleError);
     };
   }, []);
 
@@ -93,8 +113,9 @@ export function SplashScreen({ children }: SplashScreenProps) {
           }}
           aria-hidden={exiting}
         >
-          {/* Logo mark — Phase 1 (animated) */}
+          {/* Logo mark — animated */}
           <video
+            ref={videoRef}
             src={logoVideo}
             autoPlay
             muted
@@ -104,7 +125,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
             className="cv-splash-logo h-40 w-40 object-contain sm:h-52 sm:w-52"
           />
 
-          {/* Wordmark — Phase 2 */}
+          {/* Wordmark */}
           <h1
             className="cv-splash-wordmark mt-4 text-[32px] font-bold leading-none"
             style={{ color: "#F0F4FF" }}
@@ -112,13 +133,13 @@ export function SplashScreen({ children }: SplashScreenProps) {
             CourtsideView
           </h1>
 
-          {/* Divider — Phase 3 */}
+          {/* Divider */}
           <div
             className="cv-splash-divider mt-5 h-px w-48 origin-center"
             style={{ backgroundColor: "#39FF14" }}
           />
 
-          {/* Tagline — Phase 3 */}
+          {/* Tagline */}
           <p
             className="cv-splash-tagline mt-3 text-[13px] font-medium uppercase"
             style={{ color: "#9BA3B8", letterSpacing: "0.15em" }}
