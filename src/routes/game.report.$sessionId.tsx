@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { ArrowLeft, Share2, Download, Plus } from "lucide-react";
+import { ArrowLeft, Share2, Download, Plus, FileText } from "lucide-react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useHistoryStore } from "@/store/historyStore";
 import { useGameStore } from "@/store/gameStore";
@@ -9,6 +9,7 @@ import { MomentumGraph } from "@/components/report/MomentumGraph";
 import { useMemo } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
 import { formatLabel } from "@/utils/setRules";
+import { exportSessionPDF } from "@/utils/pdfReport";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
