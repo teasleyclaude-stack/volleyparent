@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import logo from "@/assets/courtsideview-logo.png";
+const logoVideo = "/courtsideview-logo-animation.mp4";
 
 const SESSION_KEY = "courtsideview-splash-shown";
 const MIN_DISPLAY_MS = 2000;
@@ -93,10 +93,14 @@ export function SplashScreen({ children }: SplashScreenProps) {
           }}
           aria-hidden={exiting}
         >
-          {/* Logo mark — Phase 1 */}
-          <img
-            src={logo}
-            alt="CourtsideView"
+          {/* Logo mark — Phase 1 (animated) */}
+          <video
+            src={logoVideo}
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            aria-label="CourtsideView"
             className="cv-splash-logo h-40 w-40 object-contain sm:h-52 sm:w-52"
           />
 
