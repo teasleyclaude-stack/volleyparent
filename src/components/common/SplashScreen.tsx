@@ -130,17 +130,38 @@ export function SplashScreen({ children }: SplashScreenProps) {
     };
     video?.addEventListener("ended", handleEnded);
 
-    // If the video errors/can't play, fall back to time-based dismissal.
+    // Mark video as started once it actually begins playing — clears fallback.
+    const handlePlaying = () => {
+      setVideoStarted(true);
+      setShowFallback(false);
+    };
+    video?.addEventListener("playing", handlePlaying);
+
+    // If the video errors/can't play, show the static fallback and fall back
+    // to time-based dismissal so the splash never gets stuck.
     const handleError = () => {
+      setShowFallback(true);
       startupTasks.then(scheduleExitAfterMin);
     };
     video?.addEventListener("error", handleError);
+
+    // Grace period: if the video hasn't actually started playing in time,
+    // reveal the static logo so the user always sees branding.
+    const fallbackTimer = setTimeout(() => {
+      const v = videoRef.current;
+      const playing = v && !v.paused && v.currentTime > 0 && v.readyState >= 2;
+      if (!playing) {
+        setShowFallback(true);
+      }
+    }, FALLBACK_GRACE_MS);
 
     return () => {
       if (exitTimer) clearTimeout(exitTimer);
       if (removeTimer) clearTimeout(removeTimer);
       clearTimeout(failsafe);
+      clearTimeout(fallbackTimer);
       video?.removeEventListener("ended", handleEnded);
+      video?.removeEventListener("playing", handlePlaying);
       video?.removeEventListener("error", handleError);
     };
   }, []);
