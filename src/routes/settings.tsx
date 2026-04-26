@@ -3,7 +3,9 @@ import { PhoneShell } from "@/components/common/PhoneShell";
 import { BottomTabs } from "@/components/common/BottomTabs";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
-import { Trash2, Volleyball } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
+import { Trash2, Volleyball, Moon, Sun } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -17,6 +19,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const clear = useGameStore((s) => s.clearSession);
+  const { theme, setTheme } = useTheme();
   const wipe = () => {
     if (!confirm("Clear all saved games? This cannot be undone.")) return;
     useHistoryStore.setState({ sessions: [] });
@@ -44,6 +47,44 @@ function SettingsPage() {
             Designed for parents and youth coaches. Data is stored on this device only.
           </p>
         </div>
+
+        <section>
+          <h2 className="mb-2 px-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+            Appearance
+          </h2>
+          <div className="rounded-2xl border border-border bg-card p-1">
+            <div className="grid grid-cols-2 gap-1">
+              {(
+                [
+                  { value: "dark" as const, label: "Dark", Icon: Moon },
+                  { value: "light" as const, label: "Light", Icon: Sun },
+                ]
+              ).map(({ value, label, Icon }) => {
+                const active = theme === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setTheme(value)}
+                    aria-pressed={active}
+                    className={cn(
+                      "flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-black uppercase tracking-widest transition-colors",
+                      active
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <p className="mt-2 px-1 text-[11px] text-muted-foreground">
+            FanView pages always follow each watcher's own device preference.
+          </p>
+        </section>
 
         <button
           type="button"
