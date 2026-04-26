@@ -146,3 +146,71 @@ export function validateRotation(
 
   return { ok: issues.length === 0, issues };
 }
+
+/**
+ * Try to repair a rotation by producing the closest valid 6-tuple from the
+ * roster while preserving as many of the existing slot assignments as
+ * possible.
+ *
+ * Strategy:
+ *  1. Walk slots 0..5. Keep an ID if it's on the roster AND hasn't already
+ *     been used in an earlier slot (deduplication — first occurrence wins).
+ *  2. Collect remaining roster players, sorted by:
+ *       - tracked players first (so a tracked player ends up on court)
+ *       - then by jersey number for stability
+ *  3. Fill empty / invalid slots in order from that pool.
+ *  4. If P1 (server) ended up empty (roster too small), there's nothing we
+ *     can do — return null so the UI can disable the action.
+ *
+ * Returns null when a valid rotation is not reachable (e.g. roster < 6
+ * players) so the caller can hide the auto-repair button.
+ */
+export function repairRotation(
+  rotation: RotationState | string[] | undefined | null,
+  roster: Player[],
+): RotationState | null {
+  if (roster.length < 6) return null;
+
+  const rosterById = new Map(roster.map((p) => [p.id, p]));
+  const next: (string | null)[] = [null, null, null, null, null, null];
+  const used = new Set<string>();
+
+  // Pass 1: keep valid, unique IDs in their current slots.
+  for (let i = 0; i < 6; i++) {
+    const id = rotation?.[i];
+    if (id && rosterById.has(id) && !used.has(id)) {
+      next[i] = id;
+      used.add(id);
+    }
+  }
+
+  // Pass 2: build a fill pool from leftover roster players.
+  const pool = roster
+    .filter((p) => !used.has(p.id))
+    .sort((a, b) => {
+      if (a.isTracked !== b.isTracked) return a.isTracked ? -1 : 1;
+      return a.number - b.number;
+    });
+
+  for (let i = 0; i < 6; i++) {
+    if (next[i]) continue;
+    const pick = pool.shift();
+    if (!pick) return null;
+    next[i] = pick.id;
+  }
+
+  // Final sanity check — every slot must be filled.
+  if (next.some((id) => !id)) return null;
+
+  return next as RotationState;
+}
+
+/**
+ * True when a repair would actually change the rotation.
+ * Used to decide whether to show the auto-repair action.
+ */
+export function rotationDiffers(a: RotationState, b: RotationState): boolean {
+  for (let i = 0; i < 6; i++) if (a[i] !== b[i]) return true;
+  return false;
+}
+
