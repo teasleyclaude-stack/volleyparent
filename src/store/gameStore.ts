@@ -4,6 +4,7 @@ import type {
   GameSession,
   KillZone,
   MatchEvent,
+  MatchFormat,
   Player,
   RotationState,
   StatType,
@@ -19,6 +20,7 @@ interface GameStore {
     homeColor: string;
     awayColor: string;
     isHomeTeam: boolean;
+    matchFormat: MatchFormat;
     roster: Player[];
     homeRotation: RotationState;
     awayRotation: RotationState;
@@ -63,6 +65,7 @@ export const useGameStore = create<GameStore>()(
         homeColor,
         awayColor,
         isHomeTeam,
+        matchFormat,
         roster,
         homeRotation,
         awayRotation,
@@ -76,6 +79,7 @@ export const useGameStore = create<GameStore>()(
           homeColor,
           awayColor,
           isHomeTeam,
+          matchFormat,
           currentSet: 1,
           homeScore: 0,
           awayScore: 0,
