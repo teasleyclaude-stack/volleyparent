@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 
 import appCss from "../styles.css?url";
 import { SplashScreen } from "@/components/common/SplashScreen";
+import { InstallBanner } from "@/components/common/InstallBanner";
 
 function NotFoundComponent() {
   return (
@@ -31,7 +32,7 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "CourtsideView — Your Game Day Companion" },
       { name: "description", content: "CourtsideView tracks volleyball stats in real-time for parents and coaches." },
       { name: "author", content: "Lovable" },
@@ -92,6 +93,7 @@ function RootComponent() {
   return (
     <SplashScreen>
       <Outlet />
+      <InstallBanner />
     </SplashScreen>
   );
 }
