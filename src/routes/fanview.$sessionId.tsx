@@ -10,6 +10,7 @@ import type {
 } from "@/lib/fanview";
 import { cn } from "@/lib/utils";
 import { readableTextColor } from "@/lib/colorContrast";
+import { fireWinConfetti } from "@/utils/winConfetti";
 
 /** Pull team text colors from meta with auto-contrast applied. */
 function teamTextColors(meta: FanviewMeta) {
