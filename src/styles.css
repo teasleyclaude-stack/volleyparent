@@ -59,7 +59,7 @@
 
 :root {
   --radius: 1rem;
-  /* Dark gymnasium palette — VolleyParent */
+  /* Dark gymnasium palette — CourtsideView */
   --background: oklch(0.16 0.03 270);          /* #0A0E1A */
   --foreground: oklch(0.97 0.02 260);          /* #F0F4FF */
   --card: oklch(0.23 0.04 268);                /* #1E2438 */

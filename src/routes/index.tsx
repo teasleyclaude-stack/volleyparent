@@ -8,9 +8,9 @@ import { useHistoryStore } from "@/store/historyStore";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "VolleyParent — Live Volleyball Stats" },
+      { title: "CourtsideView — Live Volleyball Stats" },
       { name: "description", content: "Track your player's volleyball stats live, court-side. Kills, digs, blocks, aces, and shot heat maps in real time." },
-      { property: "og:title", content: "VolleyParent — Live Volleyball Stats" },
+      { property: "og:title", content: "CourtsideView — Live Volleyball Stats" },
       { property: "og:description", content: "Track your player's volleyball stats live, court-side." },
     ],
   }),
@@ -29,9 +29,9 @@ function HomePage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Volleyball className="h-5 w-5" strokeWidth={2.5} />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground">VolleyParent</h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground">CourtsideView</h1>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">Court-side stats for your player.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Your game day companion.</p>
       </header>
 
       <main className="flex-1 space-y-4 px-5 pb-6">

@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/game/live")({
   head: () => ({
     meta: [
-      { title: "Live Game — VolleyParent" },
+      { title: "Live Game — CourtsideView" },
       { name: "description", content: "Live volleyball stat tracking dashboard." },
     ],
   }),
