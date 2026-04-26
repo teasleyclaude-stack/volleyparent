@@ -266,11 +266,23 @@ function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta })
         />
       </div>
       <div className="mt-3 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-        <span>Set {state.currentSet}</span>
+        <span>Set {state.currentSet} of {maxSets(meta.matchFormat ?? "highschool")}</span>
         <span>·</span>
         <span>
           {meta.homeTeam} {state.homeSetsWon} — {state.awaySetsWon} {meta.awayTeam}
         </span>
+      </div>
+      <div className="mt-2 flex items-center justify-center gap-1.5">
+        {Array.from({ length: maxSets(meta.matchFormat ?? "highschool") }).map((_, i) => {
+          const num = i + 1;
+          const fill =
+            num <= state.homeSetsWon
+              ? meta.homeColor
+              : num <= state.homeSetsWon + state.awaySetsWon
+                ? meta.awayColor
+                : "color-mix(in oklab, var(--muted-foreground) 30%, transparent)";
+          return <span key={i} className="h-2 w-2 rounded-full" style={{ backgroundColor: fill }} />;
+        })}
       </div>
       <div
         className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest"
