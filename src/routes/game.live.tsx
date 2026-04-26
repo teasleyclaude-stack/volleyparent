@@ -97,6 +97,15 @@ function LivePage() {
     });
   }, [session?.homeScore, session?.awayScore, session?.currentSet, setOverPopup, matchOverPopup, lineupModalOpen, dismissedSetWins, session]);
 
+  // Fire confetti the moment the match-over popup appears, in the winner's color.
+  useEffect(() => {
+    if (!matchOverPopup || !session) return;
+    const winnerColor =
+      matchOverPopup.winner === "home" ? session.homeColor : session.awayColor;
+    fireWinConfetti(winnerColor || "#F4B400");
+    tapHaptic("heavy");
+  }, [matchOverPopup, session]);
+
   if (!session) {
     return (
       <PhoneShell>
