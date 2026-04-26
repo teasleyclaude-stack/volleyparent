@@ -196,20 +196,27 @@ function ReportPage() {
           isHomeOurs={session.isHomeTeam}
         />
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {csvBlobUrl && (
             <a
               href={csvBlobUrl}
               download={`volleyparent-${session.id}.csv`}
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-xs font-black uppercase tracking-widest text-foreground active:scale-95"
             >
               <Download className="h-4 w-4" /> CSV
             </a>
           )}
           <button
             type="button"
+            onClick={() => exportSessionPDF(session)}
+            className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-xs font-black uppercase tracking-widest text-foreground active:scale-95"
+          >
+            <FileText className="h-4 w-4" /> PDF
+          </button>
+          <button
+            type="button"
             onClick={handleShare}
-            className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
+            className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-xs font-black uppercase tracking-widest text-foreground active:scale-95"
           >
             <Share2 className="h-4 w-4" /> Share
           </button>
