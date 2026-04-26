@@ -22,9 +22,9 @@ function teamTextColors(meta: FanviewMeta) {
 export const Route = createFileRoute("/fanview/$sessionId")({
   head: ({ params }) => ({
     meta: [
-      { title: "FanView — VolleyParent" },
+      { title: "FanView — CourtsideView" },
       { name: "description", content: "Follow this volleyball match live." },
-      { property: "og:title", content: "VolleyParent FanView — Live Match" },
+      { property: "og:title", content: "CourtsideView FanView — Live Match" },
       { property: "og:description", content: "Follow the game in real time, no app required." },
     ],
   }),
@@ -170,7 +170,7 @@ function Footer() {
   return (
     <footer className="mt-6 border-t border-border px-4 py-5 text-center">
       <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-        Powered by VolleyParent
+        Powered by CourtsideView
       </p>
       <p className="mt-1 text-[11px] text-muted-foreground">
         You are viewing a live read-only FanView.

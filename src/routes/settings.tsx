@@ -8,8 +8,8 @@ import { Trash2, Volleyball } from "lucide-react";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — VolleyParent" },
-      { name: "description", content: "VolleyParent app settings." },
+      { title: "Settings — CourtsideView" },
+      { name: "description", content: "CourtsideView app settings." },
     ],
   }),
   component: SettingsPage,
@@ -36,7 +36,7 @@ function SettingsPage() {
               <Volleyball className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-sm font-black text-foreground">VolleyParent</div>
+              <div className="text-sm font-black text-foreground">CourtsideView</div>
               <div className="text-[11px] text-muted-foreground">v1.0 · Web</div>
             </div>
           </div>

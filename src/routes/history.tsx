@@ -7,7 +7,7 @@ import { Trash2 } from "lucide-react";
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "History — VolleyParent" },
+      { title: "History — CourtsideView" },
       { name: "description", content: "Past volleyball matches and game reports." },
     ],
   }),

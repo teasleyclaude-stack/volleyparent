@@ -12,7 +12,7 @@ import { readableTextColor } from "@/lib/colorContrast";
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
     meta: [
-      { title: "Game Report — VolleyParent" },
+      { title: "Game Report — CourtsideView" },
       { name: "description", content: "Post-game volleyball stat report with shot chart and momentum analysis." },
     ],
   }),
@@ -81,7 +81,7 @@ function ReportPage() {
     const nav = navigator as NavShare;
     if (nav.share) {
       try {
-        await nav.share({ title: "VolleyParent Game Report", text: txt });
+        await nav.share({ title: "CourtsideView Game Report", text: txt });
       } catch { /* user cancelled */ }
     } else {
       try {

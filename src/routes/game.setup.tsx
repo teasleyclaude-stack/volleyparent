@@ -13,7 +13,7 @@ const POSITIONS: Position[] = ["S", "MB", "OH", "RS", "L", "DS"];
 export const Route = createFileRoute("/game/setup")({
   head: () => ({
     meta: [
-      { title: "New Game — VolleyParent" },
+      { title: "New Game — CourtsideView" },
       { name: "description", content: "Set up a new volleyball match: teams, roster, and starting rotation." },
     ],
   }),

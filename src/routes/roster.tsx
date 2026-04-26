@@ -7,7 +7,7 @@ import { Star } from "lucide-react";
 export const Route = createFileRoute("/roster")({
   head: () => ({
     meta: [
-      { title: "Roster — VolleyParent" },
+      { title: "Roster — CourtsideView" },
       { name: "description", content: "Manage your team roster for live volleyball stat tracking." },
     ],
   }),

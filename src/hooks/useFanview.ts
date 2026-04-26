@@ -161,7 +161,7 @@ export function useFanview() {
       try {
         if (typeof navigator !== "undefined" && "share" in navigator) {
           await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({
-            title: "VolleyParent FanView",
+            title: "CourtsideView FanView",
             text,
             url,
           });
