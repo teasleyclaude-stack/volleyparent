@@ -1,14 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Plus, Star, Trash2, Users, Volleyball, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
-import { defaultStats, type Player, type Position, type RotationState } from "@/types";
+import { defaultStats, type MatchFormat, type Player, type Position, type RotationState } from "@/types";
 import { uid } from "@/utils/stats";
 import { cn } from "@/lib/utils";
 
 const POSITIONS: Position[] = ["S", "MB", "OH", "RS", "L", "DS"];
+const MATCH_FORMAT_KEY = "courtsideview_match_format";
 
 export const Route = createFileRoute("/game/setup")({
   head: () => ({
@@ -32,6 +33,19 @@ function SetupPage() {
   const [awayColor, setAwayColor] = useState("#3B82F6");
   const [isHomeTeam, setIsHomeTeam] = useState(true);
   const [isHomeServing, setIsHomeServing] = useState(true);
+  const [matchFormat, setMatchFormat] = useState<MatchFormat>("club");
+
+  // Hydrate last-used match format from localStorage.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = window.localStorage.getItem(MATCH_FORMAT_KEY);
+      if (saved === "club" || saved === "highschool") setMatchFormat(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const [roster, setRoster] = useState<Player[]>(() => {
     // Auto-populate from the most recent saved roster (stats reset).
     const source = lastRoster ?? pastSessions[0]?.roster ?? null;
@@ -120,12 +134,18 @@ function SetupPage() {
     if (!rotationFull || !trackedId) return;
     const ourRotation = rotation as RotationState;
     const placeholder: RotationState = ["opp-1", "opp-2", "opp-3", "opp-4", "opp-5", "opp-6"];
+    try {
+      window.localStorage.setItem(MATCH_FORMAT_KEY, matchFormat);
+    } catch {
+      /* ignore */
+    }
     startSession({
       homeTeam: homeTeam.trim() || "Home",
       awayTeam: awayTeam.trim() || "Away",
       homeColor,
       awayColor,
       isHomeTeam,
+      matchFormat,
       roster,
       homeRotation: isHomeTeam ? ourRotation : placeholder,
       awayRotation: isHomeTeam ? placeholder : ourRotation,
@@ -225,6 +245,42 @@ function SetupPage() {
               })}
             </div>
           </div>
+        </section>
+
+        {/* Match format */}
+        <section className="space-y-2">
+          <h2 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+            Match Format
+          </h2>
+          <div className="grid grid-cols-2 gap-0 overflow-hidden rounded-[var(--border-radius-md,12px)] border border-border/50 h-12">
+            {(["club", "highschool"] as const).map((fmt) => {
+              const active = matchFormat === fmt;
+              const isClub = fmt === "club";
+              return (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => setMatchFormat(fmt)}
+                  className={cn(
+                    "flex h-full w-full items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest transition-colors",
+                    active
+                      ? "bg-[#39FF14] text-[#0A0E1A]"
+                      : "bg-transparent text-muted-foreground",
+                  )}
+                >
+                  <span>{isClub ? "Club" : "High School"}</span>
+                  <span className={cn("font-bold", active ? "opacity-80" : "opacity-60")}>
+                    · {isClub ? "Best of 3" : "Best of 5"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-center text-[12px] text-muted-foreground">
+            {matchFormat === "club"
+              ? "2 sets to win  ·  Set 3 to 15"
+              : "3 sets to win  ·  Set 5 to 15"}
+          </p>
         </section>
 
         {/* Roster + tracked player */}

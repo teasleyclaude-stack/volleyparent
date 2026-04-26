@@ -1,6 +1,7 @@
 export type Position = "S" | "MB" | "OH" | "RS" | "L" | "DS";
 export type StatType = "kill" | "error" | "dig" | "block" | "ace" | "assist" | "dug";
 export type KillZone = 1 | 2 | 3 | 4 | 5 | 6;
+export type MatchFormat = "club" | "highschool";
 
 export interface PlayerStats {
   kills: number;
@@ -66,6 +67,7 @@ export interface GameSession {
   homeColor: string;
   awayColor: string;
   isHomeTeam: boolean;
+  matchFormat: MatchFormat;
   currentSet: number;
   homeScore: number;
   awayScore: number;

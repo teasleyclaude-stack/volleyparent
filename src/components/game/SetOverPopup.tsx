@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
+import { maxSets } from "@/utils/setRules";
+import type { MatchFormat } from "@/types";
 
 interface SetOverPopupProps {
   open: boolean;
@@ -14,6 +16,7 @@ interface SetOverPopupProps {
   awayScore: number;
   homeSetsWon: number;
   awaySetsWon: number;
+  matchFormat: MatchFormat;
   onConfirm: () => void;
   onKeepPlaying: () => void;
 }
@@ -30,6 +33,7 @@ export function SetOverPopup({
   awayScore,
   homeSetsWon,
   awaySetsWon,
+  matchFormat,
   onConfirm,
   onKeepPlaying,
 }: SetOverPopupProps) {
@@ -42,6 +46,7 @@ export function SetOverPopup({
   const winningTeam = winner === "home" ? homeTeam : awayTeam;
   const winningColor = winner === "home" ? homeColor : awayColor;
   const winningText = readableTextColor(winningColor);
+  const total = maxSets(matchFormat);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
@@ -50,7 +55,7 @@ export function SetOverPopup({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-[13px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-          Set {setNumber} Complete
+          Set {setNumber} of {total} Complete
         </div>
 
         <div

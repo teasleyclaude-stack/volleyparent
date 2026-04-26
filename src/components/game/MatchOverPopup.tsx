@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { Trophy } from "lucide-react";
 import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
-import type { SetSummary } from "@/types";
+import { formatLabel } from "@/utils/setRules";
+import type { MatchFormat, SetSummary } from "@/types";
 
 interface MatchOverPopupProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface MatchOverPopupProps {
   homeSetsWon: number;
   awaySetsWon: number;
   completedSets: SetSummary[];
+  matchFormat: MatchFormat;
   onEndGame: () => void;
 }
 
@@ -27,6 +29,7 @@ export function MatchOverPopup({
   homeSetsWon,
   awaySetsWon,
   completedSets,
+  matchFormat,
   onEndGame,
 }: MatchOverPopupProps) {
   useEffect(() => {
@@ -47,7 +50,7 @@ export function MatchOverPopup({
       >
         <div className="flex items-center justify-center gap-2 text-[13px] font-black uppercase tracking-[0.2em] text-muted-foreground">
           <Trophy className="h-4 w-4" style={{ color: winningText }} />
-          Match Complete
+          {formatLabel(matchFormat).toUpperCase()} Match Complete
         </div>
 
         <div

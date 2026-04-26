@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
-import { getSetLabel } from "@/utils/setRules";
+import { getSetLabel, maxSets, formatLabelShort } from "@/utils/setRules";
+import type { MatchFormat } from "@/types";
 
 interface ScoreboardProps {
   homeTeam: string;
@@ -18,6 +19,7 @@ interface ScoreboardProps {
   homeSetsWon: number;
   awaySetsWon: number;
   pointTarget: number;
+  matchFormat: MatchFormat;
   onScoreHome: () => void;
   onScoreAway: () => void;
   onCorrectHome: () => void;
@@ -48,6 +50,7 @@ export function Scoreboard(props: ScoreboardProps) {
     homeSetsWon,
     awaySetsWon,
     pointTarget,
+    matchFormat,
     onScoreHome,
     onScoreAway,
     onCorrectHome,
@@ -141,13 +144,28 @@ export function Scoreboard(props: ScoreboardProps) {
     );
   };
 
-  const setLabel = getSetLabel(homeScore, awayScore, setNumber);
+  const setLabel = getSetLabel(homeScore, awayScore, setNumber, matchFormat);
+  const totalSets = maxSets(matchFormat);
+  const formatPills = Array.from({ length: totalSets }, (_, i) => {
+    const num = i + 1;
+    if (num <= homeSetsWon) return "home" as const;
+    if (num <= homeSetsWon + awaySetsWon - homeSetsWon && num <= awaySetsWon) {
+      // unreachable — handled below
+    }
+    return null;
+  });
+  // Build dot states more cleanly: first homeSetsWon = home, then awaySetsWon = away, rest empty.
+  const setDots: Array<"home" | "away" | "empty"> = [];
+  for (let i = 0; i < homeSetsWon; i++) setDots.push("home");
+  for (let i = 0; i < awaySetsWon; i++) setDots.push("away");
+  while (setDots.length < totalSets) setDots.push("empty");
+  void formatPills;
 
   return (
     <div className="border-b border-border bg-popover px-4 pt-4 pb-3">
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Set {setNumber}{" "}
+          Set {setNumber} of {totalSets}{" "}
           <span
             className="font-black"
             style={setLabel.color ? { color: setLabel.color } : undefined}
@@ -160,16 +178,34 @@ export function Scoreboard(props: ScoreboardProps) {
         </span>
       </div>
 
-      {/* Set wins tracker */}
+      {/* Set wins tracker — dots reflect format max (3 or 5). */}
       <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
         <span className={isHomeOurs ? "text-foreground" : ""}>
           <span style={{ color: homeText }}>{homeTeam || "Home"}</span>{" "}
           <span className="tabular-nums" style={{ color: homeText }}>{homeSetsWon}</span>
         </span>
-        <span className="text-muted-foreground/40">—</span>
+        <div className="flex items-center gap-1">
+          {setDots.map((d, i) => (
+            <span
+              key={i}
+              className="h-2 w-2 rounded-full"
+              style={{
+                backgroundColor:
+                  d === "home"
+                    ? homeColor
+                    : d === "away"
+                      ? awayColor
+                      : "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
+              }}
+            />
+          ))}
+        </div>
         <span className={!isHomeOurs ? "text-foreground" : ""}>
           <span className="tabular-nums" style={{ color: awayText }}>{awaySetsWon}</span>{" "}
           <span style={{ color: awayText }}>{awayTeam || "Away"}</span>
+        </span>
+        <span className="ml-1 rounded-full bg-card px-1.5 py-0.5 text-[9px] font-black tracking-widest text-muted-foreground">
+          {formatLabelShort(matchFormat)}
         </span>
       </div>
 
