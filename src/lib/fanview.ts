@@ -1,4 +1,4 @@
-import type { GameSession, MatchEvent, Player, RotationState } from "@/types";
+import type { GameSession, MatchEvent, MatchFormat, Player, RotationState } from "@/types";
 import { hittingPercentage } from "@/utils/stats";
 
 export interface FanviewMeta {
@@ -7,6 +7,7 @@ export interface FanviewMeta {
   homeColor: string;
   awayColor: string;
   isHomeTeam: boolean;
+  matchFormat: MatchFormat;
   trackedPlayer: { name: string; number: number; position: string } | null;
   createdAt: number;
 }
@@ -82,6 +83,7 @@ export function buildMeta(session: GameSession): FanviewMeta {
     homeColor: session.homeColor ?? "#F4B400",
     awayColor: session.awayColor ?? "#3B82F6",
     isHomeTeam: session.isHomeTeam,
+    matchFormat: session.matchFormat ?? "highschool",
     trackedPlayer: tracked
       ? { name: tracked.name, number: tracked.number, position: tracked.position }
       : null,
