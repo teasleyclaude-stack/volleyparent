@@ -27,6 +27,8 @@ interface SplashScreenProps {
 export function SplashScreen({ children }: SplashScreenProps) {
   const [show, setShow] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
+  const [videoStarted, setVideoStarted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
