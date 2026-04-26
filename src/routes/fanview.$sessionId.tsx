@@ -45,7 +45,19 @@ function FanviewPage() {
   const [row, setRow] = useState<SessionRow | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
 
+  // FanView always respects watcher's browser preference (prefers-color-scheme),
+  // independent of the app user's chosen theme. Mark the document so CSS scopes apply.
   useEffect(() => {
+    const html = document.documentElement;
+    const hadLight = html.classList.contains("light");
+    html.setAttribute("data-fanview", "1");
+    html.classList.remove("light"); // let prefers-color-scheme decide
+    return () => {
+      html.removeAttribute("data-fanview");
+      if (hadLight) html.classList.add("light");
+    };
+  }, []);
+
     let cancelled = false;
 
     const fetchRow = async () => {
