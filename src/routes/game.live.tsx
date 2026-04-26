@@ -97,9 +97,19 @@ function LivePage() {
     });
   }, [session?.homeScore, session?.awayScore, session?.currentSet, setOverPopup, matchOverPopup, lineupModalOpen, dismissedSetWins, session]);
 
-  // Fire confetti the moment the match-over popup appears, in the winner's color.
+  // Fire confetti ONLY when the match is fully completed (best-of-5 reached).
+  // Explicitly NOT triggered by set-over popups — set wins must never celebrate.
   useEffect(() => {
     if (!matchOverPopup || !session) return;
+
+    // Double-guard: re-verify match completion from completedSets, not just popup state.
+    // This prevents any future caller from accidentally opening matchOverPopup mid-match.
+    const homeSets = session.completedSets.filter((s) => s.homeScore > s.awayScore).length;
+    const awaySets = session.completedSets.filter((s) => s.awayScore > s.homeScore).length;
+    const matchActuallyWon = checkMatchWon(homeSets, awaySets);
+    if (!matchActuallyWon) return;
+    if (matchActuallyWon !== matchOverPopup.winner) return;
+
     const winnerColor =
       matchOverPopup.winner === "home" ? session.homeColor : session.awayColor;
     fireWinConfetti(winnerColor || "#F4B400");
