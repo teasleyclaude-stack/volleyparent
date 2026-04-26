@@ -20,7 +20,8 @@ interface GameStore {
     awayColor: string;
     isHomeTeam: boolean;
     roster: Player[];
-    rotation: RotationState;
+    homeRotation: RotationState;
+    awayRotation: RotationState;
     isHomeServing: boolean;
   }) => void;
 
@@ -29,7 +30,8 @@ interface GameStore {
   recordTimeout: (team: "home" | "away") => void;
   makeSubstitution: (benchPlayerId: string, courtPositionIndex: number) => void;
   correctScore: (team: "home" | "away") => void;
-  setRotation: (rotation: RotationState) => void;
+  /** Overwrite one team's rotation tuple (used by lineup modal & auto-repair). */
+  setRotation: (team: "home" | "away", rotation: RotationState) => void;
   undoLastAction: () => void;
   endSet: () => void;
   endGame: () => void;
@@ -40,7 +42,8 @@ const snapshot = (s: GameSession) => ({
   setNumber: s.currentSet,
   homeScore: s.homeScore,
   awayScore: s.awayScore,
-  rotationState: [...s.rotationState] as RotationState,
+  homeRotationState: [...s.homeRotationState] as RotationState,
+  awayRotationState: [...s.awayRotationState] as RotationState,
   isHomeServing: s.isHomeServing,
 });
 
@@ -54,7 +57,17 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       session: null,
 
-      startSession: ({ homeTeam, awayTeam, homeColor, awayColor, isHomeTeam, roster, rotation, isHomeServing }) => {
+      startSession: ({
+        homeTeam,
+        awayTeam,
+        homeColor,
+        awayColor,
+        isHomeTeam,
+        roster,
+        homeRotation,
+        awayRotation,
+        isHomeServing,
+      }) => {
         const s: GameSession = {
           id: uid(),
           date: new Date().toISOString(),
@@ -67,7 +80,8 @@ export const useGameStore = create<GameStore>()(
           homeScore: 0,
           awayScore: 0,
           isHomeServing,
-          rotationState: rotation,
+          homeRotationState: homeRotation,
+          awayRotationState: awayRotation,
           roster: roster.map((p) => ({
             ...p,
             stats: { kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0 },
@@ -85,24 +99,31 @@ export const useGameStore = create<GameStore>()(
         const cur = get().session;
         if (!cur) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
-        const wasServing = (team === "home") === s.isHomeServing;
-        const beforeSnap = snapshot(s);
+        const winnerWasServing = (team === "home") === s.isHomeServing;
 
         if (team === "home") s.homeScore += 1;
         else s.awayScore += 1;
 
-        if (!wasServing) {
+        if (!winnerWasServing) {
+          // Side-out: the receiving team just earned the serve.
+          // ONLY the winning team rotates THEIR OWN lineup. The other team is unchanged.
+          if (team === "home") {
+            s.homeRotationState = applyRotation(s.homeRotationState);
+          } else {
+            s.awayRotationState = applyRotation(s.awayRotationState);
+          }
           s.isHomeServing = team === "home";
-          s.rotationState = applyRotation(s.rotationState);
         }
+        // Else: serve point — no rotation, no serve change, just the score update above.
 
         pushEvent(s, {
           type: "SCORE",
           scoringTeam: team,
-          setNumber: beforeSnap.setNumber,
+          setNumber: s.currentSet,
           homeScore: s.homeScore,
           awayScore: s.awayScore,
-          rotationState: s.rotationState,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
           isHomeServing: s.isHomeServing,
         });
         set({ session: s });
@@ -137,13 +158,13 @@ export const useGameStore = create<GameStore>()(
           setNumber: s.currentSet,
           homeScore: s.homeScore,
           awayScore: s.awayScore,
-          rotationState: s.rotationState,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
           isHomeServing: s.isHomeServing,
         });
 
         set({ session: s });
 
-        // Kill / Ace also score a point for our team. Error scores for opponent.
         if (stat === "kill" || stat === "ace") {
           get().addPoint(s.isHomeTeam ? "home" : "away");
         } else if (stat === "error") {
@@ -168,7 +189,8 @@ export const useGameStore = create<GameStore>()(
           setNumber: s.currentSet,
           homeScore: s.homeScore,
           awayScore: s.awayScore,
-          rotationState: s.rotationState,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
           isHomeServing: s.isHomeServing,
         });
         set({ session: s });
@@ -178,11 +200,14 @@ export const useGameStore = create<GameStore>()(
         const cur = get().session;
         if (!cur) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
-        const outId = s.rotationState[courtPositionIndex];
+        // Subs only apply to OUR team (the only roster we know).
+        const ourKey = s.isHomeTeam ? "homeRotationState" : "awayRotationState";
+        const ourRot = s[ourKey];
+        const outId = ourRot[courtPositionIndex];
         if (!outId || outId === benchPlayerId) return;
-        const newRot = [...s.rotationState] as RotationState;
+        const newRot = [...ourRot] as RotationState;
         newRot[courtPositionIndex] = benchPlayerId;
-        s.rotationState = newRot;
+        s[ourKey] = newRot;
         pushEvent(s, {
           type: "SUB",
           subInId: benchPlayerId,
@@ -191,7 +216,8 @@ export const useGameStore = create<GameStore>()(
           setNumber: s.currentSet,
           homeScore: s.homeScore,
           awayScore: s.awayScore,
-          rotationState: s.rotationState,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
           isHomeServing: s.isHomeServing,
         });
         set({ session: s });
@@ -204,7 +230,9 @@ export const useGameStore = create<GameStore>()(
         if (current <= 0) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
 
-        // Inspect the most recent SCORE event for this team to detect side-out rotation.
+        // Detect whether the most recent SCORE for this team was a side-out
+        // (i.e. the team that won had not been serving). If so, only that
+        // team's rotation needs to be reversed.
         let rotationReversed = false;
         let servingFlipped = false;
         const lastEvent = s.events[s.events.length - 1];
@@ -213,7 +241,6 @@ export const useGameStore = create<GameStore>()(
           lastEvent.type === "SCORE" &&
           lastEvent.scoringTeam === team
         ) {
-          // Find the SCORE event before this one (or fall back to start defaults)
           let prevIsHomeServing = s.isHomeServing;
           for (let i = s.events.length - 2; i >= 0; i--) {
             const ev = s.events[i];
@@ -222,9 +249,13 @@ export const useGameStore = create<GameStore>()(
               break;
             }
           }
-          // If the serving team flipped on this score, it was a side-out → reverse rotation.
           if (lastEvent.isHomeServing !== prevIsHomeServing) {
-            s.rotationState = reverseRotation(s.rotationState);
+            // It was a side-out — reverse only the winner's rotation.
+            if (team === "home") {
+              s.homeRotationState = reverseRotation(s.homeRotationState);
+            } else {
+              s.awayRotationState = reverseRotation(s.awayRotationState);
+            }
             s.isHomeServing = prevIsHomeServing;
             rotationReversed = true;
             servingFlipped = true;
@@ -243,17 +274,19 @@ export const useGameStore = create<GameStore>()(
           setNumber: s.currentSet,
           homeScore: s.homeScore,
           awayScore: s.awayScore,
-          rotationState: s.rotationState,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
           isHomeServing: s.isHomeServing,
         });
         set({ session: s });
       },
 
-      setRotation: (rotation) => {
+      setRotation: (team, rotation) => {
         const cur = get().session;
         if (!cur) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
-        s.rotationState = [...rotation] as RotationState;
+        if (team === "home") s.homeRotationState = [...rotation] as RotationState;
+        else s.awayRotationState = [...rotation] as RotationState;
         set({ session: s });
       },
 
@@ -263,7 +296,6 @@ export const useGameStore = create<GameStore>()(
         const s: GameSession = JSON.parse(JSON.stringify(cur));
         const last = s.events.pop()!;
 
-        // Reverse stat effect on player
         if (last.type === "STAT" && last.playerId && last.statType) {
           const p = s.roster.find((x) => x.id === last.playerId);
           if (p) {
@@ -282,30 +314,21 @@ export const useGameStore = create<GameStore>()(
             else if (st === "ace") p.stats.aces = Math.max(0, p.stats.aces - 1);
             else if (st === "assist") p.stats.assists = Math.max(0, p.stats.assists - 1);
           }
-          // If kill/ace/error, also undo the linked SCORE event that follows
-          if (last.statType === "kill" || last.statType === "ace" || last.statType === "error") {
-            // The score event was pushed AFTER the stat event; but we already popped the stat.
-            // The score event is now the new last — pop again.
-            // (Stat was added, then addPoint added a SCORE — so order in array is: stat, score.
-            // We popped first; that removed the SCORE. Now we need to also reverse it.)
-          }
         }
 
-        // Reverse score
         if (last.type === "SCORE" && last.scoringTeam) {
-          // Find prior snapshot to restore from earlier event (or initial zero)
           const prior = [...s.events].reverse().find(() => true);
           if (prior) {
             s.homeScore = prior.homeScore;
             s.awayScore = prior.awayScore;
-            s.rotationState = [...prior.rotationState] as RotationState;
+            s.homeRotationState = [...prior.homeRotationState] as RotationState;
+            s.awayRotationState = [...prior.awayRotationState] as RotationState;
             s.isHomeServing = prior.isHomeServing;
             s.currentSet = prior.setNumber;
           } else {
             s.homeScore = 0;
             s.awayScore = 0;
           }
-          // If the event before was a STAT linked to this score, also pop it
           const prevTop = s.events[s.events.length - 1];
           if (
             prevTop &&
@@ -334,22 +357,30 @@ export const useGameStore = create<GameStore>()(
         }
 
         if (last.type === "SUB" && last.subInId && last.subOutId && last.subPosition !== undefined) {
-          const newRot = [...s.rotationState] as RotationState;
+          const ourKey = s.isHomeTeam ? "homeRotationState" : "awayRotationState";
+          const newRot = [...s[ourKey]] as RotationState;
           newRot[last.subPosition] = last.subOutId;
-          s.rotationState = newRot;
+          s[ourKey] = newRot;
         }
 
-        // Reverse a SCORE_CORRECTION: re-add the point and re-apply rotation if it was reversed.
         if (last.type === "SCORE_CORRECTION" && last.correctionTeam) {
           if (last.correctionTeam === "home") s.homeScore += 1;
           else s.awayScore += 1;
           if (last.rotationReversed) {
-            s.rotationState = applyRotation(s.rotationState);
+            // Reapply rotation to the team that originally won the side-out
+            if (last.correctionTeam === "home") {
+              s.homeRotationState = applyRotation(s.homeRotationState);
+            } else {
+              s.awayRotationState = applyRotation(s.awayRotationState);
+            }
           }
           if (last.servingFlipped) {
             s.isHomeServing = !s.isHomeServing;
           }
         }
+
+        // Suppress unused
+        void snapshot;
 
         set({ session: s });
       },
@@ -368,11 +399,10 @@ export const useGameStore = create<GameStore>()(
           setNumber: s.currentSet,
           homeScore: s.homeScore,
           awayScore: s.awayScore,
-          rotationState: s.rotationState,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
           isHomeServing: s.isHomeServing,
         });
-        // Losing team serves first in the next set (per standard rules).
-        // If scores are equal (shouldn't happen for completed set), keep current.
         const homeWonSet = s.homeScore > s.awayScore;
         const awayWonSet = s.awayScore > s.homeScore;
         if (homeWonSet) s.isHomeServing = false;
@@ -405,6 +435,35 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: "volleyparent-active-session",
+      version: 2,
+      migrate: (persistedState: unknown, version: number) => {
+        if (!persistedState || typeof persistedState !== "object") return persistedState;
+        const state = persistedState as { session?: Record<string, unknown> | null };
+        if (version < 2 && state.session) {
+          const sess = state.session as Record<string, unknown>;
+          const oldRot = sess.rotationState as RotationState | undefined;
+          if (oldRot && !sess.homeRotationState) {
+            const placeholder: RotationState = ["opp-1", "opp-2", "opp-3", "opp-4", "opp-5", "opp-6"];
+            const isHome = Boolean(sess.isHomeTeam);
+            sess.homeRotationState = isHome ? oldRot : placeholder;
+            sess.awayRotationState = isHome ? placeholder : oldRot;
+            delete sess.rotationState;
+            // Rewrite event snapshots
+            const events = sess.events as Array<Record<string, unknown>> | undefined;
+            if (Array.isArray(events)) {
+              for (const ev of events) {
+                const r = ev.rotationState as RotationState | undefined;
+                if (r && !ev.homeRotationState) {
+                  ev.homeRotationState = isHome ? r : placeholder;
+                  ev.awayRotationState = isHome ? placeholder : r;
+                  delete ev.rotationState;
+                }
+              }
+            }
+          }
+        }
+        return persistedState;
+      },
       storage: createJSONStorage(() =>
         typeof window !== "undefined"
           ? window.localStorage

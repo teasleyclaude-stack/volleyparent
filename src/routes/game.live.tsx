@@ -107,6 +107,8 @@ function LivePage() {
   }
 
   const tracked = session.roster.find((p) => p.isTracked) ?? session.roster[0];
+  const ourTeamKey: "home" | "away" = session.isHomeTeam ? "home" : "away";
+  const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
@@ -190,21 +192,21 @@ function LivePage() {
 
         <RotationWarning
           issues={
-            validateRotation(session.rotationState, session.roster, {
+            validateRotation(ourRotation, session.roster, {
               oursServing: session.isHomeServing === session.isHomeTeam,
               requireTracked: true,
             }).issues
           }
-          rotation={session.rotationState}
+          rotation={ourRotation}
           roster={session.roster}
           onRepair={(next) => {
             tapHaptic("light");
-            setRotationStore(next);
+            setRotationStore(ourTeamKey, next);
           }}
         />
 
         <RotationCourt
-          rotation={session.rotationState}
+          rotation={ourRotation}
           roster={session.roster}
           isHomeServing={session.isHomeServing}
           isHomeOurs={session.isHomeTeam}
@@ -414,11 +416,11 @@ function LivePage() {
       <SetLineupModal
         open={lineupModalOpen}
         setNumber={session.currentSet}
-        rotation={session.rotationState}
+        rotation={ourRotation}
         roster={session.roster}
         onKeep={() => setLineupModalOpen(false)}
         onConfirm={(newRot) => {
-          setRotationStore(newRot);
+          setRotationStore(ourTeamKey, newRot);
           setLineupModalOpen(false);
         }}
       />
@@ -463,7 +465,8 @@ function SubSheet({
 }) {
   const session = useGameStore((s) => s.session)!;
   const [benchId, setBenchId] = useState<string | null>(null);
-  const onCourt = new Set(session.rotationState);
+  const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
+  const onCourt = new Set(ourRotation);
   const bench = session.roster.filter((p) => !onCourt.has(p.id));
 
   return (
@@ -516,7 +519,7 @@ function SubSheet({
             </div>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {[3, 2, 1, 4, 5, 0].map((idx) => {
-                const out = session.roster.find((p) => p.id === session.rotationState[idx]);
+                const out = session.roster.find((p) => p.id === ourRotation[idx]);
                 return (
                   <button
                     key={idx}

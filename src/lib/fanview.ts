@@ -102,6 +102,9 @@ export function buildState(session: GameSession): FanviewState {
       isTracked: p.isTracked,
     };
   }
+  const ourRotation = session.isHomeTeam
+    ? session.homeRotationState
+    : session.awayRotationState;
   return {
     isLive: !session.isCompleted,
     currentSet: session.currentSet,
@@ -110,7 +113,7 @@ export function buildState(session: GameSession): FanviewState {
     homeSetsWon,
     awaySetsWon,
     isHomeServing: session.isHomeServing,
-    rotationState: session.rotationState,
+    rotationState: ourRotation,
     players,
     trackedStats: {
       kills: tracked?.stats.kills ?? 0,
