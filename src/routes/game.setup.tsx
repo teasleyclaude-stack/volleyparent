@@ -247,6 +247,42 @@ function SetupPage() {
           </div>
         </section>
 
+        {/* Match format */}
+        <section className="space-y-2">
+          <h2 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+            Match Format
+          </h2>
+          <div className="grid grid-cols-2 gap-0 overflow-hidden rounded-[var(--border-radius-md,12px)] border border-border/50 h-12">
+            {(["club", "highschool"] as const).map((fmt) => {
+              const active = matchFormat === fmt;
+              const isClub = fmt === "club";
+              return (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => setMatchFormat(fmt)}
+                  className={cn(
+                    "flex h-full w-full items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-widest transition-colors",
+                    active
+                      ? "bg-[#39FF14] text-[#0A0E1A]"
+                      : "bg-transparent text-muted-foreground",
+                  )}
+                >
+                  <span>{isClub ? "Club" : "High School"}</span>
+                  <span className={cn("font-bold", active ? "opacity-80" : "opacity-60")}>
+                    · {isClub ? "Best of 3" : "Best of 5"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-center text-[12px] text-muted-foreground">
+            {matchFormat === "club"
+              ? "2 sets to win  ·  Set 3 to 15"
+              : "3 sets to win  ·  Set 5 to 15"}
+          </p>
+        </section>
+
         {/* Roster + tracked player */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
