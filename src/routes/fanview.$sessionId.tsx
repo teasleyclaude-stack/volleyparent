@@ -10,6 +10,7 @@ import type {
 } from "@/lib/fanview";
 import { cn } from "@/lib/utils";
 import { readableTextColor } from "@/lib/colorContrast";
+import { fireWinConfetti } from "@/utils/winConfetti";
 
 /** Pull team text colors from meta with auto-contrast applied. */
 function teamTextColors(meta: FanviewMeta) {
@@ -463,6 +464,14 @@ function SummaryView({ row }: { row: SessionRow }) {
     (summary?.finalScore.awaySetsWon ?? 0) > (summary?.finalScore.homeSetsWon ?? 0);
   const winnerColor = homeWon ? meta.homeColor : awayWon ? meta.awayColor : undefined;
   const winnerText = homeWon ? homeText : awayWon ? awayText : undefined;
+
+  // Celebrate on the watcher's screen when the summary view first appears.
+  useEffect(() => {
+    if (!homeWon && !awayWon) return;
+    fireWinConfetti(winnerColor ?? "#F4B400");
+    // Only run once per mount of the summary view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="flex-1 px-4 pb-4">
       <section

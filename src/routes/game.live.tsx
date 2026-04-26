@@ -18,6 +18,7 @@ import { useHistoryStore } from "@/store/historyStore";
 import { hittingPercentage } from "@/utils/stats";
 import { checkSetWon, checkMatchWon, setTarget } from "@/utils/setRules";
 import { tapHaptic } from "@/utils/haptics";
+import { fireWinConfetti } from "@/utils/winConfetti";
 import type { KillZone, StatType } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -95,6 +96,15 @@ function LivePage() {
       awayScore: session.awayScore,
     });
   }, [session?.homeScore, session?.awayScore, session?.currentSet, setOverPopup, matchOverPopup, lineupModalOpen, dismissedSetWins, session]);
+
+  // Fire confetti the moment the match-over popup appears, in the winner's color.
+  useEffect(() => {
+    if (!matchOverPopup || !session) return;
+    const winnerColor =
+      matchOverPopup.winner === "home" ? session.homeColor : session.awayColor;
+    fireWinConfetti(winnerColor || "#F4B400");
+    tapHaptic("heavy");
+  }, [matchOverPopup, session]);
 
   if (!session) {
     return (
