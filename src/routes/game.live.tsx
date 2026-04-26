@@ -150,6 +150,43 @@ function LivePage() {
     navigate({ to: "/game/report/$sessionId", params: { sessionId: session.id } });
   };
 
+  const confirmEndSet = () => {
+    if (!setOverPopup) return;
+    const winner = setOverPopup.winner;
+    // Persist completed set + advance currentSet (resets scores, swaps serve to loser).
+    endSet();
+    setSetOverPopup(null);
+
+    const after = useGameStore.getState().session;
+    if (!after) return;
+
+    // Recompute set wins from the now-updated completedSets list.
+    const newHomeSets = after.completedSets.filter((s) => s.homeScore > s.awayScore).length;
+    const newAwaySets = after.completedSets.filter((s) => s.awayScore > s.homeScore).length;
+    const matchW = checkMatchWon(newHomeSets, newAwaySets);
+
+    if (matchW) {
+      setMatchOverPopup({ winner: matchW });
+      return;
+    }
+
+    // Match continues — open the lineup editor for the new set.
+    if (after.currentSet <= 5) {
+      setLineupModalOpen(true);
+    }
+    void winner;
+  };
+
+  const keepPlayingSet = () => {
+    if (!setOverPopup) return;
+    setDismissedSetWins((prev) => {
+      const next = new Set(prev);
+      next.add(setOverPopup.setNumber);
+      return next;
+    });
+    setSetOverPopup(null);
+  };
+
   return (
     <PhoneShell>
       {/* Header */}
@@ -391,13 +428,9 @@ function LivePage() {
             className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-black text-foreground">
-              {matchWinner ? `Match over — ${matchWinner} wins!` : "End the game?"}
-            </h3>
+            <h3 className="text-lg font-black text-foreground">End the game?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {matchWinner
-                ? `Final: ${session.homeTeam} ${homeSetsWon} — ${awaySetsWon} ${session.awayTeam}. End match and view the report?`
-                : "The match will be saved to history and you'll see the post-game report."}
+              The match will be saved to history and you'll see the post-game report.
             </p>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button
@@ -418,6 +451,42 @@ function LivePage() {
           </div>
         </div>
       )}
+
+      <SetOverPopup
+        open={setOverPopup !== null}
+        setNumber={setOverPopup?.setNumber ?? session.currentSet}
+        winner={setOverPopup?.winner ?? "home"}
+        homeTeam={session.homeTeam}
+        awayTeam={session.awayTeam}
+        homeColor={session.homeColor}
+        awayColor={session.awayColor}
+        homeScore={setOverPopup?.homeScore ?? session.homeScore}
+        awayScore={setOverPopup?.awayScore ?? session.awayScore}
+        homeSetsWon={
+          (setOverPopup?.winner === "home" ? 1 : 0) + homeSetsWon
+        }
+        awaySetsWon={
+          (setOverPopup?.winner === "away" ? 1 : 0) + awaySetsWon
+        }
+        onConfirm={confirmEndSet}
+        onKeepPlaying={keepPlayingSet}
+      />
+
+      <MatchOverPopup
+        open={matchOverPopup !== null}
+        winner={matchOverPopup?.winner ?? "home"}
+        homeTeam={session.homeTeam}
+        awayTeam={session.awayTeam}
+        homeColor={session.homeColor}
+        awayColor={session.awayColor}
+        homeSetsWon={homeSetsWon}
+        awaySetsWon={awaySetsWon}
+        completedSets={session.completedSets}
+        onEndGame={() => {
+          setMatchOverPopup(null);
+          handleEndGame();
+        }}
+      />
 
       <SetLineupModal
         open={lineupModalOpen}
