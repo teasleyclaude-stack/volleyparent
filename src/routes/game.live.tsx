@@ -4,6 +4,8 @@ import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag } from "lucide-
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { Scoreboard } from "@/components/game/Scoreboard";
 import { RotationCourt } from "@/components/game/RotationCourt";
+import { RotationWarning } from "@/components/game/RotationWarning";
+import { validateRotation } from "@/utils/rotationValidation";
 import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
@@ -184,6 +186,15 @@ function LivePage() {
           }}
           onCorrectHome={() => correctScore("home")}
           onCorrectAway={() => correctScore("away")}
+        />
+
+        <RotationWarning
+          issues={
+            validateRotation(session.rotationState, session.roster, {
+              oursServing: session.isHomeServing === session.isHomeTeam,
+              requireTracked: true,
+            }).issues
+          }
         />
 
         <RotationCourt
