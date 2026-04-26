@@ -32,7 +32,7 @@ export const useHistoryStore = create<HistoryStore>()(
     }),
     {
       name: "volleyparent-history",
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown, version: number) => {
         if (!persistedState || typeof persistedState !== "object") return persistedState;
         const state = persistedState as { sessions?: Array<Record<string, unknown>> };
@@ -57,6 +57,12 @@ export const useHistoryStore = create<HistoryStore>()(
                 }
               }
             }
+          }
+        }
+        // v3 — backfill matchFormat on saved historical sessions.
+        if (version < 3 && Array.isArray(state.sessions)) {
+          for (const sess of state.sessions) {
+            if (!sess.matchFormat) sess.matchFormat = "highschool";
           }
         }
         return persistedState;

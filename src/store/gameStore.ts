@@ -439,7 +439,7 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: "volleyparent-active-session",
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown, version: number) => {
         if (!persistedState || typeof persistedState !== "object") return persistedState;
         const state = persistedState as { session?: Record<string, unknown> | null };
@@ -465,6 +465,11 @@ export const useGameStore = create<GameStore>()(
               }
             }
           }
+        }
+        // v3 — backfill matchFormat on legacy sessions (default to high school for parity with old best-of-5 rules).
+        if (version < 3 && state.session) {
+          const sess = state.session as Record<string, unknown>;
+          if (!sess.matchFormat) sess.matchFormat = "highschool";
         }
         return persistedState;
       },
