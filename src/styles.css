@@ -100,6 +100,53 @@
   --chart-5: var(--gold);
 }
 
+/* Light mode — explicit user opt-in via .light class on <html> */
+.light {
+  --background: oklch(0.97 0.02 260);          /* #F0F4FF soft off-white w/ blue tint */
+  --foreground: oklch(0.16 0.03 270);          /* #0A0E1A dark navy */
+  --card: oklch(0.95 0.025 270);               /* #EEF2FF */
+  --card-foreground: oklch(0.16 0.03 270);
+  --popover: oklch(1 0 0);                     /* #FFFFFF */
+  --popover-foreground: oklch(0.16 0.03 270);
+  --primary: oklch(0.88 0.27 145);             /* keep neon green action color */
+  --primary-foreground: oklch(0.16 0.03 270);
+  --secondary: oklch(0.92 0.025 268);
+  --secondary-foreground: oklch(0.16 0.03 270);
+  --muted: oklch(0.93 0.02 268);
+  --muted-foreground: oklch(0.45 0.04 265);    /* #6B7280 */
+  --accent: oklch(0.65 0.20 245);
+  --accent-foreground: oklch(0.97 0.02 260);
+  --destructive: oklch(0.66 0.24 22);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.86 0.03 268);              /* #D1D9F0 */
+  --input: oklch(0.88 0.025 268);
+  --ring: oklch(0.65 0.20 245);
+  /* Stat tokens unchanged — neon action colors stay identical in both themes */
+}
+
+/* FanView page is always dark — independent of app's user theme.
+   Watcher's browser preference (prefers-color-scheme) controls fanview only. */
+html[data-fanview="1"] {
+  color-scheme: dark;
+}
+html[data-fanview="1"]:not(.light) {
+  /* keep dark tokens (default :root) */
+}
+@media (prefers-color-scheme: light) {
+  html[data-fanview="1"] {
+    --background: oklch(0.97 0.02 260);
+    --foreground: oklch(0.16 0.03 270);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.16 0.03 270);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.16 0.03 270);
+    --muted: oklch(0.93 0.02 268);
+    --muted-foreground: oklch(0.45 0.04 265);
+    --border: oklch(0.86 0.03 268);
+    --input: oklch(0.88 0.025 268);
+  }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
