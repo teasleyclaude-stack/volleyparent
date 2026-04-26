@@ -18,6 +18,7 @@ import { useHistoryStore } from "@/store/historyStore";
 import { hittingPercentage } from "@/utils/stats";
 import { checkSetWon, checkMatchWon, setTarget } from "@/utils/setRules";
 import { tapHaptic } from "@/utils/haptics";
+import { fireWinConfetti } from "@/utils/winConfetti";
 import type { KillZone, StatType } from "@/types";
 import { cn } from "@/lib/utils";
 
