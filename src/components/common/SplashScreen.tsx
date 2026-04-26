@@ -78,8 +78,48 @@ export function SplashScreen({ children }: SplashScreenProps) {
     // Hard cap — guarantees the splash dismisses even if the video stalls.
     const failsafe = setTimeout(beginExit, MAX_DISPLAY_MS);
 
-    // When the video finishes, ensure the min hold is satisfied before exit.
+    // iOS Safari is strict about inline autoplay. Detect iOS-family UAs and
+    // force a manual play() on mount with the required muted+playsInline flags.
+    // Also covers other browsers that block autoplay (returns a rejected promise).
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isIOS =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (/Macintosh/.test(ua) && typeof document !== "undefined" && "ontouchend" in document);
+
     const video = videoRef.current;
+    if (video) {
+      // Ensure required attributes are set imperatively too (some iOS versions
+      // only honor these when set as properties, not just JSX attrs).
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+
+      const tryPlay = () => {
+        const p = video.play();
+        if (p && typeof p.catch === "function") {
+          p.catch(() => {
+            // Autoplay blocked — fall back to time-based dismissal so the
+            // splash never gets stuck waiting on a video that won't play.
+            startupTasks.then(scheduleExitAfterMin);
+          });
+        }
+      };
+
+      if (isIOS) {
+        // On iOS, trigger play() after mount rather than relying on autoplay.
+        if (video.readyState >= 2) {
+          tryPlay();
+        } else {
+          video.addEventListener("loadedmetadata", tryPlay, { once: true });
+        }
+      } else {
+        tryPlay();
+      }
+    }
+
+    // When the video finishes, ensure the min hold is satisfied before exit.
     const handleEnded = () => {
       startupTasks.then(scheduleExitAfterMin);
     };
