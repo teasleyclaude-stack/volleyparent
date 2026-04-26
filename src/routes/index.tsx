@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Play, Volleyball, ArrowRight } from "lucide-react";
+import { Play, ArrowRight } from "lucide-react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { BottomTabs } from "@/components/common/BottomTabs";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
+import logo from "@/assets/courtsideview-logo.jpeg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,11 +25,13 @@ function HomePage() {
 
   return (
     <PhoneShell>
-      <header className="px-5 pt-8 pb-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Volleyball className="h-5 w-5" strokeWidth={2.5} />
-          </div>
+      <header className="px-5 pt-6 pb-4">
+        <div className="flex items-center gap-3">
+          <img
+            src={logo}
+            alt="CourtsideView logo"
+            className="h-12 w-12 rounded-xl bg-white object-contain p-1"
+          />
           <h1 className="text-2xl font-black tracking-tight text-foreground">CourtsideView</h1>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">Your game day companion.</p>
