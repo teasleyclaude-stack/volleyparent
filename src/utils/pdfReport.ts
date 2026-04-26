@@ -1,5 +1,5 @@
 import type { GameSession, MatchEvent, Player } from "@/types";
-import { formatLabel } from "@/utils/setRules";
+import { formatLabelShort } from "@/utils/setRules";
 
 const escape = (s: string | number | undefined | null): string =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -287,7 +287,7 @@ function buildReportHTML(session: GameSession): string {
         <div style="font-size:10px; color:#888; margin-top:2px;">${escape(new Date(session.date).toLocaleString())}</div>
       </div>
       <div style="text-align:right;">
-        <div class="label">Final · ${escape(formatLabel(session.matchFormat ?? "highschool"))} Match</div>
+        <div class="label">Final · ${escape(formatLabelShort(session.matchFormat ?? "highschool"))}</div>
         <div style="font-size:18px; font-weight:900; margin-top:2px;">
           <span><span class="swatch" style="background:${escape(session.homeColor)};"></span>${escape(session.homeTeam)}</span>
           <span style="color:#888; margin:0 8px;">vs</span>

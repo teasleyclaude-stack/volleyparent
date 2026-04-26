@@ -8,7 +8,7 @@ import { ShotChart } from "@/components/report/ShotChart";
 import { MomentumGraph } from "@/components/report/MomentumGraph";
 import { useMemo } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
-import { formatLabel } from "@/utils/setRules";
+import { formatLabelShort } from "@/utils/setRules";
 import { exportSessionPDF } from "@/utils/pdfReport";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
@@ -131,7 +131,7 @@ function ReportPage() {
               <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 <span>Final</span>
                 <span className="rounded-full bg-popover px-2 py-0.5 text-[11px] font-black uppercase tracking-widest text-foreground">
-                  {formatLabel(session.matchFormat ?? "highschool")} Match
+                  {formatLabelShort(session.matchFormat ?? "highschool")}
                 </span>
               </div>
               <div
