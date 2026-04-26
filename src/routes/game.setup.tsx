@@ -118,6 +118,8 @@ function SetupPage() {
 
   const handleStart = () => {
     if (!rotationFull || !trackedId) return;
+    const ourRotation = rotation as RotationState;
+    const placeholder: RotationState = ["opp-1", "opp-2", "opp-3", "opp-4", "opp-5", "opp-6"];
     startSession({
       homeTeam: homeTeam.trim() || "Home",
       awayTeam: awayTeam.trim() || "Away",
@@ -125,7 +127,8 @@ function SetupPage() {
       awayColor,
       isHomeTeam,
       roster,
-      rotation: rotation as RotationState,
+      homeRotation: isHomeTeam ? ourRotation : placeholder,
+      awayRotation: isHomeTeam ? placeholder : ourRotation,
       isHomeServing,
     });
     navigate({ to: "/game/live" });
