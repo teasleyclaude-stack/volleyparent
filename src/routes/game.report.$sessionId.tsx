@@ -8,6 +8,7 @@ import { ShotChart } from "@/components/report/ShotChart";
 import { MomentumGraph } from "@/components/report/MomentumGraph";
 import { useMemo } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
+import { formatLabel } from "@/utils/setRules";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
@@ -126,8 +127,11 @@ function ReportPage() {
             <div
               className={`rounded-2xl border p-4 text-center ${ourWin ? "border-primary/50 bg-primary/10" : "border-border bg-card"}`}
             >
-              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Final · Best of 5
+              <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                <span>Final</span>
+                <span className="rounded-full bg-popover px-2 py-0.5 text-[11px] font-black uppercase tracking-widest text-foreground">
+                  {formatLabel(session.matchFormat ?? "highschool")} Match
+                </span>
               </div>
               <div
                 className="mt-1 text-xl font-black"
