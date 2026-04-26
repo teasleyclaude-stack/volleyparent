@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { ArrowLeft, Share2, Download, Plus } from "lucide-react";
+import { ArrowLeft, Share2, Download, Plus, FileText } from "lucide-react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useHistoryStore } from "@/store/historyStore";
 import { useGameStore } from "@/store/gameStore";
@@ -9,6 +9,7 @@ import { MomentumGraph } from "@/components/report/MomentumGraph";
 import { useMemo } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
 import { formatLabel } from "@/utils/setRules";
+import { exportSessionPDF } from "@/utils/pdfReport";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
@@ -195,20 +196,27 @@ function ReportPage() {
           isHomeOurs={session.isHomeTeam}
         />
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {csvBlobUrl && (
             <a
               href={csvBlobUrl}
               download={`volleyparent-${session.id}.csv`}
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-xs font-black uppercase tracking-widest text-foreground active:scale-95"
             >
               <Download className="h-4 w-4" /> CSV
             </a>
           )}
           <button
             type="button"
+            onClick={() => exportSessionPDF(session)}
+            className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-xs font-black uppercase tracking-widest text-foreground active:scale-95"
+          >
+            <FileText className="h-4 w-4" /> PDF
+          </button>
+          <button
+            type="button"
             onClick={handleShare}
-            className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
+            className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-xs font-black uppercase tracking-widest text-foreground active:scale-95"
           >
             <Share2 className="h-4 w-4" /> Share
           </button>
