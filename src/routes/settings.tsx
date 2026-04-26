@@ -4,8 +4,9 @@ import { BottomTabs } from "@/components/common/BottomTabs";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useTheme } from "@/hooks/useTheme";
-import { Trash2, Volleyball, Moon, Sun } from "lucide-react";
+import { Trash2, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/courtsideview-logo.png";
 
 const THEME_OPTIONS = [
   { value: "dark", label: "Dark", Icon: Moon },
@@ -40,8 +41,8 @@ function SettingsPage() {
       <main className="flex-1 space-y-3 overflow-y-auto px-4 pb-4">
         <div className="rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Volleyball className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl">
+              <img src={logo} alt="CourtsideView logo" className="h-full w-full object-contain" />
             </div>
             <div>
               <div className="text-sm font-black text-foreground">CourtsideView</div>
