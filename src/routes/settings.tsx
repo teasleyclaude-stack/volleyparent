@@ -7,6 +7,11 @@ import { useTheme } from "@/hooks/useTheme";
 import { Trash2, Volleyball, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const THEME_OPTIONS = [
+  { value: "dark", label: "Dark", Icon: Moon },
+  { value: "light", label: "Light", Icon: Sun },
+] as const;
+
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
@@ -54,12 +59,7 @@ function SettingsPage() {
           </h2>
           <div className="rounded-2xl border border-border bg-card p-1">
             <div className="grid grid-cols-2 gap-1">
-              {(
-                [
-                  { value: "dark" as const, label: "Dark", Icon: Moon },
-                  { value: "light" as const, label: "Light", Icon: Sun },
-                ]
-              ).map(({ value, label, Icon }) => {
+              {THEME_OPTIONS.map(({ value, label, Icon }) => {
                 const active = theme === value;
                 return (
                   <button
