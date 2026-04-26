@@ -11,6 +11,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { readableTextColor } from "@/lib/colorContrast";
 import { fireWinConfetti } from "@/utils/winConfetti";
+import { formatLabel, maxSets } from "@/utils/setRules";
 
 /** Pull team text colors from meta with auto-contrast applied. */
 function teamTextColors(meta: FanviewMeta) {
@@ -130,7 +131,7 @@ function FanviewPage() {
   const isFinal = !row.is_live || !row.state.isLive;
 
   return (
-    <Shell isLive={!isFinal} homeColor={row.meta.homeColor} awayColor={row.meta.awayColor}>
+    <Shell isLive={!isFinal} homeColor={row.meta.homeColor} awayColor={row.meta.awayColor} matchFormat={row.meta.matchFormat}>
       {isFinal ? <SummaryView row={row} /> : <LiveView row={row} />}
       <Footer />
     </Shell>
@@ -144,11 +145,13 @@ function Shell({
   isLive,
   homeColor,
   awayColor,
+  matchFormat,
 }: {
   children: React.ReactNode;
   isLive?: boolean;
   homeColor?: string;
   awayColor?: string;
+  matchFormat?: import("@/types").MatchFormat;
 }) {
   const styleVars = {
     ["--home-color" as string]: homeColor ?? "#F4B400",
@@ -160,6 +163,14 @@ function Shell({
         <div className="flex items-center gap-2 text-sm font-black tracking-wide">
           <Radio className="h-4 w-4 text-primary" />
           <span>🏐 FanView</span>
+          {matchFormat && (
+            <span className="text-muted-foreground/60">·</span>
+          )}
+          {matchFormat && (
+            <span className="text-xs font-bold text-muted-foreground">
+              {formatLabel(matchFormat)}
+            </span>
+          )}
         </div>
         {isLive === undefined ? null : isLive ? (
           <span className="flex items-center gap-1.5 rounded-full bg-destructive/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-destructive">
