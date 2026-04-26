@@ -179,18 +179,27 @@ export function SplashScreen({ children }: SplashScreenProps) {
           }}
           aria-hidden={exiting}
         >
-          {/* Logo mark — animated */}
-          <video
-            ref={videoRef}
-            src={logoVideo}
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            aria-label="CourtsideView"
-            className="cv-splash-logo h-40 w-40 object-contain sm:h-52 sm:w-52"
-          />
-
+          {/* Logo mark — animated video, with static fallback if it can't start */}
+          <div className="relative h-40 w-40 sm:h-52 sm:w-52">
+            {showFallback && !videoStarted && (
+              <img
+                src={logoFallback}
+                alt="CourtsideView"
+                className="cv-splash-logo absolute inset-0 h-full w-full object-contain"
+              />
+            )}
+            <video
+              ref={videoRef}
+              src={logoVideo}
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              aria-label="CourtsideView"
+              className="cv-splash-logo absolute inset-0 h-full w-full object-contain"
+              style={{ opacity: showFallback && !videoStarted ? 0 : 1 }}
+            />
+          </div>
           {/* Wordmark */}
           <h1
             className="cv-splash-wordmark mt-4 text-[32px] font-bold leading-none"
