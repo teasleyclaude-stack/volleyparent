@@ -1,24 +1,18 @@
-## Goal
-Remove the "HS" / "CLUB" abbreviation shown next to the team names on the live Scoreboard and replace it with "Best of 3" or "Best of 5" in a smaller text, matching the wording used in the Game Setup screen.
+## Problem
 
-## Changes
+The Roster tab (`/roster`) still hardcodes the 8 sample players (Emma R., Sofia K., Ava M., etc.) from `src/data/sampleRoster.ts`. New users on the published site see these fake players even though Game Setup correctly starts blank. This is the leftover sample data we agreed to remove previously.
 
-### 1. `src/utils/setRules.ts`
-Update `formatLabelShort` to return the new wording:
-- `club` → `"Best of 3"`
-- `highschool` → `"Best of 5"`
+## Fix
 
-(Keeping the function name avoids touching other callers. `formatLabel` stays as-is in case it's used elsewhere; if unused we leave it to avoid scope creep.)
+**1. `src/routes/roster.tsx`** — Stop importing `SAMPLE_ROSTER`. Instead, derive the displayed roster from real user data:
+- Read `lastRoster` from `historyStore` (the saved roster from the user's most recent game).
+- Fall back to the most recent session's roster from `historyStore.pastSessions` if `lastRoster` is null.
+- If both are empty, show an empty state: a friendly message like "No roster yet — set up your team from the Game Setup screen" with a `<Link to="/game/setup">` button.
 
-### 2. `src/components/game/Scoreboard.tsx`
-The pill currently rendered next to the team set counts:
-```tsx
-<span className="ml-1 rounded-full bg-card px-1.5 py-0.5 text-[9px] font-black tracking-widest text-muted-foreground">
-  {formatLabelShort(matchFormat)}
-</span>
-```
-- Keep the pill but with the new label text ("Best of 3" / "Best of 5").
-- Drop `tracking-widest` and uppercase styling so the longer label reads naturally; keep `text-[9px]` for the "smaller text" requirement, switch to `font-semibold` for legibility.
+**2. `src/data/sampleRoster.ts`** — Delete the file. It's no longer referenced anywhere after step 1.
 
-## Out of Scope
-- `SetOverPopup`, `MatchOverPopup`, and the report badge already use the longer "Set X of N" / format wording per the previous request — no changes needed unless the user reports the same issue there.
+## Result
+
+- New users see an empty-state CTA on the Roster tab pointing them to Game Setup.
+- Returning users see their actual most-recent roster (with stats reset to zero, matching how Game Setup auto-populates).
+- No fake "Emma R. / Sofia K." players appear anywhere in the published app.
