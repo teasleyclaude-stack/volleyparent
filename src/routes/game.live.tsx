@@ -53,7 +53,7 @@ function LivePage() {
 
   const [killModalOpen, setKillModalOpen] = useState(false);
   const [attemptMenuOpen, setAttemptMenuOpen] = useState(false);
-  const [errorMode, setErrorMode] = useState(false);
+  const [errorModal, setErrorModal] = useState<null | "attempt" | "standalone">(null);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
