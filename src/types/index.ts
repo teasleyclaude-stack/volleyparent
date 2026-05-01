@@ -20,12 +20,32 @@ export interface Player {
   number: number;
   position: Position;
   isTracked: boolean;
+  /** ID of the player this Libero last subbed for in the current set (null = none yet). */
+  liberoPartnerId?: string | null;
   stats: PlayerStats;
+}
+
+/** Court rotation indices.
+ *  0=P1 (back-right/server), 1=P2 (front-right), 2=P3 (front-center),
+ *  3=P4 (front-left),       4=P5 (back-left),    5=P6 (back-center).
+ */
+export const FRONT_ROW_INDICES = [1, 2, 3] as const;
+export const BACK_ROW_INDICES = [0, 4, 5] as const;
+export function isLibero(p: { position: Position }): boolean {
+  return p.position === "L";
 }
 
 export type RotationState = [string, string, string, string, string, string];
 
-export type EventType = "STAT" | "SCORE" | "ROTATION" | "SUB" | "TIMEOUT" | "SET_END" | "SCORE_CORRECTION";
+export type EventType =
+  | "STAT"
+  | "SCORE"
+  | "ROTATION"
+  | "SUB"
+  | "TIMEOUT"
+  | "SET_END"
+  | "SCORE_CORRECTION"
+  | "LIBERO_SUB";
 
 export interface MatchEvent {
   id: string;
@@ -51,6 +71,12 @@ export interface MatchEvent {
   delta?: number;
   rotationReversed?: boolean;
   servingFlipped?: boolean;
+  // LIBERO_SUB
+  liberoId?: string;
+  liberoPartnerOutId?: string;
+  liberoRotationIndex?: number;
+  liberoDirection?: "out" | "in";
+  liberoTeam?: "home" | "away";
 }
 
 export interface SetSummary {
@@ -79,6 +105,18 @@ export interface GameSession {
   completedSets: SetSummary[];
   homeTimeoutsThisSet: number;
   awayTimeoutsThisSet: number;
+  /** Libero subs are unlimited; tracked for stat display only, do not count against regular subs. */
+  homeLiberoSubs?: number;
+  awayLiberoSubs?: number;
+  /** When non-null, the rotation has just been advanced and is awaiting the coach
+   *  to choose which front-row player the Libero subs out for. The proposed
+   *  rotation has already been committed (Libero sits in the violating front-row
+   *  slot) — confirming the sub will swap that slot to the chosen partner. */
+  pendingLiberoViolation?: {
+    team: "home" | "away";
+    liberoId: string;
+    rotationIndex: number; // 1, 2, or 3
+  } | null;
   isCompleted: boolean;
 }
 
