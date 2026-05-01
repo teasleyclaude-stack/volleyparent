@@ -54,6 +54,7 @@ function LivePage() {
   const confirmLiberoSub = useGameStore((s) => s.confirmLiberoSub);
   const saveSession = useHistoryStore((s) => s.saveSession);
   const fanview = useFanview();
+  const isPractice = usePracticeStore((s) => s.isPractice);
 
   const [killModalOpen, setKillModalOpen] = useState(false);
   const [attemptMenuOpen, setAttemptMenuOpen] = useState(false);
@@ -62,6 +63,8 @@ function LivePage() {
   const [quickSubIdx, setQuickSubIdx] = useState<number | null>(null);
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [showLongPressTip, setShowLongPressTip] = useState(false);
+  const [showFanviewTip, setShowFanviewTip] = useState(false);
+  const [showAttemptFlowTip, setShowAttemptFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [setOverPopup, setSetOverPopup] = useState<{ winner: "home" | "away"; setNumber: number; homeScore: number; awayScore: number } | null>(null);
