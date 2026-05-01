@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag } from "lucide-react";
+import { ErrorTypeModal } from "@/components/game/ErrorTypeModal";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { Scoreboard } from "@/components/game/Scoreboard";
 import { RotationCourt } from "@/components/game/RotationCourt";
