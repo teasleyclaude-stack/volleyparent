@@ -12,6 +12,7 @@ import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
 import { SetOverPopup } from "@/components/game/SetOverPopup";
 import { LiberoSubPopup } from "@/components/game/LiberoSubPopup";
+import { QuickSubSheet } from "@/components/game/QuickSubSheet";
 import { MatchOverPopup } from "@/components/game/MatchOverPopup";
 import { FanviewButton } from "@/components/game/FanviewButton";
 import { useFanview } from "@/hooks/useFanview";
@@ -55,6 +56,9 @@ function LivePage() {
   const [attemptMenuOpen, setAttemptMenuOpen] = useState(false);
   const [errorModal, setErrorModal] = useState<null | "attempt" | "standalone">(null);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
+  const [quickSubIdx, setQuickSubIdx] = useState<number | null>(null);
+  const [flashIdx, setFlashIdx] = useState<number | null>(null);
+  const [showLongPressTip, setShowLongPressTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [setOverPopup, setSetOverPopup] = useState<{ winner: "home" | "away"; setNumber: number; homeScore: number; awayScore: number } | null>(null);
@@ -120,6 +124,34 @@ function LivePage() {
     tapHaptic("heavy");
   }, [matchOverPopup, session]);
   void decidingSet;
+
+  // First-launch tooltip for long-press shortcut.
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const seen = window.localStorage.getItem("courtsideview_longpress_tip_seen");
+      if (!seen) {
+        setShowLongPressTip(true);
+        const t = window.setTimeout(() => {
+          setShowLongPressTip(false);
+          window.localStorage.setItem("courtsideview_longpress_tip_seen", "1");
+        }, 3000);
+        return () => window.clearTimeout(t);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const dismissLongPressTip = () => {
+    if (!showLongPressTip) return;
+    setShowLongPressTip(false);
+    try {
+      window.localStorage.setItem("courtsideview_longpress_tip_seen", "1");
+    } catch {
+      // ignore
+    }
+  };
 
   if (!session) {
     return (
@@ -284,13 +316,33 @@ function LivePage() {
           }}
         />
 
-        <RotationCourt
-          rotation={ourRotation}
-          roster={session.roster}
-          isHomeServing={session.isHomeServing}
-          isHomeOurs={session.isHomeTeam}
-          ourColor={session.isHomeTeam ? session.homeColor : session.awayColor}
-        />
+        <div className="relative" onClick={dismissLongPressTip}>
+          <RotationCourt
+            rotation={ourRotation}
+            roster={session.roster}
+            isHomeServing={session.isHomeServing}
+            isHomeOurs={session.isHomeTeam}
+            ourColor={session.isHomeTeam ? session.homeColor : session.awayColor}
+            onLongPressCell={(idx) => {
+              dismissLongPressTip();
+              setQuickSubIdx(idx);
+            }}
+            flashIndex={flashIdx}
+          />
+          {showLongPressTip && (
+            <div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded-xl bg-primary px-3 py-2 text-[11px] font-bold text-primary-foreground shadow-lg">
+              Long press any player on the court to substitute
+              <div
+                className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2"
+                style={{
+                  borderLeft: "6px solid transparent",
+                  borderRight: "6px solid transparent",
+                  borderTop: "6px solid var(--primary)",
+                }}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Tracked player + stat buttons */}
         <section className="px-4 pt-3">
@@ -375,11 +427,18 @@ function LivePage() {
             label={`TO ${session.isHomeTeam ? session.homeTimeoutsThisSet : session.awayTimeoutsThisSet}/2`}
             onClick={() => recordTimeout(session.isHomeTeam ? "home" : "away")}
           />
-          <ControlBtn
-            icon={<RefreshCw className="h-4 w-4" />}
-            label="Sub"
+          <button
+            type="button"
             onClick={() => setSubSheetOpen(true)}
-          />
+            className="flex h-12 flex-col items-center justify-center gap-0 rounded-2xl border border-border bg-card px-1 text-[11px] font-black uppercase tracking-widest text-foreground active:scale-95"
+          >
+            <span className="flex items-center gap-1.5">
+              <RefreshCw className="h-4 w-4" /> Sub
+            </span>
+            <span className="text-[8px] font-medium normal-case tracking-normal text-muted-foreground">
+              or long press court
+            </span>
+          </button>
           <ControlBtn
             icon={<AlertTriangle className="h-4 w-4" />}
             label="Error"
@@ -448,6 +507,23 @@ function LivePage() {
           }}
         />
       )}
+
+      <QuickSubSheet
+        open={quickSubIdx !== null}
+        rotationIndex={quickSubIdx ?? 0}
+        rotation={ourRotation}
+        roster={session.roster}
+        onClose={() => setQuickSubIdx(null)}
+        onConfirm={(benchId) => {
+          const idx = quickSubIdx;
+          if (idx === null) return;
+          makeSub(benchId, idx);
+          setQuickSubIdx(null);
+          tapHaptic("medium");
+          setFlashIdx(idx);
+          window.setTimeout(() => setFlashIdx(null), 320);
+        }}
+      />
 
       {endConfirmOpen && (
         <div
