@@ -156,6 +156,8 @@ export const useGameStore = create<GameStore>()(
         if (team === "home") s.homeScore += 1;
         else s.awayScore += 1;
 
+        const ourTeamKey: "home" | "away" = s.isHomeTeam ? "home" : "away";
+
         if (!winnerWasServing) {
           // Side-out: the receiving team just earned the serve.
           // ONLY the winning team rotates THEIR OWN lineup. The other team is unchanged.
@@ -165,6 +167,49 @@ export const useGameStore = create<GameStore>()(
             s.awayRotationState = applyRotation(s.awayRotationState);
           }
           s.isHomeServing = team === "home";
+
+          // Libero enforcement only applies to OUR team's rotation.
+          if (team === ourTeamKey) {
+            const ourRotKey = ourTeamKey === "home" ? "homeRotationState" : "awayRotationState";
+            const rotation = s[ourRotKey];
+
+            // 1) Auto-return: if a benched Libero's partner just rotated to back row, swap Libero in.
+            const ret = maybeAutoLiberoReturn(rotation, s.roster);
+            if (ret) {
+              s[ourRotKey] = ret.rotation;
+              const lib = s.roster.find((p) => p.id === ret.liberoId);
+              const partner = s.roster.find((p) => p.id === ret.partnerOutId);
+              pushEvent(s, {
+                type: "LIBERO_SUB",
+                setNumber: s.currentSet,
+                homeScore: s.homeScore,
+                awayScore: s.awayScore,
+                homeRotationState: s.homeRotationState,
+                awayRotationState: s.awayRotationState,
+                isHomeServing: s.isHomeServing,
+                liberoId: ret.liberoId,
+                liberoPartnerOutId: ret.partnerOutId,
+                liberoRotationIndex: ret.rotationIndex,
+                liberoDirection: "in",
+                liberoTeam: ourTeamKey,
+              });
+              if (ourTeamKey === "home") s.homeLiberoSubs = (s.homeLiberoSubs ?? 0) + 1;
+              else s.awayLiberoSubs = (s.awayLiberoSubs ?? 0) + 1;
+              if (typeof window !== "undefined" && lib) {
+                toast(`${lib.name.split(" ")[0]} back in for ${partner?.name.split(" ")[0] ?? "partner"}`);
+              }
+            }
+
+            // 2) Violation: a Libero rotated INTO a front-row slot. Mark pending — coach must pick partner.
+            const v = findLiberoFrontRowViolation(s[ourRotKey], s.roster);
+            if (v) {
+              s.pendingLiberoViolation = {
+                team: ourTeamKey,
+                liberoId: v.liberoId,
+                rotationIndex: v.rotationIndex,
+              };
+            }
+          }
         }
         // Else: serve point — no rotation, no serve change, just the score update above.
 
