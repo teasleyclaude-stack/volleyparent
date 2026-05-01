@@ -40,9 +40,16 @@ export function SetOverPopup({
   onConfirm,
   onKeepPlaying,
 }: SetOverPopupProps) {
+  const isPractice = usePracticeStore((s) => s.isPractice);
+  const [showTip, setShowTip] = useState(false);
   useEffect(() => {
-    if (open) tapHaptic("heavy");
-  }, [open]);
+    if (open) {
+      tapHaptic("heavy");
+      if (shouldShowTip("setComplete", isPractice)) setShowTip(true);
+    } else {
+      setShowTip(false);
+    }
+  }, [open, isPractice]);
 
   if (!open) return null;
 
