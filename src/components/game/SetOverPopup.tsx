@@ -1,8 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
 import { maxSets } from "@/utils/setRules";
 import type { MatchFormat } from "@/types";
+import { Tip } from "@/components/common/Tip";
+import { shouldShowTip, dismissTip } from "@/lib/tips";
+import { usePracticeStore } from "@/store/practiceStore";
 
 interface SetOverPopupProps {
   open: boolean;
@@ -37,9 +40,16 @@ export function SetOverPopup({
   onConfirm,
   onKeepPlaying,
 }: SetOverPopupProps) {
+  const isPractice = usePracticeStore((s) => s.isPractice);
+  const [showTip, setShowTip] = useState(false);
   useEffect(() => {
-    if (open) tapHaptic("heavy");
-  }, [open]);
+    if (open) {
+      tapHaptic("heavy");
+      if (shouldShowTip("setComplete", isPractice)) setShowTip(true);
+    } else {
+      setShowTip(false);
+    }
+  }, [open, isPractice]);
 
   if (!open) return null;
 
@@ -94,6 +104,22 @@ export function SetOverPopup({
         >
           Keep playing this set
         </button>
+
+        {showTip && (
+          <div className="mt-3 flex justify-center">
+            <Tip
+              show={showTip}
+              message="Set complete! Confirm to lock it in, or keep playing if it was a mistake."
+              arrow="none"
+              autoDismissMs={null}
+              showGotIt
+              onDismiss={() => {
+                dismissTip("setComplete");
+                setShowTip(false);
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

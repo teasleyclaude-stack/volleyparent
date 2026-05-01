@@ -5,6 +5,9 @@ import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
 import { getSetLabel, maxSets, formatLabelShort } from "@/utils/setRules";
 import type { MatchFormat } from "@/types";
+import { Tip } from "@/components/common/Tip";
+import { shouldShowTip, dismissTip } from "@/lib/tips";
+import { usePracticeStore } from "@/store/practiceStore";
 
 interface ScoreboardProps {
   homeTeam: string;
@@ -63,6 +66,8 @@ export function Scoreboard(props: ScoreboardProps) {
   const [flashHome, setFlashHome] = useState(false);
   const [flashAway, setFlashAway] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [showWinByTwoTip, setShowWinByTwoTip] = useState(false);
+  const isPractice = usePracticeStore((s) => s.isPractice);
 
   const lastTapHome = useRef<number>(0);
   const lastTapAway = useRef<number>(0);
@@ -146,20 +151,18 @@ export function Scoreboard(props: ScoreboardProps) {
 
   const setLabel = getSetLabel(homeScore, awayScore, setNumber, matchFormat);
   const totalSets = maxSets(matchFormat);
-  const formatPills = Array.from({ length: totalSets }, (_, i) => {
-    const num = i + 1;
-    if (num <= homeSetsWon) return "home" as const;
-    if (num <= homeSetsWon + awaySetsWon - homeSetsWon && num <= awaySetsWon) {
-      // unreachable — handled below
+
+  useEffect(() => {
+    if (setLabel.text === "WIN BY 2" && shouldShowTip("winByTwo", isPractice)) {
+      setShowWinByTwoTip(true);
     }
-    return null;
-  });
-  // Build dot states more cleanly: first homeSetsWon = home, then awaySetsWon = away, rest empty.
+  }, [setLabel.text, isPractice]);
+
+  // Build dot states: first homeSetsWon = home, then awaySetsWon = away, rest empty.
   const setDots: Array<"home" | "away" | "empty"> = [];
   for (let i = 0; i < homeSetsWon; i++) setDots.push("home");
   for (let i = 0; i < awaySetsWon; i++) setDots.push("away");
   while (setDots.length < totalSets) setDots.push("empty");
-  void formatPills;
 
   return (
     <div className="border-b border-border bg-popover px-4 pt-4 pb-3">
@@ -177,6 +180,21 @@ export function Scoreboard(props: ScoreboardProps) {
           ● Live
         </span>
       </div>
+
+      {showWinByTwoTip && (
+        <div className="mb-2 flex justify-center">
+          <Tip
+            show={showWinByTwoTip}
+            message="Win by 2! No score cap — keep playing until someone leads by two."
+            arrow="up"
+            autoDismissMs={6000}
+            onDismiss={() => {
+              dismissTip("winByTwo");
+              setShowWinByTwoTip(false);
+            }}
+          />
+        </div>
+      )}
 
       {/* Set wins tracker — dots reflect format max (3 or 5). */}
       <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
