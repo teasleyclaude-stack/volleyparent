@@ -593,6 +593,9 @@ export const useGameStore = create<GameStore>()(
         s.homeScore = 0;
         s.awayScore = 0;
         s.homeTimeoutsThisSet = 0;
+        // Reset Libero partner memory between sets so a fresh partnership forms.
+        s.roster = s.roster.map((p) => (isLibero(p) ? { ...p, liberoPartnerId: null } : p));
+        s.pendingLiberoViolation = null;
         s.awayTimeoutsThisSet = 0;
         set({ session: s });
       },
