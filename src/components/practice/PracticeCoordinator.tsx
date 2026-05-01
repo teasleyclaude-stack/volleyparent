@@ -109,14 +109,6 @@ export function PracticeCoordinator() {
       return;
     }
 
-    if (step === "sideout") {
-      if (session.awayScore > lastAwayScore.current) {
-        lastAwayScore.current = session.awayScore;
-        setFlash("Players rotated and the serve changed automatically!");
-        advance();
-      }
-      return;
-    }
 
     if (step === "killZone") {
       // Zone selection records a kill stat with killZone set
