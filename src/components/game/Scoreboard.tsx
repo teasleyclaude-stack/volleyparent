@@ -181,6 +181,21 @@ export function Scoreboard(props: ScoreboardProps) {
         </span>
       </div>
 
+      {showWinByTwoTip && (
+        <div className="mb-2 flex justify-center">
+          <Tip
+            show={showWinByTwoTip}
+            message="Win by 2! No score cap — keep playing until someone leads by two."
+            arrow="up"
+            autoDismissMs={6000}
+            onDismiss={() => {
+              dismissTip("winByTwo");
+              setShowWinByTwoTip(false);
+            }}
+          />
+        </div>
+      )}
+
       {/* Set wins tracker — dots reflect format max (3 or 5). */}
       <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
         <span className={isHomeOurs ? "text-foreground" : ""}>
