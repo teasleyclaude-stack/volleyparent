@@ -295,9 +295,23 @@ function LivePage() {
         <Link to="/" className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2" data-tutorial="fanview-btn">
           <div className="text-[10px] font-black uppercase tracking-widest text-primary">● Live</div>
           <FanviewButton />
+          {showFanviewTip && (
+            <div className="absolute -bottom-2 right-0 z-30 translate-y-full">
+              <Tip
+                show={showFanviewTip}
+                message="Share a live link so family can follow the game from anywhere."
+                arrow="up"
+                autoDismissMs={4000}
+                onDismiss={() => {
+                  setShowFanviewTip(false);
+                  dismissTip("fanView");
+                }}
+              />
+            </div>
+          )}
         </div>
         <button
           type="button"
