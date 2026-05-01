@@ -7,6 +7,8 @@ import {
   isLibero,
 } from "@/types";
 import type {
+  ErrorSource,
+  ErrorType,
   GameSession,
   KillZone,
   MatchEvent,
