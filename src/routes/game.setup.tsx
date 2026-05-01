@@ -68,6 +68,15 @@ function SetupPage() {
 
   const trackedId = roster.find((p) => p.isTracked)?.id ?? null;
   const rotationFull = rotation.every((x) => x);
+  // Libero may NOT start in front-row positions (indices 1, 2, 3).
+  const liberoFrontRowIdx = rotation
+    .map((id, idx) => {
+      if (idx !== 1 && idx !== 2 && idx !== 3) return null;
+      const p = roster.find((r) => r.id === id);
+      return p && p.position === "L" ? idx : null;
+    })
+    .filter((x): x is number => x !== null);
+  const liberoPlacementInvalid = liberoFrontRowIdx.length > 0;
 
   const setTracked = (id: string) => {
     setRoster((r) => r.map((p) => ({ ...p, isTracked: p.id === id })));
