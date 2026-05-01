@@ -508,6 +508,23 @@ function LivePage() {
         />
       )}
 
+      <QuickSubSheet
+        open={quickSubIdx !== null}
+        rotationIndex={quickSubIdx ?? 0}
+        rotation={ourRotation}
+        roster={session.roster}
+        onClose={() => setQuickSubIdx(null)}
+        onConfirm={(benchId) => {
+          const idx = quickSubIdx;
+          if (idx === null) return;
+          makeSub(benchId, idx);
+          setQuickSubIdx(null);
+          tapHaptic("success");
+          setFlashIdx(idx);
+          window.setTimeout(() => setFlashIdx(null), 320);
+        }}
+      />
+
       {endConfirmOpen && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
