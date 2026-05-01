@@ -206,10 +206,20 @@ export function eventToFeedItem(
         message = `${trackedFirst} attack dug by opponent`;
         tone = "error";
         break;
-      case "error":
-        message = `${trackedFirst} attack error`;
+      case "error": {
+        const errLabel = ev.errorType ? ERROR_TYPE_LABELS[ev.errorType] : null;
+        if (ev.errorSource === "standalone") {
+          message = errLabel
+            ? `Error — ${errLabel} (point to ${oppTeamName})`
+            : `Error (point to ${oppTeamName})`;
+        } else {
+          message = errLabel
+            ? `${trackedFirst} attack error — ${errLabel}`
+            : `${trackedFirst} attack error`;
+        }
         tone = "error";
         break;
+      }
       case "assist":
         message = `${trackedFirst} Assist`;
         tone = "neutral";
