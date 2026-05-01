@@ -39,6 +39,7 @@ function LivePage() {
   const session = useGameStore((s) => s.session);
   const addPoint = useGameStore((s) => s.addPoint);
   const recordStat = useGameStore((s) => s.recordStat);
+  const recordError = useGameStore((s) => s.recordError);
   const recordTimeout = useGameStore((s) => s.recordTimeout);
   const undo = useGameStore((s) => s.undoLastAction);
   const endSet = useGameStore((s) => s.endSet);
