@@ -1,8 +1,12 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { SplashScreen } from "@/components/common/SplashScreen";
 import { InstallBanner } from "@/components/common/InstallBanner";
+import { PracticeBanner } from "@/components/practice/PracticeBanner";
+import { PracticeCoordinator } from "@/components/practice/PracticeCoordinator";
+import { WelcomePrompt } from "@/components/practice/WelcomePrompt";
 
 function NotFoundComponent() {
   return (
