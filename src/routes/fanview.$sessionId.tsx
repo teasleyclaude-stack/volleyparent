@@ -457,6 +457,7 @@ function FeedRow({ item, meta }: { item: FanviewFeedItem; meta: FanviewMeta }) {
     score: "border-l-[var(--gold)]",
     rotation: "border-l-[#00B4FF]",
     set: "border-l-[#8B5CF6]",
+    libero: "border-l-[#00ACC1]",
     neutral: "border-l-border",
   }[item.tone];
   return (
