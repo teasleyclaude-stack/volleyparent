@@ -302,6 +302,8 @@ export const useGameStore = create<GameStore>()(
         // Opponent always gets the point.
         get().addPoint(s.isHomeTeam ? "away" : "home");
       },
+
+      recordTimeout: (team) => {
         const cur = get().session;
         if (!cur) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
