@@ -158,19 +158,11 @@ export function Scoreboard(props: ScoreboardProps) {
     }
   }, [setLabel.text, isPractice]);
 
-    const num = i + 1;
-    if (num <= homeSetsWon) return "home" as const;
-    if (num <= homeSetsWon + awaySetsWon - homeSetsWon && num <= awaySetsWon) {
-      // unreachable — handled below
-    }
-    return null;
-  });
-  // Build dot states more cleanly: first homeSetsWon = home, then awaySetsWon = away, rest empty.
+  // Build dot states: first homeSetsWon = home, then awaySetsWon = away, rest empty.
   const setDots: Array<"home" | "away" | "empty"> = [];
   for (let i = 0; i < homeSetsWon; i++) setDots.push("home");
   for (let i = 0; i < awaySetsWon; i++) setDots.push("away");
   while (setDots.length < totalSets) setDots.push("empty");
-  void formatPills;
 
   return (
     <div className="border-b border-border bg-popover px-4 pt-4 pb-3">
