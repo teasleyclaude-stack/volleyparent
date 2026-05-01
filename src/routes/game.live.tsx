@@ -10,6 +10,7 @@ import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
 import { SetOverPopup } from "@/components/game/SetOverPopup";
+import { LiberoSubPopup } from "@/components/game/LiberoSubPopup";
 import { MatchOverPopup } from "@/components/game/MatchOverPopup";
 import { FanviewButton } from "@/components/game/FanviewButton";
 import { useFanview } from "@/hooks/useFanview";
@@ -44,6 +45,7 @@ function LivePage() {
   const makeSub = useGameStore((s) => s.makeSubstitution);
   const correctScore = useGameStore((s) => s.correctScore);
   const setRotationStore = useGameStore((s) => s.setRotation);
+  const confirmLiberoSub = useGameStore((s) => s.confirmLiberoSub);
   const saveSession = useHistoryStore((s) => s.saveSession);
   const fanview = useFanview();
 
@@ -523,6 +525,17 @@ function LivePage() {
           setLineupModalOpen(false);
         }}
       />
+
+      {session.pendingLiberoViolation && session.pendingLiberoViolation.team === ourTeamKey && (
+        <LiberoSubPopup
+          open
+          liberoId={session.pendingLiberoViolation.liberoId}
+          rotationIndex={session.pendingLiberoViolation.rotationIndex}
+          rotation={ourRotation}
+          roster={session.roster}
+          onConfirm={(subOutId) => confirmLiberoSub(subOutId)}
+        />
+      )}
     </PhoneShell>
   );
 }

@@ -52,7 +52,7 @@ export interface FanviewFeedItem {
   homeScore: number;
   awayScore: number;
   message: string;
-  tone: "kill" | "error" | "score" | "rotation" | "set" | "neutral";
+  tone: "kill" | "error" | "score" | "rotation" | "set" | "neutral" | "libero";
   team?: "home" | "away";
 }
 
@@ -250,6 +250,24 @@ export function eventToFeedItem(
       type: "SET_END",
       message: `Set ${ev.setNumber} Final: ${session.homeTeam} ${ev.homeScore} — ${session.awayTeam} ${ev.awayScore}`,
       tone: "set",
+    };
+  }
+
+  if (ev.type === "LIBERO_SUB" && ev.liberoId && ev.liberoPartnerOutId) {
+    const lib = findPlayer(session, ev.liberoId);
+    const partner = findPlayer(session, ev.liberoPartnerOutId);
+    const libName = lib ? firstName(lib.name) : "Libero";
+    const partnerName = partner ? firstName(partner.name) : "partner";
+    const message =
+      ev.liberoDirection === "in"
+        ? `${libName} back in for ${partnerName} (Libero)`
+        : `${libName} subs out for ${partnerName} (Libero)`;
+    return {
+      ...base,
+      type: "LIBERO_SUB",
+      message,
+      tone: "libero",
+      team: ev.liberoTeam,
     };
   }
 

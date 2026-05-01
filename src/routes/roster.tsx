@@ -54,25 +54,36 @@ function RosterPage() {
             </Link>
           </div>
         ) : (
-          roster.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-popover text-base font-black tabular-nums text-foreground">
-                {p.number}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-1.5 text-sm font-bold text-foreground">
-                  {p.name}
-                  {p.isTracked && <Star className="h-3.5 w-3.5 fill-primary text-primary" strokeWidth={1.5} />}
+          roster.map((p) => {
+            const lib = p.position === "L";
+            return (
+              <div
+                key={p.id}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-popover text-base font-black tabular-nums text-foreground">
+                  {p.number}
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {p.position}
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+                    {p.name}
+                    {p.isTracked && <Star className="h-3.5 w-3.5 fill-primary text-primary" strokeWidth={1.5} />}
+                    {lib && (
+                      <span
+                        className="ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white"
+                        style={{ backgroundColor: "#00ACC1" }}
+                      >
+                        LIB
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    {p.position}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </main>
 

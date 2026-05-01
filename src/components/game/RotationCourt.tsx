@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import type { Player, RotationState } from "@/types";
+import { isLibero } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface RotationCourtProps {
@@ -47,6 +48,7 @@ export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs, our
             const player = find(rotation[rotIdx] ?? "");
             const isServer = rotIdx === 0;
             const isFrontRow = gridIdx < 3;
+            const liberoCell = player ? isLibero(player) : false;
             return (
               <div
                 key={gridIdx}
@@ -55,7 +57,16 @@ export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs, our
                   "border-border",
                   isServer && oursServing && "vp-serving",
                 )}
-                style={isServer && oursServing ? { borderColor: ourColor } : undefined}
+                style={
+                  liberoCell
+                    ? {
+                        backgroundColor: "rgba(0, 172, 193, 0.15)",
+                        borderColor: "#00ACC1",
+                      }
+                    : isServer && oursServing
+                      ? { borderColor: ourColor }
+                      : undefined
+                }
               >
                 {player?.isTracked && (
                   <Star
@@ -75,9 +86,15 @@ export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs, our
                 <span className="mt-0.5 max-w-full truncate text-[10px] font-medium text-muted-foreground">
                   {player?.name?.split(" ")[0] ?? "Empty"}
                 </span>
-                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                  P{rotIdx + 1} · {isFrontRow ? "Front" : "Back"}
-                </span>
+                {liberoCell ? (
+                  <span className="mt-0.5 text-[9px] font-black uppercase tracking-wider text-[#00ACC1]">
+                    LIB · P{rotIdx + 1}
+                  </span>
+                ) : (
+                  <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                    P{rotIdx + 1} · {isFrontRow ? "Front" : "Back"}
+                  </span>
+                )}
               </div>
             );
           })}

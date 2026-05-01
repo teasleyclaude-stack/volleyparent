@@ -1,5 +1,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { toast } from "sonner";
+import {
+  BACK_ROW_INDICES,
+  FRONT_ROW_INDICES,
+  isLibero,
+} from "@/types";
 import type {
   GameSession,
   KillZone,
@@ -34,6 +40,8 @@ interface GameStore {
   correctScore: (team: "home" | "away") => void;
   /** Overwrite one team's rotation tuple (used by lineup modal & auto-repair). */
   setRotation: (team: "home" | "away", rotation: RotationState) => void;
+  /** Resolve a pending Libero front-row violation by selecting which front-row player they replace. */
+  confirmLiberoSub: (subOutPlayerId: string) => void;
   undoLastAction: () => void;
   endSet: () => void;
   endGame: () => void;
@@ -53,6 +61,42 @@ const pushEvent = (s: GameSession, e: Omit<MatchEvent, "id" | "timestamp">) => {
   const ev: MatchEvent = { ...e, id: uid(), timestamp: Date.now() };
   s.events.push(ev);
 };
+
+/** If a Libero is in any front-row index of the rotation, return the (firstViolating)
+ *  rotation index and the Libero's player id. */
+function findLiberoFrontRowViolation(
+  rotation: RotationState,
+  roster: Player[],
+): { rotationIndex: number; liberoId: string } | null {
+  for (const idx of FRONT_ROW_INDICES) {
+    const p = roster.find((r) => r.id === rotation[idx]);
+    if (p && isLibero(p)) return { rotationIndex: idx, liberoId: p.id };
+  }
+  return null;
+}
+
+/** If any benched Libero's remembered partner is now in a back-row slot,
+ *  swap the Libero back in. Returns updated rotation + sub info, or null. */
+function maybeAutoLiberoReturn(
+  rotation: RotationState,
+  roster: Player[],
+): { rotation: RotationState; liberoId: string; partnerOutId: string; rotationIndex: number } | null {
+  const onCourt = new Set(rotation);
+  const liberos = roster.filter(
+    (p) => isLibero(p) && p.liberoPartnerId && !onCourt.has(p.id),
+  );
+  for (const lib of liberos) {
+    const partnerId = lib.liberoPartnerId!;
+    const partnerIdx = rotation.indexOf(partnerId);
+    if (partnerIdx === -1) continue;
+    if ((BACK_ROW_INDICES as readonly number[]).includes(partnerIdx)) {
+      const next = [...rotation] as RotationState;
+      next[partnerIdx] = lib.id;
+      return { rotation: next, liberoId: lib.id, partnerOutId: partnerId, rotationIndex: partnerIdx };
+    }
+  }
+  return null;
+}
 
 export const useGameStore = create<GameStore>()(
   persist(
@@ -88,12 +132,16 @@ export const useGameStore = create<GameStore>()(
           awayRotationState: awayRotation,
           roster: roster.map((p) => ({
             ...p,
+            liberoPartnerId: null,
             stats: { kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0 },
           })),
           events: [],
           completedSets: [],
           homeTimeoutsThisSet: 0,
           awayTimeoutsThisSet: 0,
+          homeLiberoSubs: 0,
+          awayLiberoSubs: 0,
+          pendingLiberoViolation: null,
           isCompleted: false,
         };
         set({ session: s });
@@ -108,6 +156,8 @@ export const useGameStore = create<GameStore>()(
         if (team === "home") s.homeScore += 1;
         else s.awayScore += 1;
 
+        const ourTeamKey: "home" | "away" = s.isHomeTeam ? "home" : "away";
+
         if (!winnerWasServing) {
           // Side-out: the receiving team just earned the serve.
           // ONLY the winning team rotates THEIR OWN lineup. The other team is unchanged.
@@ -117,6 +167,49 @@ export const useGameStore = create<GameStore>()(
             s.awayRotationState = applyRotation(s.awayRotationState);
           }
           s.isHomeServing = team === "home";
+
+          // Libero enforcement only applies to OUR team's rotation.
+          if (team === ourTeamKey) {
+            const ourRotKey = ourTeamKey === "home" ? "homeRotationState" : "awayRotationState";
+            const rotation = s[ourRotKey];
+
+            // 1) Auto-return: if a benched Libero's partner just rotated to back row, swap Libero in.
+            const ret = maybeAutoLiberoReturn(rotation, s.roster);
+            if (ret) {
+              s[ourRotKey] = ret.rotation;
+              const lib = s.roster.find((p) => p.id === ret.liberoId);
+              const partner = s.roster.find((p) => p.id === ret.partnerOutId);
+              pushEvent(s, {
+                type: "LIBERO_SUB",
+                setNumber: s.currentSet,
+                homeScore: s.homeScore,
+                awayScore: s.awayScore,
+                homeRotationState: s.homeRotationState,
+                awayRotationState: s.awayRotationState,
+                isHomeServing: s.isHomeServing,
+                liberoId: ret.liberoId,
+                liberoPartnerOutId: ret.partnerOutId,
+                liberoRotationIndex: ret.rotationIndex,
+                liberoDirection: "in",
+                liberoTeam: ourTeamKey,
+              });
+              if (ourTeamKey === "home") s.homeLiberoSubs = (s.homeLiberoSubs ?? 0) + 1;
+              else s.awayLiberoSubs = (s.awayLiberoSubs ?? 0) + 1;
+              if (typeof window !== "undefined" && lib) {
+                toast(`${lib.name.split(" ")[0]} back in for ${partner?.name.split(" ")[0] ?? "partner"}`);
+              }
+            }
+
+            // 2) Violation: a Libero rotated INTO a front-row slot. Mark pending — coach must pick partner.
+            const v = findLiberoFrontRowViolation(s[ourRotKey], s.roster);
+            if (v) {
+              s.pendingLiberoViolation = {
+                team: ourTeamKey,
+                liberoId: v.liberoId,
+                rotationIndex: v.rotationIndex,
+              };
+            }
+          }
         }
         // Else: serve point — no rotation, no serve change, just the score update above.
 
@@ -291,6 +384,50 @@ export const useGameStore = create<GameStore>()(
         const s: GameSession = JSON.parse(JSON.stringify(cur));
         if (team === "home") s.homeRotationState = [...rotation] as RotationState;
         else s.awayRotationState = [...rotation] as RotationState;
+        // Manual lineup edit: clear any pending Libero violation since the rotation
+        // was overridden directly. Also reset partner memory so a fresh partnership forms.
+        s.pendingLiberoViolation = null;
+        s.roster = s.roster.map((p) => (isLibero(p) ? { ...p, liberoPartnerId: null } : p));
+        set({ session: s });
+      },
+
+      confirmLiberoSub: (subOutPlayerId) => {
+        const cur = get().session;
+        if (!cur || !cur.pendingLiberoViolation) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const v = s.pendingLiberoViolation!;
+        const ourRotKey = v.team === "home" ? "homeRotationState" : "awayRotationState";
+        const rotation = [...s[ourRotKey]] as RotationState;
+        // Sanity: the libero must actually be at the violation index right now.
+        if (rotation[v.rotationIndex] !== v.liberoId) {
+          // State drifted — clear and bail.
+          s.pendingLiberoViolation = null;
+          set({ session: s });
+          return;
+        }
+        rotation[v.rotationIndex] = subOutPlayerId;
+        s[ourRotKey] = rotation;
+        // Remember the partnership on the libero for the rest of this set.
+        s.roster = s.roster.map((p) =>
+          p.id === v.liberoId ? { ...p, liberoPartnerId: subOutPlayerId } : p,
+        );
+        if (v.team === "home") s.homeLiberoSubs = (s.homeLiberoSubs ?? 0) + 1;
+        else s.awayLiberoSubs = (s.awayLiberoSubs ?? 0) + 1;
+        pushEvent(s, {
+          type: "LIBERO_SUB",
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          liberoId: v.liberoId,
+          liberoPartnerOutId: subOutPlayerId,
+          liberoRotationIndex: v.rotationIndex,
+          liberoDirection: "out",
+          liberoTeam: v.team,
+        });
+        s.pendingLiberoViolation = null;
         set({ session: s });
       },
 
@@ -383,6 +520,46 @@ export const useGameStore = create<GameStore>()(
           }
         }
 
+        if (
+          last.type === "LIBERO_SUB" &&
+          last.liberoId &&
+          last.liberoPartnerOutId &&
+          last.liberoRotationIndex !== undefined &&
+          last.liberoTeam
+        ) {
+          const ourRotKey = last.liberoTeam === "home" ? "homeRotationState" : "awayRotationState";
+          const rotation = [...s[ourRotKey]] as RotationState;
+          if (last.liberoDirection === "out") {
+            // Coach had subbed Libero out (partner went into front-row slot). Reverse:
+            // restore Libero to that slot, partner returns to bench, clear partner memory.
+            rotation[last.liberoRotationIndex] = last.liberoId;
+            s[ourRotKey] = rotation;
+            s.roster = s.roster.map((p) =>
+              p.id === last.liberoId ? { ...p, liberoPartnerId: null } : p,
+            );
+            s.pendingLiberoViolation = {
+              team: last.liberoTeam,
+              liberoId: last.liberoId,
+              rotationIndex: last.liberoRotationIndex,
+            };
+          } else {
+            // Auto-return: Libero came back in for partner in back row. Reverse:
+            // partner back to that slot, Libero to bench, restore partner memory.
+            rotation[last.liberoRotationIndex] = last.liberoPartnerOutId;
+            s[ourRotKey] = rotation;
+            s.roster = s.roster.map((p) =>
+              p.id === last.liberoId
+                ? { ...p, liberoPartnerId: last.liberoPartnerOutId ?? null }
+                : p,
+            );
+          }
+          if (last.liberoTeam === "home") {
+            s.homeLiberoSubs = Math.max(0, (s.homeLiberoSubs ?? 0) - 1);
+          } else {
+            s.awayLiberoSubs = Math.max(0, (s.awayLiberoSubs ?? 0) - 1);
+          }
+        }
+
         // Suppress unused
         void snapshot;
 
@@ -416,6 +593,9 @@ export const useGameStore = create<GameStore>()(
         s.homeScore = 0;
         s.awayScore = 0;
         s.homeTimeoutsThisSet = 0;
+        // Reset Libero partner memory between sets so a fresh partnership forms.
+        s.roster = s.roster.map((p) => (isLibero(p) ? { ...p, liberoPartnerId: null } : p));
+        s.pendingLiberoViolation = null;
         s.awayTimeoutsThisSet = 0;
         set({ session: s });
       },
