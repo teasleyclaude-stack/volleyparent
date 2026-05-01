@@ -132,12 +132,16 @@ export const useGameStore = create<GameStore>()(
           awayRotationState: awayRotation,
           roster: roster.map((p) => ({
             ...p,
+            liberoPartnerId: null,
             stats: { kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0 },
           })),
           events: [],
           completedSets: [],
           homeTimeoutsThisSet: 0,
           awayTimeoutsThisSet: 0,
+          homeLiberoSubs: 0,
+          awayLiberoSubs: 0,
+          pendingLiberoViolation: null,
           isCompleted: false,
         };
         set({ session: s });
