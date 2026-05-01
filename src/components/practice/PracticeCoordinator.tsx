@@ -18,6 +18,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
     title: "Recording an attack",
     description: "When your player attacks, tap ATTEMPT. You'll choose what happened — Kill, Dug, or Error.",
     target: "btn-attempt",
+    cardPosition: "top",
   },
   kill: {
     step: "kill",
@@ -41,6 +42,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
     title: "Tracking defensive plays",
     description: "Use these for defensive plays. DIG for passing attacks, BLOCK for net blocks, ACE when your player's serve scores directly.",
     target: "defense-row",
+    cardPosition: "top",
   },
   longPressSub: {
     step: "longPressSub",
