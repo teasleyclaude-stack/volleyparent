@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 export type PracticeStep =
   | "point"
-  | "sideout"
   | "attempt"
   | "kill"
   | "killZone"
@@ -13,7 +12,6 @@ export type PracticeStep =
 
 export const PRACTICE_STEPS: PracticeStep[] = [
   "point",
-  "sideout",
   "attempt",
   "kill",
   "killZone",
@@ -29,6 +27,7 @@ interface PracticeStore {
   start: () => void;
   setStep: (s: PracticeStep) => void;
   advance: () => void;
+  back: () => void;
   exit: () => void;
 }
 
@@ -44,6 +43,16 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     if (idx === -1) return;
     const next = idx + 1 >= PRACTICE_STEPS.length ? "complete" : PRACTICE_STEPS[idx + 1];
     set({ step: next });
+  },
+  back: () => {
+    const cur = get().step;
+    if (cur === "complete") {
+      set({ step: PRACTICE_STEPS[PRACTICE_STEPS.length - 1] });
+      return;
+    }
+    const idx = PRACTICE_STEPS.indexOf(cur);
+    if (idx <= 0) return;
+    set({ step: PRACTICE_STEPS[idx - 1] });
   },
   exit: () => set({ isPractice: false, step: "point" }),
 }));

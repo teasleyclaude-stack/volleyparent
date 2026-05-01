@@ -31,6 +31,8 @@ export interface StepConfig {
 interface TutorialOverlayProps {
   config: StepConfig;
   onSkip: () => void;
+  /** Called when user swipes right or taps Back. Omit to hide back affordance. */
+  onBack?: () => void;
 }
 
 function rectOf(target: string): DOMRect | null {
@@ -40,7 +42,7 @@ function rectOf(target: string): DOMRect | null {
   return el.getBoundingClientRect();
 }
 
-export function TutorialOverlay({ config, onSkip }: TutorialOverlayProps) {
+export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps) {
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [rect2, setRect2] = useState<DOMRect | null>(null);
   const [showHint, setShowHint] = useState(false);
@@ -193,7 +195,26 @@ export function TutorialOverlay({ config, onSkip }: TutorialOverlayProps) {
           config.cardPosition === "top" ? "top-3" : "bottom-3",
         )}
       >
-        <div className="mx-auto max-w-[440px] rounded-2xl border border-border bg-card p-4 shadow-2xl">
+        <div
+          className="mx-auto max-w-[440px] rounded-2xl border border-border bg-card p-4 shadow-2xl"
+          onTouchStart={(e) => {
+            if (!onBack) return;
+            const t = e.touches[0];
+            (e.currentTarget as HTMLDivElement).dataset.sx = String(t.clientX);
+            (e.currentTarget as HTMLDivElement).dataset.sy = String(t.clientY);
+          }}
+          onTouchEnd={(e) => {
+            if (!onBack) return;
+            const el = e.currentTarget as HTMLDivElement;
+            const sx = Number(el.dataset.sx ?? NaN);
+            const sy = Number(el.dataset.sy ?? NaN);
+            const t = e.changedTouches[0];
+            if (Number.isNaN(sx) || Number.isNaN(sy) || !t) return;
+            const dx = t.clientX - sx;
+            const dy = t.clientY - sy;
+            if (dx > 60 && Math.abs(dy) < 40) onBack();
+          }}
+        >
           {/* Progress dots + step counter */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -219,14 +240,24 @@ export function TutorialOverlay({ config, onSkip }: TutorialOverlayProps) {
             {config.description}
           </p>
 
-          <div className="mt-3 flex items-center justify-between">
-            {showHint ? (
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#39FF14]">
-                ↗ Show me
-              </span>
-            ) : (
-              <span />
-            )}
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {onBack ? (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="text-[12px] font-bold text-muted-foreground active:text-foreground"
+                  aria-label="Previous step"
+                >
+                  ← Back
+                </button>
+              ) : null}
+              {showHint ? (
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#39FF14]">
+                  ↗ Show me
+                </span>
+              ) : null}
+            </div>
             <button
               type="button"
               onClick={onSkip}
