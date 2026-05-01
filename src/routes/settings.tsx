@@ -1,12 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { BottomTabs } from "@/components/common/BottomTabs";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useTheme } from "@/hooks/useTheme";
-import { Trash2, Moon, Sun } from "lucide-react";
+import { Trash2, Moon, Sun, Star, ChevronRight, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/courtsideview-logo.png";
+import { startPracticeMode } from "@/utils/practice";
+import { resetAllTips } from "@/lib/tips";
+import { toast } from "sonner";
 
 const THEME_OPTIONS = [
   { value: "dark", label: "Dark", Icon: Moon },
