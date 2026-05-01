@@ -519,7 +519,7 @@ function LivePage() {
           if (idx === null) return;
           makeSub(benchId, idx);
           setQuickSubIdx(null);
-          tapHaptic("success");
+          tapHaptic("medium");
           setFlashIdx(idx);
           window.setTimeout(() => setFlashIdx(null), 320);
         }}
