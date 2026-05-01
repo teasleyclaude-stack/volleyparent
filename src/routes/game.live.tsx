@@ -12,6 +12,7 @@ import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
 import { SetOverPopup } from "@/components/game/SetOverPopup";
 import { LiberoSubPopup } from "@/components/game/LiberoSubPopup";
+import { QuickSubSheet } from "@/components/game/QuickSubSheet";
 import { MatchOverPopup } from "@/components/game/MatchOverPopup";
 import { FanviewButton } from "@/components/game/FanviewButton";
 import { useFanview } from "@/hooks/useFanview";
@@ -55,6 +56,9 @@ function LivePage() {
   const [attemptMenuOpen, setAttemptMenuOpen] = useState(false);
   const [errorModal, setErrorModal] = useState<null | "attempt" | "standalone">(null);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
+  const [quickSubIdx, setQuickSubIdx] = useState<number | null>(null);
+  const [flashIdx, setFlashIdx] = useState<number | null>(null);
+  const [showLongPressTip, setShowLongPressTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [setOverPopup, setSetOverPopup] = useState<{ winner: "home" | "away"; setNumber: number; homeScore: number; awayScore: number } | null>(null);
