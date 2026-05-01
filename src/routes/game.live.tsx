@@ -383,8 +383,8 @@ function LivePage() {
           <ControlBtn
             icon={<AlertTriangle className="h-4 w-4" />}
             label="Error"
-            onClick={() => setErrorMode((v) => !v)}
-            active={errorMode}
+            onClick={() => setErrorModal("standalone")}
+            active={errorModal !== null}
           />
         </section>
 
