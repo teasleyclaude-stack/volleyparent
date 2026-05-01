@@ -125,19 +125,8 @@ export function PracticeCoordinator() {
       return;
     }
 
-    if (step === "kill") {
-      // Detect kill stat
-      const killEv = newEvents.find((e) => e.type === "STAT" && e.statType === "kill");
-      if (killEv) {
-        setFlash(killEv.killZone ? `Kill logged · Zone ${killEv.killZone}` : "Kill logged!");
-        // skip killZone if zone already provided
-        advance();
-      }
-      return;
-    }
-
     if (step === "killZone") {
-      // killZone is detected via the same kill event metadata when zone is selected
+      // Zone selection records a kill stat with killZone set
       const killWithZone = newEvents.find(
         (e) => e.type === "STAT" && e.statType === "kill" && e.killZone,
       );
