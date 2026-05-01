@@ -94,8 +94,25 @@ export function KillHeatMap({ open, onSelect, onCancel, previousByZone = {} }: K
           </button>
         </div>
 
+        {/* Tip */}
+        {showZoneTip && (
+          <div className="mb-2 flex justify-center">
+            <Tip
+              show={showZoneTip}
+              message="Tap where the ball landed. Back row: 1·6·5 · Front row: 2·3·4"
+              arrow="down"
+              autoDismissMs={4000}
+              onDismiss={() => {
+                setShowZoneTip(false);
+                dismissTip("killZones");
+              }}
+            />
+          </div>
+        )}
+
         {/* Court diagram */}
         <div
+          data-tutorial="kill-zones"
           className="overflow-hidden rounded-2xl border-2 border-white"
           style={{ backgroundColor: "#0A0E1A" }}
         >
