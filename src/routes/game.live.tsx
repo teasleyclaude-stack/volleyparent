@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag } from "lucide-react";
+import { ErrorTypeModal } from "@/components/game/ErrorTypeModal";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { Scoreboard } from "@/components/game/Scoreboard";
 import { RotationCourt } from "@/components/game/RotationCourt";
@@ -20,7 +21,7 @@ import { hittingPercentage } from "@/utils/stats";
 import { checkSetWon, checkMatchWon, setTarget, maxSets, decidingSet } from "@/utils/setRules";
 import { tapHaptic } from "@/utils/haptics";
 import { fireWinConfetti } from "@/utils/winConfetti";
-import type { KillZone, StatType } from "@/types";
+import type { ErrorType, KillZone, StatType } from "@/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/game/live")({
@@ -38,6 +39,7 @@ function LivePage() {
   const session = useGameStore((s) => s.session);
   const addPoint = useGameStore((s) => s.addPoint);
   const recordStat = useGameStore((s) => s.recordStat);
+  const recordError = useGameStore((s) => s.recordError);
   const recordTimeout = useGameStore((s) => s.recordTimeout);
   const undo = useGameStore((s) => s.undoLastAction);
   const endSet = useGameStore((s) => s.endSet);
@@ -51,7 +53,7 @@ function LivePage() {
 
   const [killModalOpen, setKillModalOpen] = useState(false);
   const [attemptMenuOpen, setAttemptMenuOpen] = useState(false);
-  const [errorMode, setErrorMode] = useState(false);
+  const [errorModal, setErrorModal] = useState<null | "attempt" | "standalone">(null);
   const [subSheetOpen, setSubSheetOpen] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
@@ -153,7 +155,17 @@ function LivePage() {
       setKillModalOpen(true);
       return;
     }
+    if (outcome === "error") {
+      setErrorModal("attempt");
+      return;
+    }
     recordStat(tracked.id, outcome);
+  };
+
+  const handleErrorTypeSelected = (type: ErrorType) => {
+    const source = errorModal ?? "standalone";
+    setErrorModal(null);
+    recordError(tracked.id, type, source);
   };
 
   const handleKillZone = (zone: KillZone | null) => {
@@ -354,18 +366,6 @@ function LivePage() {
             </div>
           )}
 
-          {errorMode && (
-            <div className="mt-2.5">
-              <StatButton
-                stat="error"
-                label="Hitting Error"
-                onPress={() => {
-                  handleStat("error");
-                  setErrorMode(false);
-                }}
-              />
-            </div>
-          )}
         </section>
 
         {/* Game controls */}
@@ -383,8 +383,8 @@ function LivePage() {
           <ControlBtn
             icon={<AlertTriangle className="h-4 w-4" />}
             label="Error"
-            onClick={() => setErrorMode((v) => !v)}
-            active={errorMode}
+            onClick={() => setErrorModal("standalone")}
+            active={errorModal !== null}
           />
         </section>
 
@@ -431,6 +431,12 @@ function LivePage() {
         onSelect={handleKillZone}
         onCancel={() => setKillModalOpen(false)}
         previousByZone={previousByZone}
+      />
+
+      <ErrorTypeModal
+        open={errorModal !== null}
+        onSelect={handleErrorTypeSelected}
+        onCancel={() => setErrorModal(null)}
       />
 
       {subSheetOpen && (

@@ -3,6 +3,37 @@ export type StatType = "kill" | "error" | "dig" | "block" | "ace" | "assist" | "
 export type KillZone = 1 | 2 | 3 | 4 | 5 | 6;
 export type MatchFormat = "club" | "highschool";
 
+export type ErrorType =
+  | "hit_error"
+  | "service_error"
+  | "net_touch"
+  | "blocked"
+  | "lift_carry"
+  | "foot_fault"
+  | "double_contact"
+  | "four_touches"
+  | "back_row_violation"
+  | "reach_over"
+  | "rotation_error"
+  | "other";
+
+export type ErrorSource = "attempt" | "standalone";
+
+export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
+  hit_error: "Hit Error",
+  service_error: "Service Error",
+  net_touch: "Net Touch",
+  blocked: "Blocked",
+  lift_carry: "Lift / Carry",
+  foot_fault: "Foot Fault",
+  double_contact: "Double Contact",
+  four_touches: "Four Touches",
+  back_row_violation: "Back Row Violation",
+  reach_over: "Reach Over",
+  rotation_error: "Rotation Error",
+  other: "Other",
+};
+
 export interface PlayerStats {
   kills: number;
   errors: number;
@@ -77,6 +108,9 @@ export interface MatchEvent {
   liberoRotationIndex?: number;
   liberoDirection?: "out" | "in";
   liberoTeam?: "home" | "away";
+  // Error metadata (when type === "STAT" && statType === "error")
+  errorType?: ErrorType;
+  errorSource?: ErrorSource;
 }
 
 export interface SetSummary {

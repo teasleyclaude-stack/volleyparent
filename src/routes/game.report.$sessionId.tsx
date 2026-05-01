@@ -10,6 +10,7 @@ import { useMemo } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
 import { formatLabelShort } from "@/utils/setRules";
 import { exportSessionPDF } from "@/utils/pdfReport";
+import { ERROR_TYPE_LABELS, type ErrorType } from "@/types";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
@@ -36,6 +37,18 @@ function ReportPage() {
         .map((e) => e.killZone as number) ?? [],
     [session, tracked],
   );
+
+  const errorBreakdown = useMemo(() => {
+    const counts: Partial<Record<ErrorType, number>> = {};
+    session?.events.forEach((e) => {
+      if (e.type === "STAT" && e.statType === "error" && e.errorType) {
+        counts[e.errorType] = (counts[e.errorType] ?? 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .filter(([, c]) => (c ?? 0) > 0)
+      .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0)) as [ErrorType, number][];
+  }, [session]);
 
   const csvBlobUrl = useMemo(() => {
     if (!session) return null;
@@ -183,6 +196,28 @@ function ReportPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {errorBreakdown.length > 0 && (
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <h3 className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+              Error Breakdown
+            </h3>
+            <div className="divide-y divide-border">
+              {errorBreakdown.map(([type, count]) => (
+                <div key={type} className="flex items-center justify-between py-1.5">
+                  <span className="text-sm font-bold text-foreground">{ERROR_TYPE_LABELS[type]}</span>
+                  <span className="text-sm font-black tabular-nums text-[#FF4D4D]">{count}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                <span>Total Errors</span>
+                <span className="tabular-nums">
+                  {errorBreakdown.reduce((sum, [, c]) => sum + c, 0)}
+                </span>
+              </div>
             </div>
           </div>
         )}

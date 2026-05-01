@@ -7,6 +7,8 @@ import {
   isLibero,
 } from "@/types";
 import type {
+  ErrorSource,
+  ErrorType,
   GameSession,
   KillZone,
   MatchEvent,
@@ -35,6 +37,7 @@ interface GameStore {
 
   addPoint: (team: "home" | "away") => void;
   recordStat: (playerId: string, stat: StatType, killZone?: KillZone | null) => void;
+  recordError: (playerId: string, errorType: ErrorType, source: ErrorSource) => void;
   recordTimeout: (team: "home" | "away") => void;
   makeSubstitution: (benchPlayerId: string, courtPositionIndex: number) => void;
   correctScore: (team: "home" | "away") => void;
@@ -269,6 +272,37 @@ export const useGameStore = create<GameStore>()(
         }
       },
 
+      recordError: (playerId, errorType, source) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const player = s.roster.find((p) => p.id === playerId);
+        if (!player) return;
+
+        const isAttackError = source === "attempt";
+        player.stats.errors += 1;
+        if (isAttackError) player.stats.totalAttempts += 1;
+
+        pushEvent(s, {
+          type: "STAT",
+          playerId,
+          statType: "error",
+          killZone: null,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          errorType,
+          errorSource: source,
+        });
+
+        set({ session: s });
+        // Opponent always gets the point.
+        get().addPoint(s.isHomeTeam ? "away" : "home");
+      },
+
       recordTimeout: (team) => {
         const cur = get().session;
         if (!cur) return;
@@ -446,7 +480,9 @@ export const useGameStore = create<GameStore>()(
               p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
             } else if (st === "error") {
               p.stats.errors = Math.max(0, p.stats.errors - 1);
-              p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+              // Only attempt-flow errors counted toward totalAttempts.
+              const wasAttack = last.errorSource ? last.errorSource === "attempt" : true;
+              if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
             } else if (st === "dug") {
               p.stats.dugAttempts = Math.max(0, p.stats.dugAttempts - 1);
               p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
@@ -485,7 +521,8 @@ export const useGameStore = create<GameStore>()(
                 p.stats.aces = Math.max(0, p.stats.aces - 1);
               } else if (prevTop.statType === "error") {
                 p.stats.errors = Math.max(0, p.stats.errors - 1);
-                p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+                const wasAttack = prevTop.errorSource ? prevTop.errorSource === "attempt" : true;
+                if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
               }
             }
             s.events.pop();
