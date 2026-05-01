@@ -440,11 +440,11 @@ function SetupPage() {
       <footer className="border-t border-border bg-popover p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         <button
           type="button"
-          disabled={!rotationFull || !trackedId || roster.length < 6}
+          disabled={!rotationFull || !trackedId || roster.length < 6 || liberoPlacementInvalid}
           onClick={handleStart}
           className={cn(
             "flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-black uppercase tracking-widest transition-all",
-            rotationFull && trackedId && roster.length >= 6
+            rotationFull && trackedId && roster.length >= 6 && !liberoPlacementInvalid
               ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 active:scale-[0.98]"
               : "bg-card text-muted-foreground",
           )}
@@ -452,11 +452,12 @@ function SetupPage() {
           <Volleyball className="h-5 w-5" />
           Start Game
         </button>
-        {(!rotationFull || !trackedId || roster.length < 6) && (
+        {(!rotationFull || !trackedId || roster.length < 6 || liberoPlacementInvalid) && (
           <p className="mt-2 text-center text-[11px] text-muted-foreground">
             {roster.length < 6 ? `Add at least ${6 - roster.length} more player${6 - roster.length === 1 ? "" : "s"}. ` : ""}
             {!trackedId ? "Pick your player. " : ""}
-            {roster.length >= 6 && !rotationFull ? "Set all 6 court positions." : ""}
+            {roster.length >= 6 && !rotationFull ? "Set all 6 court positions. " : ""}
+            {liberoPlacementInvalid ? "Move Libero out of the front row." : ""}
           </p>
         )}
       </footer>
