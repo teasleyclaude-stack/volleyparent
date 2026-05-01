@@ -520,6 +520,46 @@ export const useGameStore = create<GameStore>()(
           }
         }
 
+        if (
+          last.type === "LIBERO_SUB" &&
+          last.liberoId &&
+          last.liberoPartnerOutId &&
+          last.liberoRotationIndex !== undefined &&
+          last.liberoTeam
+        ) {
+          const ourRotKey = last.liberoTeam === "home" ? "homeRotationState" : "awayRotationState";
+          const rotation = [...s[ourRotKey]] as RotationState;
+          if (last.liberoDirection === "out") {
+            // Coach had subbed Libero out (partner went into front-row slot). Reverse:
+            // restore Libero to that slot, partner returns to bench, clear partner memory.
+            rotation[last.liberoRotationIndex] = last.liberoId;
+            s[ourRotKey] = rotation;
+            s.roster = s.roster.map((p) =>
+              p.id === last.liberoId ? { ...p, liberoPartnerId: null } : p,
+            );
+            s.pendingLiberoViolation = {
+              team: last.liberoTeam,
+              liberoId: last.liberoId,
+              rotationIndex: last.liberoRotationIndex,
+            };
+          } else {
+            // Auto-return: Libero came back in for partner in back row. Reverse:
+            // partner back to that slot, Libero to bench, restore partner memory.
+            rotation[last.liberoRotationIndex] = last.liberoPartnerOutId;
+            s[ourRotKey] = rotation;
+            s.roster = s.roster.map((p) =>
+              p.id === last.liberoId
+                ? { ...p, liberoPartnerId: last.liberoPartnerOutId ?? null }
+                : p,
+            );
+          }
+          if (last.liberoTeam === "home") {
+            s.homeLiberoSubs = Math.max(0, (s.homeLiberoSubs ?? 0) - 1);
+          } else {
+            s.awayLiberoSubs = Math.max(0, (s.awayLiberoSubs ?? 0) - 1);
+          }
+        }
+
         // Suppress unused
         void snapshot;
 
