@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import type { KillZone } from "@/types";
 import { tapHaptic } from "@/utils/haptics";
+import { Tip } from "@/components/common/Tip";
+import { shouldShowTip, dismissTip } from "@/lib/tips";
+import { usePracticeStore } from "@/store/practiceStore";
 
 interface KillHeatMapProps {
   open: boolean;
