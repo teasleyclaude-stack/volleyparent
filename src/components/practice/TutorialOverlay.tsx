@@ -31,6 +31,8 @@ export interface StepConfig {
 interface TutorialOverlayProps {
   config: StepConfig;
   onSkip: () => void;
+  /** Called when user swipes right or taps Back. Omit to hide back affordance. */
+  onBack?: () => void;
 }
 
 function rectOf(target: string): DOMRect | null {
