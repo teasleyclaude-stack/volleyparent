@@ -12,24 +12,16 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
     description: "Tap the + button for whichever team just scored. The app handles rotation automatically when the other team earns the serve.",
     target: "score-home",
   },
-  sideout: {
-    step: "sideout",
-    index: 2,
-    title: "Side out — earning the serve back",
-    description: "When the opponent scores while you're serving, tap their + button. Your team rotates clockwise and earns the serve.",
-    target: "score-away",
-    target2: "court",
-  },
   attempt: {
     step: "attempt",
-    index: 3,
+    index: 2,
     title: "Recording an attack",
     description: "When your player attacks, tap ATTEMPT. You'll choose what happened — Kill, Dug, or Error.",
     target: "btn-attempt",
   },
   kill: {
     step: "kill",
-    index: 4,
+    index: 3,
     title: "It's a kill!",
     description: "Tap KILL when your player's attack scores a point. You'll then mark where it landed on the opponent's court.",
     target: "attempt-kill",
@@ -37,7 +29,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
   },
   killZone: {
     step: "killZone",
-    index: 5,
+    index: 4,
     title: "Where did it land?",
     description: "Tap the zone where the ball landed. Back row: 1·6·5 · Front row: 2·3·4. This builds your shot chart.",
     target: "kill-zones",
@@ -45,14 +37,14 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
   },
   defense: {
     step: "defense",
-    index: 6,
+    index: 5,
     title: "Tracking defensive plays",
     description: "Use these for defensive plays. DIG for passing attacks, BLOCK for net blocks, ACE when your player's serve scores directly.",
     target: "defense-row",
   },
   longPressSub: {
     step: "longPressSub",
-    index: 7,
+    index: 6,
     title: "Quick substitution",
     description: "Long press any player on the court for 1 second to substitute them. Fastest way to make a change during a live rally.",
     target: "court",
@@ -60,14 +52,15 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
   },
   undo: {
     step: "undo",
-    index: 8,
+    index: 7,
     title: "Made a mistake? No problem.",
     description: "Tap UNDO to reverse the last action. Fat fingers happen — this keeps your stats accurate without interrupting the game.",
     target: "btn-undo",
+    cardPosition: "top",
   },
 };
 
-const TOTAL = 8;
+const TOTAL = 7;
 
 /**
  * Drives the Practice Mode tutorial: detects user actions via gameStore
