@@ -66,6 +66,8 @@ export function Scoreboard(props: ScoreboardProps) {
   const [flashHome, setFlashHome] = useState(false);
   const [flashAway, setFlashAway] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [showWinByTwoTip, setShowWinByTwoTip] = useState(false);
+  const isPractice = usePracticeStore((s) => s.isPractice);
 
   const lastTapHome = useRef<number>(0);
   const lastTapAway = useRef<number>(0);
