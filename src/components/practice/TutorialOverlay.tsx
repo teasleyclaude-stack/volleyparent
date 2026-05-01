@@ -42,7 +42,7 @@ function rectOf(target: string): DOMRect | null {
   return el.getBoundingClientRect();
 }
 
-export function TutorialOverlay({ config, onSkip }: TutorialOverlayProps) {
+export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps) {
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [rect2, setRect2] = useState<DOMRect | null>(null);
   const [showHint, setShowHint] = useState(false);
