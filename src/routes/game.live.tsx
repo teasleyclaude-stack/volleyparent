@@ -350,7 +350,7 @@ function LivePage() {
           }}
         />
 
-        <div className="relative" onClick={dismissLongPressTip}>
+        <div className="relative" data-tutorial="court" onClick={dismissLongPressTip}>
           <RotationCourt
             rotation={ourRotation}
             roster={session.roster}
@@ -364,15 +364,13 @@ function LivePage() {
             flashIndex={flashIdx}
           />
           {showLongPressTip && (
-            <div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded-xl bg-primary px-3 py-2 text-[11px] font-bold text-primary-foreground shadow-lg">
-              Long press any player on the court to substitute
-              <div
-                className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2"
-                style={{
-                  borderLeft: "6px solid transparent",
-                  borderRight: "6px solid transparent",
-                  borderTop: "6px solid var(--primary)",
-                }}
+            <div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2">
+              <Tip
+                show={showLongPressTip}
+                message="Long press any player on the court to substitute them quickly."
+                arrow="up"
+                autoDismissMs={4000}
+                onDismiss={dismissLongPressTip}
               />
             </div>
           )}
