@@ -125,6 +125,34 @@ function LivePage() {
   }, [matchOverPopup, session]);
   void decidingSet;
 
+  // First-launch tooltip for long-press shortcut.
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const seen = window.localStorage.getItem("courtsideview_longpress_tip_seen");
+      if (!seen) {
+        setShowLongPressTip(true);
+        const t = window.setTimeout(() => {
+          setShowLongPressTip(false);
+          window.localStorage.setItem("courtsideview_longpress_tip_seen", "1");
+        }, 3000);
+        return () => window.clearTimeout(t);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const dismissLongPressTip = () => {
+    if (!showLongPressTip) return;
+    setShowLongPressTip(false);
+    try {
+      window.localStorage.setItem("courtsideview_longpress_tip_seen", "1");
+    } catch {
+      // ignore
+    }
+  };
+
   if (!session) {
     return (
       <PhoneShell>
@@ -288,13 +316,33 @@ function LivePage() {
           }}
         />
 
-        <RotationCourt
-          rotation={ourRotation}
-          roster={session.roster}
-          isHomeServing={session.isHomeServing}
-          isHomeOurs={session.isHomeTeam}
-          ourColor={session.isHomeTeam ? session.homeColor : session.awayColor}
-        />
+        <div className="relative" onClick={dismissLongPressTip}>
+          <RotationCourt
+            rotation={ourRotation}
+            roster={session.roster}
+            isHomeServing={session.isHomeServing}
+            isHomeOurs={session.isHomeTeam}
+            ourColor={session.isHomeTeam ? session.homeColor : session.awayColor}
+            onLongPressCell={(idx) => {
+              dismissLongPressTip();
+              setQuickSubIdx(idx);
+            }}
+            flashIndex={flashIdx}
+          />
+          {showLongPressTip && (
+            <div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded-xl bg-primary px-3 py-2 text-[11px] font-bold text-primary-foreground shadow-lg">
+              Long press any player on the court to substitute
+              <div
+                className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2"
+                style={{
+                  borderLeft: "6px solid transparent",
+                  borderRight: "6px solid transparent",
+                  borderTop: "6px solid var(--primary)",
+                }}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Tracked player + stat buttons */}
         <section className="px-4 pt-3">
