@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import type { KillZone } from "@/types";
 import { tapHaptic } from "@/utils/haptics";
+import { Tip } from "@/components/common/Tip";
+import { shouldShowTip, dismissTip } from "@/lib/tips";
+import { usePracticeStore } from "@/store/practiceStore";
 
 interface KillHeatMapProps {
   open: boolean;
@@ -17,18 +20,36 @@ const FRONT_ROW: KillZone[] = [2, 3, 4];
 
 export function KillHeatMap({ open, onSelect, onCancel, previousByZone = {} }: KillHeatMapProps) {
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const isPractice = usePracticeStore((s) => s.isPractice);
+  const [showZoneTip, setShowZoneTip] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setConfirmation(null);
+      setShowZoneTip(false);
       return;
+    }
+    if (shouldShowTip("killZones", isPractice)) {
+      setShowZoneTip(true);
+      const t = window.setTimeout(() => {
+        setShowZoneTip(false);
+        dismissTip("killZones");
+      }, 4000);
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onCancel();
+      };
+      window.addEventListener("keydown", onKey);
+      return () => {
+        window.clearTimeout(t);
+        window.removeEventListener("keydown", onKey);
+      };
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
+  }, [open, onCancel, isPractice]);
 
   if (!open) return null;
 
@@ -73,8 +94,25 @@ export function KillHeatMap({ open, onSelect, onCancel, previousByZone = {} }: K
           </button>
         </div>
 
+        {/* Tip */}
+        {showZoneTip && (
+          <div className="mb-2 flex justify-center">
+            <Tip
+              show={showZoneTip}
+              message="Tap where the ball landed. Back row: 1·6·5 · Front row: 2·3·4"
+              arrow="down"
+              autoDismissMs={4000}
+              onDismiss={() => {
+                setShowZoneTip(false);
+                dismissTip("killZones");
+              }}
+            />
+          </div>
+        )}
+
         {/* Court diagram */}
         <div
+          data-tutorial="kill-zones"
           className="overflow-hidden rounded-2xl border-2 border-white"
           style={{ backgroundColor: "#0A0E1A" }}
         >

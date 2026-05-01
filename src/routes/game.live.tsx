@@ -18,10 +18,13 @@ import { FanviewButton } from "@/components/game/FanviewButton";
 import { useFanview } from "@/hooks/useFanview";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
+import { usePracticeStore } from "@/store/practiceStore";
 import { hittingPercentage } from "@/utils/stats";
 import { checkSetWon, checkMatchWon, setTarget, maxSets, decidingSet } from "@/utils/setRules";
 import { tapHaptic } from "@/utils/haptics";
 import { fireWinConfetti } from "@/utils/winConfetti";
+import { Tip } from "@/components/common/Tip";
+import { shouldShowTip, dismissTip } from "@/lib/tips";
 import type { ErrorType, KillZone, StatType } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +54,7 @@ function LivePage() {
   const confirmLiberoSub = useGameStore((s) => s.confirmLiberoSub);
   const saveSession = useHistoryStore((s) => s.saveSession);
   const fanview = useFanview();
+  const isPractice = usePracticeStore((s) => s.isPractice);
 
   const [killModalOpen, setKillModalOpen] = useState(false);
   const [attemptMenuOpen, setAttemptMenuOpen] = useState(false);
@@ -59,6 +63,8 @@ function LivePage() {
   const [quickSubIdx, setQuickSubIdx] = useState<number | null>(null);
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [showLongPressTip, setShowLongPressTip] = useState(false);
+  const [showFanviewTip, setShowFanviewTip] = useState(false);
+  const [showAttemptFlowTip, setShowAttemptFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [setOverPopup, setSetOverPopup] = useState<{ winner: "home" | "away"; setNumber: number; homeScore: number; awayScore: number } | null>(null);
@@ -125,32 +131,35 @@ function LivePage() {
   }, [matchOverPopup, session]);
   void decidingSet;
 
-  // First-launch tooltip for long-press shortcut.
+  // Long-press contextual tip — uses the new tips system (skipped during practice).
   useEffect(() => {
-    try {
-      if (typeof window === "undefined") return;
-      const seen = window.localStorage.getItem("courtsideview_longpress_tip_seen");
-      if (!seen) {
-        setShowLongPressTip(true);
-        const t = window.setTimeout(() => {
-          setShowLongPressTip(false);
-          window.localStorage.setItem("courtsideview_longpress_tip_seen", "1");
-        }, 3000);
-        return () => window.clearTimeout(t);
-      }
-    } catch {
-      // ignore storage errors
+    if (shouldShowTip("longPressSub", isPractice)) {
+      setShowLongPressTip(true);
+      const t = window.setTimeout(() => {
+        setShowLongPressTip(false);
+        dismissTip("longPressSub");
+      }, 4000);
+      return () => window.clearTimeout(t);
     }
-  }, []);
+  }, [isPractice]);
+
+  // FanView tip — fires 8s after dashboard loads on first real game.
+  useEffect(() => {
+    if (!shouldShowTip("fanView", isPractice)) return;
+    const t = window.setTimeout(() => {
+      setShowFanviewTip(true);
+      window.setTimeout(() => {
+        setShowFanviewTip(false);
+        dismissTip("fanView");
+      }, 4000);
+    }, 8000);
+    return () => window.clearTimeout(t);
+  }, [isPractice]);
 
   const dismissLongPressTip = () => {
     if (!showLongPressTip) return;
     setShowLongPressTip(false);
-    try {
-      window.localStorage.setItem("courtsideview_longpress_tip_seen", "1");
-    } catch {
-      // ignore
-    }
+    dismissTip("longPressSub");
   };
 
   if (!session) {
@@ -175,7 +184,24 @@ function LivePage() {
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
-      setAttemptMenuOpen((v) => !v);
+      setAttemptMenuOpen((v) => {
+        const next = !v;
+        if (next) {
+          // Notify practice coordinator
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("practice:attempt-open"));
+          }
+          // Contextual tip — first time the attempt sub-menu opens
+          if (shouldShowTip("attemptFlow", isPractice)) {
+            setShowAttemptFlowTip(true);
+            window.setTimeout(() => {
+              setShowAttemptFlowTip(false);
+              dismissTip("attemptFlow");
+            }, 4000);
+          }
+        }
+        return next;
+      });
       return;
     }
     recordStat(tracked.id, stat);
@@ -203,18 +229,26 @@ function LivePage() {
   const handleKillZone = (zone: KillZone | null) => {
     setKillModalOpen(false);
     recordStat(tracked.id, "kill", zone);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("practice:kill-zone-selected"));
+    }
   };
 
   const handleEndGame = async () => {
     endGame();
     const finalSession = useGameStore.getState().session!;
-    saveSession({ ...finalSession });
-    try {
-      await fanview.finalize();
-    } catch (e) {
-      console.error("fanview finalize failed", e);
+    // Practice sessions are never persisted to history.
+    if (!isPractice) {
+      saveSession({ ...finalSession });
+      try {
+        await fanview.finalize();
+      } catch (e) {
+        console.error("fanview finalize failed", e);
+      }
+      navigate({ to: "/game/report/$sessionId", params: { sessionId: session.id } });
+    } else {
+      navigate({ to: "/" });
     }
-    navigate({ to: "/game/report/$sessionId", params: { sessionId: session.id } });
   };
 
   const confirmEndSet = () => {
@@ -261,9 +295,23 @@ function LivePage() {
         <Link to="/" className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2" data-tutorial="fanview-btn">
           <div className="text-[10px] font-black uppercase tracking-widest text-primary">● Live</div>
           <FanviewButton />
+          {showFanviewTip && (
+            <div className="absolute -bottom-2 right-0 z-30 translate-y-full">
+              <Tip
+                show={showFanviewTip}
+                message="Share a live link so family can follow the game from anywhere."
+                arrow="up"
+                autoDismissMs={4000}
+                onDismiss={() => {
+                  setShowFanviewTip(false);
+                  dismissTip("fanView");
+                }}
+              />
+            </div>
+          )}
         </div>
         <button
           type="button"
@@ -316,7 +364,7 @@ function LivePage() {
           }}
         />
 
-        <div className="relative" onClick={dismissLongPressTip}>
+        <div className="relative" data-tutorial="court" onClick={dismissLongPressTip}>
           <RotationCourt
             rotation={ourRotation}
             roster={session.roster}
@@ -330,15 +378,13 @@ function LivePage() {
             flashIndex={flashIdx}
           />
           {showLongPressTip && (
-            <div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded-xl bg-primary px-3 py-2 text-[11px] font-bold text-primary-foreground shadow-lg">
-              Long press any player on the court to substitute
-              <div
-                className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2"
-                style={{
-                  borderLeft: "6px solid transparent",
-                  borderRight: "6px solid transparent",
-                  borderTop: "6px solid var(--primary)",
-                }}
+            <div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2">
+              <Tip
+                show={showLongPressTip}
+                message="Long press any player on the court to substitute them quickly."
+                arrow="up"
+                autoDismissMs={4000}
+                onDismiss={dismissLongPressTip}
               />
             </div>
           )}
@@ -380,22 +426,41 @@ function LivePage() {
             ))}
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2.5">
-            <StatButton stat="kill" label="Attempt" onPress={() => handleStat("kill")} />
-            <StatButton stat="dig" label="Dig" onPress={() => handleStat("dig")} />
-            <StatButton stat="block" label="Block" onPress={() => handleStat("block")} />
-            <StatButton stat="ace" label="Ace" onPress={() => handleStat("ace")} />
+          <div className="mt-3 space-y-2.5">
+            <div data-tutorial="btn-attempt">
+              <StatButton stat="kill" label="Attempt" onPress={() => handleStat("kill")} />
+            </div>
+            <div data-tutorial="defense-row" className="grid grid-cols-3 gap-2.5">
+              <StatButton stat="dig" label="Dig" onPress={() => handleStat("dig")} />
+              <StatButton stat="block" label="Block" onPress={() => handleStat("block")} />
+              <StatButton stat="ace" label="Ace" onPress={() => handleStat("ace")} />
+            </div>
           </div>
 
           {attemptMenuOpen && (
-            <div className="mt-2.5 rounded-2xl border border-border bg-popover p-2.5">
+            <div className="relative mt-2.5 rounded-2xl border border-border bg-popover p-2.5">
               <div className="mb-1.5 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 Attempt outcome
               </div>
+              {showAttemptFlowTip && (
+                <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+                  <Tip
+                    show={showAttemptFlowTip}
+                    message="Choose what happened — Kill scores, Dug means they passed it, Error gives them a point."
+                    arrow="down"
+                    autoDismissMs={4000}
+                    onDismiss={() => {
+                      setShowAttemptFlowTip(false);
+                      dismissTip("attemptFlow");
+                    }}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => handleAttemptOutcome("kill")}
+                  data-tutorial="attempt-kill"
                   className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--kill)] text-[var(--kill-foreground)] shadow-lg shadow-black/30"
                 >
                   <span className="text-[13px] font-black uppercase tracking-widest">Kill</span>
@@ -454,6 +519,7 @@ function LivePage() {
               tapHaptic("light");
               undo();
             }}
+            data-tutorial="btn-undo"
             className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-muted-foreground active:scale-95"
           >
             <Undo2 className="h-4 w-4" /> Undo

@@ -1,8 +1,12 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { SplashScreen } from "@/components/common/SplashScreen";
 import { InstallBanner } from "@/components/common/InstallBanner";
+import { PracticeBanner } from "@/components/practice/PracticeBanner";
+import { PracticeCoordinator } from "@/components/practice/PracticeCoordinator";
+import { WelcomePrompt } from "@/components/practice/WelcomePrompt";
 
 function NotFoundComponent() {
   return (
@@ -90,10 +94,25 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const loc = useLocation();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    try {
+      const seen = window.localStorage.getItem("courtsideview_practice_seen");
+      if (!seen && loc.pathname === "/") setShowWelcome(true);
+    } catch {
+      /* noop */
+    }
+  }, [loc.pathname]);
+
   return (
     <SplashScreen>
+      <PracticeBanner />
       <Outlet />
       <InstallBanner />
+      <PracticeCoordinator />
+      <WelcomePrompt open={showWelcome} onSkip={() => setShowWelcome(false)} />
     </SplashScreen>
   );
 }

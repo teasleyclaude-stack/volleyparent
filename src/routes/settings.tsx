@@ -1,12 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { BottomTabs } from "@/components/common/BottomTabs";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useTheme } from "@/hooks/useTheme";
-import { Trash2, Moon, Sun } from "lucide-react";
+import { Trash2, Moon, Sun, Star, ChevronRight, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/courtsideview-logo.png";
+import { startPracticeMode } from "@/utils/practice";
+import { resetAllTips } from "@/lib/tips";
+import { toast } from "sonner";
 
 const THEME_OPTIONS = [
   { value: "dark", label: "Dark", Icon: Moon },
@@ -26,10 +29,22 @@ export const Route = createFileRoute("/settings")({
 function SettingsPage() {
   const clear = useGameStore((s) => s.clearSession);
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+
   const wipe = () => {
     if (!confirm("Clear all saved games? This cannot be undone.")) return;
     useHistoryStore.setState({ sessions: [] });
     clear();
+  };
+
+  const launchPractice = () => {
+    startPracticeMode();
+    navigate({ to: "/game/live" });
+  };
+
+  const handleResetTips = () => {
+    resetAllTips();
+    toast("Tips reset — they'll show again the next time each feature is used.");
   };
 
   return (
@@ -39,6 +54,33 @@ function SettingsPage() {
       </header>
 
       <main className="flex-1 space-y-3 overflow-y-auto px-4 pb-4">
+        <section>
+          <h2 className="mb-2 px-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+            Practice Mode
+          </h2>
+          <button
+            type="button"
+            onClick={launchPractice}
+            className="flex w-full items-center justify-between rounded-2xl border border-border bg-card p-4 text-left active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <Star className="h-5 w-5 fill-[#39FF14] text-[#39FF14]" strokeWidth={1.5} />
+              <div>
+                <div className="text-sm font-black text-foreground">Launch Practice Game</div>
+                <div className="text-[11px] text-muted-foreground">Learn the app before game day</div>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </button>
+          <button
+            type="button"
+            onClick={handleResetTips}
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card text-[12px] font-bold uppercase tracking-widest text-muted-foreground active:scale-[0.99]"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Reset all tips
+          </button>
+        </section>
+
         <div className="rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl">

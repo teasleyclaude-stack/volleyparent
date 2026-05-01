@@ -299,6 +299,7 @@ export function Scoreboard(props: ScoreboardProps) {
         <button
           type="button"
           onClick={onScoreHome}
+          data-tutorial="score-home"
           className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-card text-foreground active:scale-95 transition-transform border border-border"
         >
           <Plus className="h-5 w-5" /> <span className="text-sm font-bold">Home</span>
@@ -306,6 +307,7 @@ export function Scoreboard(props: ScoreboardProps) {
         <button
           type="button"
           onClick={onScoreAway}
+          data-tutorial="score-away"
           className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-card text-foreground active:scale-95 transition-transform border border-border"
         >
           <Plus className="h-5 w-5" /> <span className="text-sm font-bold">Away</span>

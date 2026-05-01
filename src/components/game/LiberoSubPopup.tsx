@@ -1,9 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import type { Player, RotationState } from "@/types";
 import { FRONT_ROW_INDICES } from "@/types";
 import { tapHaptic } from "@/utils/haptics";
 import { cn } from "@/lib/utils";
+import { Tip } from "@/components/common/Tip";
+import { shouldShowTip, dismissTip } from "@/lib/tips";
+import { usePracticeStore } from "@/store/practiceStore";
 
 interface LiberoSubPopupProps {
   open: boolean;
@@ -27,9 +30,16 @@ export function LiberoSubPopup({
   roster,
   onConfirm,
 }: LiberoSubPopupProps) {
+  const isPractice = usePracticeStore((s) => s.isPractice);
+  const [showTip, setShowTip] = useState(false);
   useEffect(() => {
-    if (open) tapHaptic("heavy");
-  }, [open]);
+    if (open) {
+      tapHaptic("heavy");
+      if (shouldShowTip("liberoSub", isPractice)) setShowTip(true);
+    } else {
+      setShowTip(false);
+    }
+  }, [open, isPractice]);
 
   if (!open) return null;
   const libero = roster.find((p) => p.id === liberoId);
