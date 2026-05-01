@@ -184,7 +184,24 @@ function LivePage() {
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
-      setAttemptMenuOpen((v) => !v);
+      setAttemptMenuOpen((v) => {
+        const next = !v;
+        if (next) {
+          // Notify practice coordinator
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("practice:attempt-open"));
+          }
+          // Contextual tip — first time the attempt sub-menu opens
+          if (shouldShowTip("attemptFlow", isPractice)) {
+            setShowAttemptFlowTip(true);
+            window.setTimeout(() => {
+              setShowAttemptFlowTip(false);
+              dismissTip("attemptFlow");
+            }, 4000);
+          }
+        }
+        return next;
+      });
       return;
     }
     recordStat(tracked.id, stat);
@@ -212,18 +229,26 @@ function LivePage() {
   const handleKillZone = (zone: KillZone | null) => {
     setKillModalOpen(false);
     recordStat(tracked.id, "kill", zone);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("practice:kill-zone-selected"));
+    }
   };
 
   const handleEndGame = async () => {
     endGame();
     const finalSession = useGameStore.getState().session!;
-    saveSession({ ...finalSession });
-    try {
-      await fanview.finalize();
-    } catch (e) {
-      console.error("fanview finalize failed", e);
+    // Practice sessions are never persisted to history.
+    if (!isPractice) {
+      saveSession({ ...finalSession });
+      try {
+        await fanview.finalize();
+      } catch (e) {
+        console.error("fanview finalize failed", e);
+      }
+      navigate({ to: "/game/report/$sessionId", params: { sessionId: session.id } });
+    } else {
+      navigate({ to: "/" });
     }
-    navigate({ to: "/game/report/$sessionId", params: { sessionId: session.id } });
   };
 
   const confirmEndSet = () => {
