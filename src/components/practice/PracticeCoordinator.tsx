@@ -70,6 +70,7 @@ export function PracticeCoordinator() {
   const isPractice = usePracticeStore((s) => s.isPractice);
   const step = usePracticeStore((s) => s.step);
   const advance = usePracticeStore((s) => s.advance);
+  const back = usePracticeStore((s) => s.back);
   const exit = usePracticeStore((s) => s.exit);
   const session = useGameStore((s) => s.session);
   const clearSession = useGameStore((s) => s.clearSession);
