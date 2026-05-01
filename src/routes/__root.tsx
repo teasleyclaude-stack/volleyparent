@@ -94,10 +94,25 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const loc = useLocation();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    try {
+      const seen = window.localStorage.getItem("courtsideview_practice_seen");
+      if (!seen && loc.pathname === "/") setShowWelcome(true);
+    } catch {
+      /* noop */
+    }
+  }, [loc.pathname]);
+
   return (
     <SplashScreen>
+      <PracticeBanner />
       <Outlet />
       <InstallBanner />
+      <PracticeCoordinator />
+      <WelcomePrompt open={showWelcome} onSkip={() => setShowWelcome(false)} />
     </SplashScreen>
   );
 }
