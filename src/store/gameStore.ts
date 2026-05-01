@@ -62,6 +62,42 @@ const pushEvent = (s: GameSession, e: Omit<MatchEvent, "id" | "timestamp">) => {
   s.events.push(ev);
 };
 
+/** If a Libero is in any front-row index of the rotation, return the (firstViolating)
+ *  rotation index and the Libero's player id. */
+function findLiberoFrontRowViolation(
+  rotation: RotationState,
+  roster: Player[],
+): { rotationIndex: number; liberoId: string } | null {
+  for (const idx of FRONT_ROW_INDICES) {
+    const p = roster.find((r) => r.id === rotation[idx]);
+    if (p && isLibero(p)) return { rotationIndex: idx, liberoId: p.id };
+  }
+  return null;
+}
+
+/** If any benched Libero's remembered partner is now in a back-row slot,
+ *  swap the Libero back in. Returns updated rotation + sub info, or null. */
+function maybeAutoLiberoReturn(
+  rotation: RotationState,
+  roster: Player[],
+): { rotation: RotationState; liberoId: string; partnerOutId: string; rotationIndex: number } | null {
+  const onCourt = new Set(rotation);
+  const liberos = roster.filter(
+    (p) => isLibero(p) && p.liberoPartnerId && !onCourt.has(p.id),
+  );
+  for (const lib of liberos) {
+    const partnerId = lib.liberoPartnerId!;
+    const partnerIdx = rotation.indexOf(partnerId);
+    if (partnerIdx === -1) continue;
+    if ((BACK_ROW_INDICES as readonly number[]).includes(partnerIdx)) {
+      const next = [...rotation] as RotationState;
+      next[partnerIdx] = lib.id;
+      return { rotation: next, liberoId: lib.id, partnerOutId: partnerId, rotationIndex: partnerIdx };
+    }
+  }
+  return null;
+}
+
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
