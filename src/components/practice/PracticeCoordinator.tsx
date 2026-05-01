@@ -50,6 +50,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
     title: "Quick substitution",
     description: "Long press any player on the court for 1 second to substitute them. Fastest way to make a change during a live rally.",
     target: "court",
+    cardPosition: "top",
     pulseRing: true,
   },
   undo: {

@@ -10,6 +10,9 @@ const PRACTICE_ROSTER: Player[] = [
   { id: "p5", name: "Chloe W.", number: 5,  position: "L",  isTracked: false, liberoPartnerId: null, stats: stats() },
   { id: "p6", name: "Maya P.",  number: 21, position: "MB", isTracked: false, liberoPartnerId: null, stats: stats() },
   { id: "p7", name: "Jess B.",  number: 9,  position: "DS", isTracked: false, liberoPartnerId: null, stats: stats() },
+  { id: "p8", name: "Nora H.",  number: 14, position: "OH", isTracked: false, liberoPartnerId: null, stats: stats() },
+  { id: "p9", name: "Riley S.", number: 2,  position: "S",  isTracked: false, liberoPartnerId: null, stats: stats() },
+  { id: "p10", name: "Zoe D.",  number: 11, position: "MB", isTracked: false, liberoPartnerId: null, stats: stats() },
 ];
 
 function stats() {
