@@ -1,7 +1,9 @@
+import { useRef, useState } from "react";
 import { Star } from "lucide-react";
 import type { Player, RotationState } from "@/types";
 import { isLibero } from "@/types";
 import { cn } from "@/lib/utils";
+import { tapHaptic } from "@/utils/haptics";
 
 interface RotationCourtProps {
   rotation: RotationState;
@@ -9,6 +11,10 @@ interface RotationCourtProps {
   isHomeServing: boolean;
   isHomeOurs: boolean;
   ourColor: string;
+  /** Fired after a 500ms hold on a cell. Receives the rotation index (0..5). */
+  onLongPressCell?: (rotationIndex: number) => void;
+  /** Rotation index to briefly green-flash (e.g. just after a sub). */
+  flashIndex?: number | null;
 }
 
 /**
@@ -17,10 +23,46 @@ interface RotationCourtProps {
  *     [P4 OH] [P3 MB] [P2 RS]   <- front row (at net)
  *     [P5 OH] [P6 MB] [P1 S ]   <- back row (P1 = server)
  */
-export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs, ourColor }: RotationCourtProps) {
+export function RotationCourt({
+  rotation,
+  roster,
+  isHomeServing,
+  isHomeOurs,
+  ourColor,
+  onLongPressCell,
+  flashIndex,
+}: RotationCourtProps) {
   const find = (id: string) => roster.find((p) => p.id === id);
-  const cellOrder: number[] = [3, 2, 1, 4, 5, 0]; // indices into rotation for the 6 grid cells (front L→R, back L→R)
+  const cellOrder: number[] = [3, 2, 1, 4, 5, 0];
   const oursServing = isHomeServing === isHomeOurs;
+
+  const timerRef = useRef<number | null>(null);
+  const longPressedRef = useRef(false);
+  const [pulseIdx, setPulseIdx] = useState<number | null>(null);
+
+  const clearTimer = () => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const startPress = (rotIdx: number) => {
+    if (!onLongPressCell) return;
+    longPressedRef.current = false;
+    clearTimer();
+    timerRef.current = window.setTimeout(() => {
+      longPressedRef.current = true;
+      tapHaptic("heavy");
+      setPulseIdx(rotIdx);
+      window.setTimeout(() => setPulseIdx(null), 220);
+      onLongPressCell(rotIdx);
+    }, 500);
+  };
+
+  const cancelPress = () => {
+    clearTimer();
+  };
 
   return (
     <div className="border-b border-border bg-background px-4 py-4">
@@ -34,7 +76,6 @@ export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs, our
       </div>
 
       <div className="relative overflow-hidden rounded-2xl border border-border bg-[var(--popover)] p-3">
-        {/* Court lines decoration */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -49,24 +90,40 @@ export function RotationCourt({ rotation, roster, isHomeServing, isHomeOurs, our
             const isServer = rotIdx === 0;
             const isFrontRow = gridIdx < 3;
             const liberoCell = player ? isLibero(player) : false;
+            const isFlashing = flashIndex === rotIdx;
+            const isPulsing = pulseIdx === rotIdx;
             return (
               <div
                 key={gridIdx}
+                onPointerDown={() => startPress(rotIdx)}
+                onPointerUp={cancelPress}
+                onPointerLeave={cancelPress}
+                onPointerCancel={cancelPress}
+                onContextMenu={(e) => e.preventDefault()}
                 className={cn(
-                  "relative flex aspect-square flex-col items-center justify-center rounded-xl border bg-card px-1 py-2 text-center transition-all",
+                  "relative flex aspect-square select-none flex-col items-center justify-center rounded-xl border bg-card px-1 py-2 text-center transition-all duration-200",
                   "border-border",
                   isServer && oursServing && "vp-serving",
                 )}
-                style={
-                  liberoCell
+                style={{
+                  ...(liberoCell
                     ? {
                         backgroundColor: "rgba(0, 172, 193, 0.15)",
                         borderColor: "#00ACC1",
                       }
                     : isServer && oursServing
                       ? { borderColor: ourColor }
-                      : undefined
-                }
+                      : {}),
+                  ...(isFlashing
+                    ? {
+                        backgroundColor: "rgba(57, 255, 20, 0.35)",
+                        borderColor: "#39FF14",
+                      }
+                    : {}),
+                  transform: isPulsing ? "scale(1.08)" : "scale(1)",
+                  WebkitUserSelect: "none",
+                  WebkitTouchCallout: "none",
+                }}
               >
                 {player?.isTracked && (
                   <Star
