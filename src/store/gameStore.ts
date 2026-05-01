@@ -40,6 +40,8 @@ interface GameStore {
   correctScore: (team: "home" | "away") => void;
   /** Overwrite one team's rotation tuple (used by lineup modal & auto-repair). */
   setRotation: (team: "home" | "away", rotation: RotationState) => void;
+  /** Resolve a pending Libero front-row violation by selecting which front-row player they replace. */
+  confirmLiberoSub: (subOutPlayerId: string) => void;
   undoLastAction: () => void;
   endSet: () => void;
   endGame: () => void;
