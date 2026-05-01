@@ -521,7 +521,8 @@ export const useGameStore = create<GameStore>()(
                 p.stats.aces = Math.max(0, p.stats.aces - 1);
               } else if (prevTop.statType === "error") {
                 p.stats.errors = Math.max(0, p.stats.errors - 1);
-                p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+                const wasAttack = prevTop.errorSource ? prevTop.errorSource === "attempt" : true;
+                if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
               }
             }
             s.events.pop();
