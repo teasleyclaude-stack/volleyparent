@@ -1,4 +1,5 @@
 import type { GameSession, MatchEvent, MatchFormat, Player, RotationState } from "@/types";
+import { ERROR_TYPE_LABELS } from "@/types";
 import { hittingPercentage } from "@/utils/stats";
 
 export interface FanviewMeta {
