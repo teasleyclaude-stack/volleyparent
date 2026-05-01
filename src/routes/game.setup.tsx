@@ -492,6 +492,7 @@ function RotationSlot({
   onPick,
   roster,
   rotation,
+  illegalLibero,
 }: {
   label: string;
   sub: string;
@@ -500,6 +501,7 @@ function RotationSlot({
   onPick: (pid: string) => void;
   roster: Player[];
   rotation: (string | null)[];
+  illegalLibero?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const available = roster.filter((p) => !rotation.includes(p.id) || p.id === player?.id);
@@ -511,7 +513,11 @@ function RotationSlot({
         onClick={() => setOpen((o) => !o)}
         className={cn(
           "flex aspect-square w-full flex-col items-center justify-center rounded-xl border bg-card px-1 text-center",
-          player ? "border-border" : "border-dashed border-border/60",
+          illegalLibero
+            ? "border-2 border-[#FF4D4D]"
+            : player
+              ? "border-border"
+              : "border-dashed border-border/60",
         )}
       >
         <span className="absolute left-1.5 top-1.5 text-[9px] font-black uppercase tracking-wider text-muted-foreground">
