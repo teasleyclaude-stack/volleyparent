@@ -218,7 +218,13 @@ export function PracticeCoordinator() {
 
   return (
     <>
-      {config && <TutorialOverlay config={config} onSkip={skip} />}
+      {config && (
+        <TutorialOverlay
+          config={config}
+          onSkip={skip}
+          onBack={config.index > 1 ? back : undefined}
+        />
+      )}
       <StepFlashOverlay
         message={flash ?? ""}
         show={flash !== null}
