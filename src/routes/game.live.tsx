@@ -366,18 +366,6 @@ function LivePage() {
             </div>
           )}
 
-          {errorMode && (
-            <div className="mt-2.5">
-              <StatButton
-                stat="error"
-                label="Hitting Error"
-                onPress={() => {
-                  handleStat("error");
-                  setErrorMode(false);
-                }}
-              />
-            </div>
-          )}
         </section>
 
         {/* Game controls */}
