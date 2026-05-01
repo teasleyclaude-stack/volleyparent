@@ -412,11 +412,11 @@ function LivePage() {
             ))}
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2.5">
+          <div className="mt-3 space-y-2.5">
             <div data-tutorial="btn-attempt">
               <StatButton stat="kill" label="Attempt" onPress={() => handleStat("kill")} />
             </div>
-            <div data-tutorial="defense-row" className="contents">
+            <div data-tutorial="defense-row" className="grid grid-cols-3 gap-2.5">
               <StatButton stat="dig" label="Dig" onPress={() => handleStat("dig")} />
               <StatButton stat="block" label="Block" onPress={() => handleStat("block")} />
               <StatButton stat="ace" label="Ace" onPress={() => handleStat("ace")} />
