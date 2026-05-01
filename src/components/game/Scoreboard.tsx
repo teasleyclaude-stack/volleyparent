@@ -5,6 +5,9 @@ import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
 import { getSetLabel, maxSets, formatLabelShort } from "@/utils/setRules";
 import type { MatchFormat } from "@/types";
+import { Tip } from "@/components/common/Tip";
+import { shouldShowTip, dismissTip } from "@/lib/tips";
+import { usePracticeStore } from "@/store/practiceStore";
 
 interface ScoreboardProps {
   homeTeam: string;
