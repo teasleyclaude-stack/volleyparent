@@ -433,6 +433,12 @@ function LivePage() {
         previousByZone={previousByZone}
       />
 
+      <ErrorTypeModal
+        open={errorModal !== null}
+        onSelect={handleErrorTypeSelected}
+        onCancel={() => setErrorModal(null)}
+      />
+
       {subSheetOpen && (
         <SubSheet
           onClose={() => setSubSheetOpen(false)}
