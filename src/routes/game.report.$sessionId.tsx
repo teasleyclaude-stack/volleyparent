@@ -38,6 +38,18 @@ function ReportPage() {
     [session, tracked],
   );
 
+  const errorBreakdown = useMemo(() => {
+    const counts: Partial<Record<ErrorType, number>> = {};
+    session?.events.forEach((e) => {
+      if (e.type === "STAT" && e.statType === "error" && e.errorType) {
+        counts[e.errorType] = (counts[e.errorType] ?? 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .filter(([, c]) => (c ?? 0) > 0)
+      .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0)) as [ErrorType, number][];
+  }, [session]);
+
   const csvBlobUrl = useMemo(() => {
     if (!session) return null;
     const rows: string[][] = [
