@@ -151,7 +151,13 @@ export function Scoreboard(props: ScoreboardProps) {
 
   const setLabel = getSetLabel(homeScore, awayScore, setNumber, matchFormat);
   const totalSets = maxSets(matchFormat);
-  const formatPills = Array.from({ length: totalSets }, (_, i) => {
+
+  useEffect(() => {
+    if (setLabel.text === "WIN BY 2" && shouldShowTip("winByTwo", isPractice)) {
+      setShowWinByTwoTip(true);
+    }
+  }, [setLabel.text, isPractice]);
+
     const num = i + 1;
     if (num <= homeSetsWon) return "home" as const;
     if (num <= homeSetsWon + awaySetsWon - homeSetsWon && num <= awaySetsWon) {
