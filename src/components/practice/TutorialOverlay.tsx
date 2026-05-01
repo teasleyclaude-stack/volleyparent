@@ -78,10 +78,36 @@ export function TutorialOverlay({ config, onSkip }: TutorialOverlayProps) {
   const W = typeof window !== "undefined" ? window.innerWidth : 0;
   const H = typeof window !== "undefined" ? window.innerHeight : 0;
 
+  // Compute the union bounding box of all spotlight rects, so the click-blocker
+  // frames hug a single hole. SVG masks only affect *rendering* — they don't
+  // pass pointer events through cutouts. So we use the SVG purely as a visual
+  // dim layer (pointer-events: none) and place four absolutely-positioned
+  // click-blockers around the hole instead.
+  const validRects = cutouts.map((c) => c.rect).filter((r): r is DOMRect => !!r);
+  let hole: { left: number; top: number; right: number; bottom: number } | null = null;
+  if (validRects.length > 0) {
+    const left = Math.min(...validRects.map((r) => r.left)) - PADDING;
+    const top = Math.min(...validRects.map((r) => r.top)) - PADDING;
+    const right = Math.max(...validRects.map((r) => r.right)) + PADDING;
+    const bottom = Math.max(...validRects.map((r) => r.bottom)) + PADDING;
+    hole = { left, top, right, bottom };
+  }
+
+  const blockerStyle: React.CSSProperties = {
+    position: "absolute",
+    background: "transparent",
+  };
+
+  const swallow = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   const node = (
     <div className="pointer-events-none fixed inset-0 z-[80]">
-      {/* Dim layer with cutouts (SVG mask) */}
-      <svg width={W} height={H} className="pointer-events-auto">
+      {/* Visual dim layer — pointer-events disabled so the highlighted target
+          stays clickable. Click-blocking is handled by the frame divs below. */}
+      <svg width={W} height={H} className="pointer-events-none">
         <defs>
           <mask id="tutorial-mask">
             <rect width={W} height={H} fill="white" />
@@ -101,19 +127,45 @@ export function TutorialOverlay({ config, onSkip }: TutorialOverlayProps) {
             )}
           </mask>
         </defs>
-        <rect
-          width={W}
-          height={H}
-          fill="rgba(0,0,0,0.65)"
-          mask="url(#tutorial-mask)"
-          // Block clicks on the dim area only — cutouts let pointer events through.
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-        />
+        <rect width={W} height={H} fill="rgba(0,0,0,0.65)" mask="url(#tutorial-mask)" />
       </svg>
+
+      {/* Click-blocker frames — block taps everywhere EXCEPT the spotlight hole.
+          When no target is mounted yet, fall back to a single full-screen blocker. */}
+      {hole ? (
+        <>
+          <div
+            className="pointer-events-auto"
+            style={{ ...blockerStyle, left: 0, top: 0, width: W, height: hole.top }}
+            onPointerDown={swallow}
+            onClick={swallow}
+          />
+          <div
+            className="pointer-events-auto"
+            style={{ ...blockerStyle, left: 0, top: hole.bottom, width: W, height: Math.max(0, H - hole.bottom) }}
+            onPointerDown={swallow}
+            onClick={swallow}
+          />
+          <div
+            className="pointer-events-auto"
+            style={{ ...blockerStyle, left: 0, top: hole.top, width: hole.left, height: hole.bottom - hole.top }}
+            onPointerDown={swallow}
+            onClick={swallow}
+          />
+          <div
+            className="pointer-events-auto"
+            style={{ ...blockerStyle, left: hole.right, top: hole.top, width: Math.max(0, W - hole.right), height: hole.bottom - hole.top }}
+            onPointerDown={swallow}
+            onClick={swallow}
+          />
+        </>
+      ) : (
+        <div
+          className="pointer-events-auto absolute inset-0"
+          onPointerDown={swallow}
+          onClick={swallow}
+        />
+      )}
 
       {/* Pulsing ring on the spotlight when hint is shown / pulseRing is on */}
       {cutouts.map(
