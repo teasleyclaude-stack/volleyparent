@@ -480,7 +480,9 @@ export const useGameStore = create<GameStore>()(
               p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
             } else if (st === "error") {
               p.stats.errors = Math.max(0, p.stats.errors - 1);
-              p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+              // Only attempt-flow errors counted toward totalAttempts.
+              const wasAttack = last.errorSource ? last.errorSource === "attempt" : true;
+              if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
             } else if (st === "dug") {
               p.stats.dugAttempts = Math.max(0, p.stats.dugAttempts - 1);
               p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
