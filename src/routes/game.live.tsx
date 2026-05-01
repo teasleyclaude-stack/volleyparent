@@ -155,7 +155,17 @@ function LivePage() {
       setKillModalOpen(true);
       return;
     }
+    if (outcome === "error") {
+      setErrorModal("attempt");
+      return;
+    }
     recordStat(tracked.id, outcome);
+  };
+
+  const handleErrorTypeSelected = (type: ErrorType) => {
+    const source = errorModal ?? "standalone";
+    setErrorModal(null);
+    recordError(tracked.id, type, source);
   };
 
   const handleKillZone = (zone: KillZone | null) => {
