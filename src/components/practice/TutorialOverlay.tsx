@@ -68,6 +68,19 @@ export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps
     return () => window.cancelAnimationFrame(raf);
   }, [config.target, config.target2]);
 
+  // On step change, scroll the target into view if needed so the spotlight
+  // and instruction card don't overlap or miss the element.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const el = document.querySelector(`[data-tutorial="${config.target}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight;
+    if (r.top < 80 || r.bottom > vh - 200) {
+      (el as HTMLElement).scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [config.step, config.target]);
+
   if (typeof document === "undefined") return null;
 
   const PADDING = 8;
