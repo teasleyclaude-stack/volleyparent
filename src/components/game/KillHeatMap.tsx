@@ -20,18 +20,36 @@ const FRONT_ROW: KillZone[] = [2, 3, 4];
 
 export function KillHeatMap({ open, onSelect, onCancel, previousByZone = {} }: KillHeatMapProps) {
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const isPractice = usePracticeStore((s) => s.isPractice);
+  const [showZoneTip, setShowZoneTip] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setConfirmation(null);
+      setShowZoneTip(false);
       return;
+    }
+    if (shouldShowTip("killZones", isPractice)) {
+      setShowZoneTip(true);
+      const t = window.setTimeout(() => {
+        setShowZoneTip(false);
+        dismissTip("killZones");
+      }, 4000);
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onCancel();
+      };
+      window.addEventListener("keydown", onKey);
+      return () => {
+        window.clearTimeout(t);
+        window.removeEventListener("keydown", onKey);
+      };
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
+  }, [open, onCancel, isPractice]);
 
   if (!open) return null;
 
