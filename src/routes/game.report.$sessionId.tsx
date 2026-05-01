@@ -10,6 +10,7 @@ import { useMemo } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
 import { formatLabelShort } from "@/utils/setRules";
 import { exportSessionPDF } from "@/utils/pdfReport";
+import { ERROR_TYPE_LABELS, type ErrorType } from "@/types";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
