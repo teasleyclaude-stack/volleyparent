@@ -200,6 +200,28 @@ function ReportPage() {
           </div>
         )}
 
+        {errorBreakdown.length > 0 && (
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <h3 className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+              Error Breakdown
+            </h3>
+            <div className="divide-y divide-border">
+              {errorBreakdown.map(([type, count]) => (
+                <div key={type} className="flex items-center justify-between py-1.5">
+                  <span className="text-sm font-bold text-foreground">{ERROR_TYPE_LABELS[type]}</span>
+                  <span className="text-sm font-black tabular-nums text-[#FF4D4D]">{count}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                <span>Total Errors</span>
+                <span className="tabular-nums">
+                  {errorBreakdown.reduce((sum, [, c]) => sum + c, 0)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <ShotChart killZones={killZones} />
 
         <MomentumGraph
