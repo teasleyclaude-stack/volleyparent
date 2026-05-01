@@ -345,6 +345,7 @@ function Court({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
             const p = id ? state.players[id] : undefined;
             const isServer = rotIdx === 0 && weServe;
             const isFront = gridIdx < 3;
+            const liberoCell = p?.position === "L";
             return (
               <div
                 key={gridIdx}
@@ -352,7 +353,13 @@ function Court({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
                   "relative flex aspect-square flex-col items-center justify-center rounded-xl border bg-card px-1 py-2 text-center transition-all duration-300",
                   isServer ? "vp-serving" : "border-border",
                 )}
-                style={isServer ? { borderColor: ourColor } : undefined}
+                style={
+                  liberoCell
+                    ? { backgroundColor: "rgba(0, 172, 193, 0.15)", borderColor: "#00ACC1" }
+                    : isServer
+                      ? { borderColor: ourColor }
+                      : undefined
+                }
               >
                 {p?.isTracked && (
                   <Star className="absolute right-1.5 top-1.5 h-3.5 w-3.5 fill-primary text-primary" strokeWidth={1.5} />
@@ -369,9 +376,15 @@ function Court({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
                 <span className="mt-0.5 max-w-full truncate text-[10px] font-medium text-muted-foreground">
                   {p?.name?.split(" ")[0] ?? "Empty"}
                 </span>
-                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                  P{rotIdx + 1} · {isFront ? "Front" : "Back"}
-                </span>
+                {liberoCell ? (
+                  <span className="mt-0.5 text-[9px] font-black uppercase tracking-wider text-[#00ACC1]">
+                    LIB · P{rotIdx + 1}
+                  </span>
+                ) : (
+                  <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                    P{rotIdx + 1} · {isFront ? "Front" : "Back"}
+                  </span>
+                )}
               </div>
             );
           })}
