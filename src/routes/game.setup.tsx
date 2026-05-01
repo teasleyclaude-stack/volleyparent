@@ -405,6 +405,9 @@ function SetupPage() {
               {[3, 2, 1, 4, 5, 0].map((rotIdx) => {
                 const id = rotation[rotIdx];
                 const player = roster.find((p) => p.id === id);
+                const illegalLibero =
+                  (rotIdx === 1 || rotIdx === 2 || rotIdx === 3) &&
+                  player?.position === "L";
                 return (
                   <RotationSlot
                     key={rotIdx}
@@ -415,6 +418,7 @@ function SetupPage() {
                     onPick={(pid) => setRotationAt(rotIdx, pid)}
                     roster={roster}
                     rotation={rotation}
+                    illegalLibero={Boolean(illegalLibero)}
                   />
                 );
               })}
@@ -424,6 +428,11 @@ function SetupPage() {
               NET
               <span className="h-px flex-1 bg-border" />
             </div>
+            {liberoPlacementInvalid && (
+              <p className="mt-2 text-center text-[11px] font-bold text-[#FF4D4D]">
+                Libero must start in P1, P5, or P6 (back row only).
+              </p>
+            )}
           </div>
         </section>
       </main>
