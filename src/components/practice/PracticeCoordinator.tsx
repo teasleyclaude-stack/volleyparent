@@ -181,14 +181,20 @@ export function PracticeCoordinator() {
     const onAttempt = () => {
       if (usePracticeStore.getState().step === "attempt") advance();
     };
+    const onKillTapped = () => {
+      // Tapping KILL opens the zone modal — advance from "kill" to "killZone"
+      // so the zone grid is the next spotlight.
+      if (usePracticeStore.getState().step === "kill") advance();
+    };
     const onZone = () => {
-      // Backup signal in case the kill event ordering misses it
       if (usePracticeStore.getState().step === "killZone") advance();
     };
     window.addEventListener("practice:attempt-open", onAttempt);
+    window.addEventListener("practice:kill-tapped", onKillTapped);
     window.addEventListener("practice:kill-zone-selected", onZone);
     return () => {
       window.removeEventListener("practice:attempt-open", onAttempt);
+      window.removeEventListener("practice:kill-tapped", onKillTapped);
       window.removeEventListener("practice:kill-zone-selected", onZone);
     };
   }, [isPractice, advance]);
