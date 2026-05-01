@@ -108,6 +108,9 @@ export interface MatchEvent {
   liberoRotationIndex?: number;
   liberoDirection?: "out" | "in";
   liberoTeam?: "home" | "away";
+  // Error metadata (when type === "STAT" && statType === "error")
+  errorType?: ErrorType;
+  errorSource?: ErrorSource;
 }
 
 export interface SetSummary {
