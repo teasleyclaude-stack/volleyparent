@@ -413,21 +413,40 @@ function LivePage() {
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2.5">
-            <StatButton stat="kill" label="Attempt" onPress={() => handleStat("kill")} />
-            <StatButton stat="dig" label="Dig" onPress={() => handleStat("dig")} />
-            <StatButton stat="block" label="Block" onPress={() => handleStat("block")} />
-            <StatButton stat="ace" label="Ace" onPress={() => handleStat("ace")} />
+            <div data-tutorial="btn-attempt">
+              <StatButton stat="kill" label="Attempt" onPress={() => handleStat("kill")} />
+            </div>
+            <div data-tutorial="defense-row" className="contents">
+              <StatButton stat="dig" label="Dig" onPress={() => handleStat("dig")} />
+              <StatButton stat="block" label="Block" onPress={() => handleStat("block")} />
+              <StatButton stat="ace" label="Ace" onPress={() => handleStat("ace")} />
+            </div>
           </div>
 
           {attemptMenuOpen && (
-            <div className="mt-2.5 rounded-2xl border border-border bg-popover p-2.5">
+            <div className="relative mt-2.5 rounded-2xl border border-border bg-popover p-2.5">
               <div className="mb-1.5 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 Attempt outcome
               </div>
+              {showAttemptFlowTip && (
+                <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+                  <Tip
+                    show={showAttemptFlowTip}
+                    message="Choose what happened — Kill scores, Dug means they passed it, Error gives them a point."
+                    arrow="down"
+                    autoDismissMs={4000}
+                    onDismiss={() => {
+                      setShowAttemptFlowTip(false);
+                      dismissTip("attemptFlow");
+                    }}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => handleAttemptOutcome("kill")}
+                  data-tutorial="attempt-kill"
                   className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--kill)] text-[var(--kill-foreground)] shadow-lg shadow-black/30"
                 >
                   <span className="text-[13px] font-black uppercase tracking-widest">Kill</span>
