@@ -131,32 +131,35 @@ function LivePage() {
   }, [matchOverPopup, session]);
   void decidingSet;
 
-  // First-launch tooltip for long-press shortcut.
+  // Long-press contextual tip — uses the new tips system (skipped during practice).
   useEffect(() => {
-    try {
-      if (typeof window === "undefined") return;
-      const seen = window.localStorage.getItem("courtsideview_longpress_tip_seen");
-      if (!seen) {
-        setShowLongPressTip(true);
-        const t = window.setTimeout(() => {
-          setShowLongPressTip(false);
-          window.localStorage.setItem("courtsideview_longpress_tip_seen", "1");
-        }, 3000);
-        return () => window.clearTimeout(t);
-      }
-    } catch {
-      // ignore storage errors
+    if (shouldShowTip("longPressSub", isPractice)) {
+      setShowLongPressTip(true);
+      const t = window.setTimeout(() => {
+        setShowLongPressTip(false);
+        dismissTip("longPressSub");
+      }, 4000);
+      return () => window.clearTimeout(t);
     }
-  }, []);
+  }, [isPractice]);
+
+  // FanView tip — fires 8s after dashboard loads on first real game.
+  useEffect(() => {
+    if (!shouldShowTip("fanView", isPractice)) return;
+    const t = window.setTimeout(() => {
+      setShowFanviewTip(true);
+      window.setTimeout(() => {
+        setShowFanviewTip(false);
+        dismissTip("fanView");
+      }, 4000);
+    }, 8000);
+    return () => window.clearTimeout(t);
+  }, [isPractice]);
 
   const dismissLongPressTip = () => {
     if (!showLongPressTip) return;
     setShowLongPressTip(false);
-    try {
-      window.localStorage.setItem("courtsideview_longpress_tip_seen", "1");
-    } catch {
-      // ignore
-    }
+    dismissTip("longPressSub");
   };
 
   if (!session) {
