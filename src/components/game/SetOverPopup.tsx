@@ -104,6 +104,22 @@ export function SetOverPopup({
         >
           Keep playing this set
         </button>
+
+        {showTip && (
+          <div className="mt-3 flex justify-center">
+            <Tip
+              show={showTip}
+              message="Set complete! Confirm to lock it in, or keep playing if it was a mistake."
+              arrow="none"
+              autoDismissMs={null}
+              showGotIt
+              onDismiss={() => {
+                dismissTip("setComplete");
+                setShowTip(false);
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
