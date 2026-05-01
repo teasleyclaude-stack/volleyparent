@@ -112,6 +112,22 @@ export function LiberoSubPopup({
         <p className="mt-4 text-center text-[10px] text-muted-foreground">
           A Libero cannot play in the front row.
         </p>
+
+        {showTip && (
+          <div className="mt-3 flex justify-center">
+            <Tip
+              show={showTip}
+              message="Liberos can't play front row — pick who they swap with each rotation."
+              arrow="none"
+              autoDismissMs={null}
+              showGotIt
+              onDismiss={() => {
+                dismissTip("liberoSub");
+                setShowTip(false);
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
