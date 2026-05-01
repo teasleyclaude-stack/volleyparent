@@ -211,6 +211,9 @@ function LivePage() {
     setAttemptMenuOpen(false);
     if (outcome === "kill") {
       setKillModalOpen(true);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("practice:kill-tapped"));
+      }
       return;
     }
     if (outcome === "error") {
