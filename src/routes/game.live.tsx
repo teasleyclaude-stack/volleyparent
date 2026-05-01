@@ -427,11 +427,18 @@ function LivePage() {
             label={`TO ${session.isHomeTeam ? session.homeTimeoutsThisSet : session.awayTimeoutsThisSet}/2`}
             onClick={() => recordTimeout(session.isHomeTeam ? "home" : "away")}
           />
-          <ControlBtn
-            icon={<RefreshCw className="h-4 w-4" />}
-            label="Sub"
+          <button
+            type="button"
             onClick={() => setSubSheetOpen(true)}
-          />
+            className="flex h-12 flex-col items-center justify-center gap-0 rounded-2xl border border-border bg-card px-1 text-[11px] font-black uppercase tracking-widest text-foreground active:scale-95"
+          >
+            <span className="flex items-center gap-1.5">
+              <RefreshCw className="h-4 w-4" /> Sub
+            </span>
+            <span className="text-[8px] font-medium normal-case tracking-normal text-muted-foreground">
+              or long press court
+            </span>
+          </button>
           <ControlBtn
             icon={<AlertTriangle className="h-4 w-4" />}
             label="Error"
