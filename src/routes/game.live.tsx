@@ -525,6 +525,17 @@ function LivePage() {
           setLineupModalOpen(false);
         }}
       />
+
+      {session.pendingLiberoViolation && session.pendingLiberoViolation.team === ourTeamKey && (
+        <LiberoSubPopup
+          open
+          liberoId={session.pendingLiberoViolation.liberoId}
+          rotationIndex={session.pendingLiberoViolation.rotationIndex}
+          rotation={ourRotation}
+          roster={session.roster}
+          onConfirm={(subOutId) => confirmLiberoSub(subOutId)}
+        />
+      )}
     </PhoneShell>
   );
 }
