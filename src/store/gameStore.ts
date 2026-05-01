@@ -384,6 +384,50 @@ export const useGameStore = create<GameStore>()(
         const s: GameSession = JSON.parse(JSON.stringify(cur));
         if (team === "home") s.homeRotationState = [...rotation] as RotationState;
         else s.awayRotationState = [...rotation] as RotationState;
+        // Manual lineup edit: clear any pending Libero violation since the rotation
+        // was overridden directly. Also reset partner memory so a fresh partnership forms.
+        s.pendingLiberoViolation = null;
+        s.roster = s.roster.map((p) => (isLibero(p) ? { ...p, liberoPartnerId: null } : p));
+        set({ session: s });
+      },
+
+      confirmLiberoSub: (subOutPlayerId) => {
+        const cur = get().session;
+        if (!cur || !cur.pendingLiberoViolation) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const v = s.pendingLiberoViolation!;
+        const ourRotKey = v.team === "home" ? "homeRotationState" : "awayRotationState";
+        const rotation = [...s[ourRotKey]] as RotationState;
+        // Sanity: the libero must actually be at the violation index right now.
+        if (rotation[v.rotationIndex] !== v.liberoId) {
+          // State drifted — clear and bail.
+          s.pendingLiberoViolation = null;
+          set({ session: s });
+          return;
+        }
+        rotation[v.rotationIndex] = subOutPlayerId;
+        s[ourRotKey] = rotation;
+        // Remember the partnership on the libero for the rest of this set.
+        s.roster = s.roster.map((p) =>
+          p.id === v.liberoId ? { ...p, liberoPartnerId: subOutPlayerId } : p,
+        );
+        if (v.team === "home") s.homeLiberoSubs = (s.homeLiberoSubs ?? 0) + 1;
+        else s.awayLiberoSubs = (s.awayLiberoSubs ?? 0) + 1;
+        pushEvent(s, {
+          type: "LIBERO_SUB",
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          liberoId: v.liberoId,
+          liberoPartnerOutId: subOutPlayerId,
+          liberoRotationIndex: v.rotationIndex,
+          liberoDirection: "out",
+          liberoTeam: v.team,
+        });
+        s.pendingLiberoViolation = null;
         set({ session: s });
       },
 
