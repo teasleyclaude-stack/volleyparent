@@ -37,6 +37,7 @@ interface GameStore {
 
   addPoint: (team: "home" | "away") => void;
   recordStat: (playerId: string, stat: StatType, killZone?: KillZone | null) => void;
+  recordError: (playerId: string, errorType: ErrorType, source: ErrorSource) => void;
   recordTimeout: (team: "home" | "away") => void;
   makeSubstitution: (benchPlayerId: string, courtPositionIndex: number) => void;
   correctScore: (team: "home" | "away") => void;
