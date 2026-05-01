@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 export type PracticeStep =
   | "point"
-  | "sideout"
   | "attempt"
   | "kill"
   | "killZone"
@@ -13,7 +12,6 @@ export type PracticeStep =
 
 export const PRACTICE_STEPS: PracticeStep[] = [
   "point",
-  "sideout",
   "attempt",
   "kill",
   "killZone",
