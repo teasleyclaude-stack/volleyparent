@@ -18,10 +18,13 @@ import { FanviewButton } from "@/components/game/FanviewButton";
 import { useFanview } from "@/hooks/useFanview";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
+import { usePracticeStore } from "@/store/practiceStore";
 import { hittingPercentage } from "@/utils/stats";
 import { checkSetWon, checkMatchWon, setTarget, maxSets, decidingSet } from "@/utils/setRules";
 import { tapHaptic } from "@/utils/haptics";
 import { fireWinConfetti } from "@/utils/winConfetti";
+import { Tip } from "@/components/common/Tip";
+import { shouldShowTip, dismissTip } from "@/lib/tips";
 import type { ErrorType, KillZone, StatType } from "@/types";
 import { cn } from "@/lib/utils";
 
