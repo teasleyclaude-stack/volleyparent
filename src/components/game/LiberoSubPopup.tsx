@@ -30,9 +30,16 @@ export function LiberoSubPopup({
   roster,
   onConfirm,
 }: LiberoSubPopupProps) {
+  const isPractice = usePracticeStore((s) => s.isPractice);
+  const [showTip, setShowTip] = useState(false);
   useEffect(() => {
-    if (open) tapHaptic("heavy");
-  }, [open]);
+    if (open) {
+      tapHaptic("heavy");
+      if (shouldShowTip("liberoSub", isPractice)) setShowTip(true);
+    } else {
+      setShowTip(false);
+    }
+  }, [open, isPractice]);
 
   if (!open) return null;
   const libero = roster.find((p) => p.id === liberoId);
