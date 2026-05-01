@@ -272,7 +272,36 @@ export const useGameStore = create<GameStore>()(
         }
       },
 
-      recordTimeout: (team) => {
+      recordError: (playerId, errorType, source) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const player = s.roster.find((p) => p.id === playerId);
+        if (!player) return;
+
+        const isAttackError = source === "attempt";
+        player.stats.errors += 1;
+        if (isAttackError) player.stats.totalAttempts += 1;
+
+        pushEvent(s, {
+          type: "STAT",
+          playerId,
+          statType: "error",
+          killZone: null,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          errorType,
+          errorSource: source,
+        });
+
+        set({ session: s });
+        // Opponent always gets the point.
+        get().addPoint(s.isHomeTeam ? "away" : "home");
+      },
         const cur = get().session;
         if (!cur) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
