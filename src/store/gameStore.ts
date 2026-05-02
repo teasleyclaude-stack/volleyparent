@@ -640,24 +640,23 @@ export const useGameStore = create<GameStore>()(
             s.awayScore = 0;
           }
           const prevTop = s.events[s.events.length - 1];
+          // Reverse the paired stat that produced this score (kill/ace/error/dump_kill/dump_error/setting_error/assist).
           if (
             prevTop &&
             prevTop.type === "STAT" &&
-            (prevTop.statType === "kill" || prevTop.statType === "ace" || prevTop.statType === "error")
+            prevTop.statType &&
+            (
+              prevTop.statType === "kill" ||
+              prevTop.statType === "ace" ||
+              prevTop.statType === "error" ||
+              prevTop.statType === "dump_kill" ||
+              prevTop.statType === "dump_error" ||
+              prevTop.statType === "setting_error" ||
+              prevTop.statType === "assist"
+            )
           ) {
             const p = s.roster.find((x) => x.id === prevTop.playerId);
-            if (p && prevTop.statType) {
-              if (prevTop.statType === "kill") {
-                p.stats.kills = Math.max(0, p.stats.kills - 1);
-                p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-              } else if (prevTop.statType === "ace") {
-                p.stats.aces = Math.max(0, p.stats.aces - 1);
-              } else if (prevTop.statType === "error") {
-                p.stats.errors = Math.max(0, p.stats.errors - 1);
-                const wasAttack = prevTop.errorSource ? prevTop.errorSource === "attempt" : true;
-                if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-              }
-            }
+            if (p) reverseStatOnPlayer(p, prevTop);
             s.events.pop();
           }
         }
