@@ -56,6 +56,11 @@ function LivePage() {
   const correctScore = useGameStore((s) => s.correctScore);
   const setRotationStore = useGameStore((s) => s.setRotation);
   const confirmLiberoSub = useGameStore((s) => s.confirmLiberoSub);
+  const recordDumpKill = useGameStore((s) => s.recordDumpKill);
+  const recordDumpError = useGameStore((s) => s.recordDumpError);
+  const recordSettingError = useGameStore((s) => s.recordSettingError);
+  const recordAssist = useGameStore((s) => s.recordAssist);
+  const recordPass = useGameStore((s) => s.recordPass);
   const saveSession = useHistoryStore((s) => s.saveSession);
   const fanview = useFanview();
   const isPractice = usePracticeStore((s) => s.isPractice);
