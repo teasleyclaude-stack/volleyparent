@@ -423,11 +423,31 @@ function TrackedStatsBar({ state }: { state: FanviewState }) {
         </div>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-black tabular-nums">
-        <Chip label="K" value={s.kills} />
-        <Chip label="D" value={s.digs} />
-        <Chip label="B" value={s.blocks} />
-        <Chip label="A" value={s.aces} />
-        <Chip label="Hit%" value={s.hittingPct} accent />
+        {s.positionGroup === "setter" ? (
+          <>
+            <Chip label="Ast" value={s.assists} />
+            <Chip label="DmpK" value={s.dumpKills} />
+            <Chip label="SetE" value={s.settingErrors} />
+            <Chip label="D" value={s.digs} />
+            <Chip label="Dmp%" value={s.dumpHittingPct} accent />
+          </>
+        ) : s.positionGroup === "defensive" ? (
+          <>
+            <Chip label="Pass" value={s.passAttempts} />
+            <Chip label="D" value={s.digs} />
+            <Chip label="A" value={s.aces} />
+            <Chip label="Ast" value={s.assists} />
+            <Chip label="PassAvg" value={s.passAvg} accent />
+          </>
+        ) : (
+          <>
+            <Chip label="K" value={s.kills} />
+            <Chip label="D" value={s.digs} />
+            <Chip label="B" value={s.blocks} />
+            <Chip label="A" value={s.aces} />
+            <Chip label="Hit%" value={s.hittingPct} accent />
+          </>
+        )}
       </div>
     </section>
   );
