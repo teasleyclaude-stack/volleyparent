@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import type { Player, RotationState } from "@/types";
-import { FRONT_ROW_INDICES } from "@/types";
 import { tapHaptic } from "@/utils/haptics";
 
 interface Props {
@@ -13,14 +12,14 @@ interface Props {
   autoDismissMs?: number;
 }
 
-/** Bottom-sheet prompt: tap a front-row teammate who got the kill, or skip. */
+/** Bottom-sheet prompt: tap an on-court teammate who got the kill, or skip. */
 export function AssistKillerPrompt({
   open,
   rotation,
   roster,
   setterId,
   onResolve,
-  autoDismissMs = 2500,
+  autoDismissMs = 10000,
 }: Props) {
   const [resolved, setResolved] = useState(false);
 
@@ -37,9 +36,9 @@ export function AssistKillerPrompt({
 
   if (!open) return null;
 
-  const candidates = FRONT_ROW_INDICES.map((idx) =>
-    roster.find((p) => p.id === rotation[idx]),
-  ).filter((p): p is Player => Boolean(p) && p!.id !== setterId);
+  const candidates = rotation
+    .map((id) => roster.find((p) => p.id === id))
+    .filter((p): p is Player => Boolean(p) && p!.id !== setterId);
 
   const handlePick = (id: string | null) => {
     setResolved(true);
@@ -68,7 +67,7 @@ export function AssistKillerPrompt({
         <div className="grid grid-cols-3 gap-2">
           {candidates.length === 0 && (
             <div className="col-span-3 rounded-xl border border-dashed border-border p-2 text-center text-[11px] text-muted-foreground">
-              No front-row teammates
+              No teammates on court
             </div>
           )}
           {candidates.map((p) => (
