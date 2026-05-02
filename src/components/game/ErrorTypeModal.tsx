@@ -32,9 +32,11 @@ interface Props {
   open: boolean;
   onSelect: (type: ErrorType) => void;
   onCancel: () => void;
+  /** When false, Foot Fault is shown with a soft visual cue (dim + caption). */
+  isServing?: boolean;
 }
 
-export function ErrorTypeModal({ open, onSelect, onCancel }: Props) {
+export function ErrorTypeModal({ open, onSelect, onCancel, isServing = true }: Props) {
   const [otherOpen, setOtherOpen] = useState(false);
   const [flashing, setFlashing] = useState<ErrorType | null>(null);
 
