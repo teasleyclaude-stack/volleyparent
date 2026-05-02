@@ -36,9 +36,9 @@ export function AssistKillerPrompt({
 
   if (!open) return null;
 
-  const candidates = FRONT_ROW_INDICES.map((idx) =>
-    roster.find((p) => p.id === rotation[idx]),
-  ).filter((p): p is Player => Boolean(p) && p!.id !== setterId);
+  const candidates = rotation
+    .map((id) => roster.find((p) => p.id === id))
+    .filter((p): p is Player => Boolean(p) && p!.id !== setterId);
 
   const handlePick = (id: string | null) => {
     setResolved(true);
