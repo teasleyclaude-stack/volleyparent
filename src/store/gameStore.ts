@@ -1,11 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { toast } from "sonner";
-import {
-  BACK_ROW_INDICES,
-  FRONT_ROW_INDICES,
-  isLibero,
-} from "@/types";
+import { BACK_ROW_INDICES, FRONT_ROW_INDICES, isLibero } from "@/types";
 import type {
   ErrorSource,
   ErrorType,
@@ -140,11 +136,14 @@ function findLiberoFrontRowViolation(
 function maybeAutoLiberoReturn(
   rotation: RotationState,
   roster: Player[],
-): { rotation: RotationState; liberoId: string; partnerOutId: string; rotationIndex: number } | null {
+): {
+  rotation: RotationState;
+  liberoId: string;
+  partnerOutId: string;
+  rotationIndex: number;
+} | null {
   const onCourt = new Set(rotation);
-  const liberos = roster.filter(
-    (p) => isLibero(p) && p.liberoPartnerId && !onCourt.has(p.id),
-  );
+  const liberos = roster.filter((p) => isLibero(p) && p.liberoPartnerId && !onCourt.has(p.id));
   for (const lib of liberos) {
     const partnerId = lib.liberoPartnerId!;
     const partnerIdx = rotation.indexOf(partnerId);
@@ -152,7 +151,12 @@ function maybeAutoLiberoReturn(
     if ((BACK_ROW_INDICES as readonly number[]).includes(partnerIdx)) {
       const next = [...rotation] as RotationState;
       next[partnerIdx] = lib.id;
-      return { rotation: next, liberoId: lib.id, partnerOutId: partnerId, rotationIndex: partnerIdx };
+      return {
+        rotation: next,
+        liberoId: lib.id,
+        partnerOutId: partnerId,
+        rotationIndex: partnerIdx,
+      };
     }
   }
   return null;
@@ -194,10 +198,24 @@ export const useGameStore = create<GameStore>()(
             ...p,
             liberoPartnerId: null,
             stats: {
-              kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0,
-              settingErrors: 0, dumpKills: 0, dumpErrors: 0, dumpAttempts: 0,
-              passAttempts: 0, passTotal: 0,
-              passGrade3: 0, passGrade2: 0, passGrade1: 0, passGrade0: 0,
+              kills: 0,
+              errors: 0,
+              totalAttempts: 0,
+              digs: 0,
+              blocks: 0,
+              aces: 0,
+              assists: 0,
+              dugAttempts: 0,
+              settingErrors: 0,
+              dumpKills: 0,
+              dumpErrors: 0,
+              dumpAttempts: 0,
+              passAttempts: 0,
+              passTotal: 0,
+              passGrade3: 0,
+              passGrade2: 0,
+              passGrade1: 0,
+              passGrade0: 0,
             },
           })),
           events: [],
@@ -261,7 +279,9 @@ export const useGameStore = create<GameStore>()(
               if (ourTeamKey === "home") s.homeLiberoSubs = (s.homeLiberoSubs ?? 0) + 1;
               else s.awayLiberoSubs = (s.awayLiberoSubs ?? 0) + 1;
               if (typeof window !== "undefined" && lib) {
-                toast(`${lib.name.split(" ")[0]} back in for ${partner?.name.split(" ")[0] ?? "partner"}`);
+                toast(
+                  `${lib.name.split(" ")[0]} back in for ${partner?.name.split(" ")[0] ?? "partner"}`,
+                );
               }
             }
 
@@ -563,11 +583,7 @@ export const useGameStore = create<GameStore>()(
         let rotationReversed = false;
         let servingFlipped = false;
         const lastEvent = s.events[s.events.length - 1];
-        if (
-          lastEvent &&
-          lastEvent.type === "SCORE" &&
-          lastEvent.scoringTeam === team
-        ) {
+        if (lastEvent && lastEvent.type === "SCORE" && lastEvent.scoringTeam === team) {
           let prevIsHomeServing = s.isHomeServing;
           for (let i = s.events.length - 2; i >= 0; i--) {
             const ev = s.events[i];
@@ -691,15 +707,13 @@ export const useGameStore = create<GameStore>()(
             prevTop &&
             prevTop.type === "STAT" &&
             prevTop.statType &&
-            (
-              prevTop.statType === "kill" ||
+            (prevTop.statType === "kill" ||
               prevTop.statType === "ace" ||
               prevTop.statType === "error" ||
               prevTop.statType === "dump_kill" ||
               prevTop.statType === "dump_error" ||
               prevTop.statType === "setting_error" ||
-              prevTop.statType === "assist"
-            )
+              prevTop.statType === "assist")
           ) {
             const p = s.roster.find((x) => x.id === prevTop.playerId);
             if (p) reverseStatOnPlayer(p, prevTop);
@@ -708,11 +722,17 @@ export const useGameStore = create<GameStore>()(
         }
 
         if (last.type === "TIMEOUT" && last.timeoutTeam) {
-          if (last.timeoutTeam === "home") s.homeTimeoutsThisSet = Math.max(0, s.homeTimeoutsThisSet - 1);
+          if (last.timeoutTeam === "home")
+            s.homeTimeoutsThisSet = Math.max(0, s.homeTimeoutsThisSet - 1);
           else s.awayTimeoutsThisSet = Math.max(0, s.awayTimeoutsThisSet - 1);
         }
 
-        if (last.type === "SUB" && last.subInId && last.subOutId && last.subPosition !== undefined) {
+        if (
+          last.type === "SUB" &&
+          last.subInId &&
+          last.subOutId &&
+          last.subPosition !== undefined
+        ) {
           const ourKey = s.isHomeTeam ? "homeRotationState" : "awayRotationState";
           const newRot = [...s[ourKey]] as RotationState;
           newRot[last.subPosition] = last.subOutId;
@@ -842,7 +862,14 @@ export const useGameStore = create<GameStore>()(
           const sess = state.session as Record<string, unknown>;
           const oldRot = sess.rotationState as RotationState | undefined;
           if (oldRot && !sess.homeRotationState) {
-            const placeholder: RotationState = ["opp-1", "opp-2", "opp-3", "opp-4", "opp-5", "opp-6"];
+            const placeholder: RotationState = [
+              "opp-1",
+              "opp-2",
+              "opp-3",
+              "opp-4",
+              "opp-5",
+              "opp-6",
+            ];
             const isHome = Boolean(sess.isHomeTeam);
             sess.homeRotationState = isHome ? oldRot : placeholder;
             sess.awayRotationState = isHome ? placeholder : oldRot;
@@ -871,7 +898,11 @@ export const useGameStore = create<GameStore>()(
       storage: createJSONStorage(() =>
         typeof window !== "undefined"
           ? window.localStorage
-          : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as unknown as Storage),
+          : ({
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            } as unknown as Storage),
       ),
     },
   ),

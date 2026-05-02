@@ -76,7 +76,12 @@ function LivePage() {
   const [showAttemptFlowTip, setShowAttemptFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
-  const [setOverPopup, setSetOverPopup] = useState<{ winner: "home" | "away"; setNumber: number; homeScore: number; awayScore: number } | null>(null);
+  const [setOverPopup, setSetOverPopup] = useState<{
+    winner: "home" | "away";
+    setNumber: number;
+    homeScore: number;
+    awayScore: number;
+  } | null>(null);
   const [matchOverPopup, setMatchOverPopup] = useState<{ winner: "home" | "away" } | null>(null);
   // Position-aware modals
   const [setActionOpen, setSetActionOpen] = useState(false);
@@ -113,13 +118,19 @@ function LivePage() {
   const pointTarget = setTarget(currentSet, matchFormat);
   const totalSets = maxSets(matchFormat);
   const winsNeeded = matchFormat === "club" ? 2 : 3;
-  const isFinalSet = currentSet >= totalSets || homeSetsWon >= winsNeeded || awaySetsWon >= winsNeeded;
+  const isFinalSet =
+    currentSet >= totalSets || homeSetsWon >= winsNeeded || awaySetsWon >= winsNeeded;
 
   // Auto-detect set win after every score change.
   useEffect(() => {
     if (!session) return;
     if (setOverPopup || matchOverPopup || lineupModalOpen) return;
-    const winner = checkSetWon(session.homeScore, session.awayScore, session.currentSet, session.matchFormat);
+    const winner = checkSetWon(
+      session.homeScore,
+      session.awayScore,
+      session.currentSet,
+      session.matchFormat,
+    );
     if (!winner) return;
     if (dismissedSetWins.has(session.currentSet)) return;
     setSetOverPopup({
@@ -128,7 +139,16 @@ function LivePage() {
       homeScore: session.homeScore,
       awayScore: session.awayScore,
     });
-  }, [session?.homeScore, session?.awayScore, session?.currentSet, setOverPopup, matchOverPopup, lineupModalOpen, dismissedSetWins, session]);
+  }, [
+    session?.homeScore,
+    session?.awayScore,
+    session?.currentSet,
+    setOverPopup,
+    matchOverPopup,
+    lineupModalOpen,
+    dismissedSetWins,
+    session,
+  ]);
 
   // Fire confetti ONLY when the match is fully completed.
   useEffect(() => {
@@ -140,8 +160,7 @@ function LivePage() {
     if (!matchActuallyWon) return;
     if (matchActuallyWon !== matchOverPopup.winner) return;
 
-    const winnerColor =
-      matchOverPopup.winner === "home" ? session.homeColor : session.awayColor;
+    const winnerColor = matchOverPopup.winner === "home" ? session.homeColor : session.awayColor;
     fireWinConfetti(winnerColor || "#F4B400");
     tapHaptic("heavy");
   }, [matchOverPopup, session]);
@@ -311,11 +330,16 @@ function LivePage() {
     <PhoneShell>
       {/* Header */}
       <header className="flex items-center justify-between border-b border-border bg-popover px-3 py-2">
-        <Link to="/" className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground">
+        <Link
+          to="/"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="relative flex items-center gap-2" data-tutorial="fanview-btn">
-          <div className="text-[10px] font-black uppercase tracking-widest text-primary">● Live</div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-primary">
+            ● Live
+          </div>
           <FanviewButton />
           {showFanviewTip && (
             <div className="absolute -bottom-2 right-0 z-30 translate-y-full">
@@ -437,7 +461,6 @@ function LivePage() {
             dismissTip("attemptFlow");
           }}
         />
-
 
         {/* Game controls */}
         <section className="mt-3 grid grid-cols-3 gap-2 px-4">
@@ -647,12 +670,8 @@ function LivePage() {
         awayColor={session.awayColor}
         homeScore={setOverPopup?.homeScore ?? session.homeScore}
         awayScore={setOverPopup?.awayScore ?? session.awayScore}
-        homeSetsWon={
-          (setOverPopup?.winner === "home" ? 1 : 0) + homeSetsWon
-        }
-        awaySetsWon={
-          (setOverPopup?.winner === "away" ? 1 : 0) + awaySetsWon
-        }
+        homeSetsWon={(setOverPopup?.winner === "home" ? 1 : 0) + homeSetsWon}
+        awaySetsWon={(setOverPopup?.winner === "away" ? 1 : 0) + awaySetsWon}
         onConfirm={confirmEndSet}
         onKeepPlaying={keepPlayingSet}
         matchFormat={matchFormat}
@@ -751,7 +770,9 @@ function SubSheet({
         className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-base font-black uppercase tracking-widest text-foreground">Substitution</h3>
+        <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+          Substitution
+        </h3>
 
         <div className="mt-3">
           <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -900,21 +921,16 @@ function PositionAwareStatPanel(props: PositionPanelProps) {
       </div>
 
       {/* Action buttons by position */}
-      {group === "attacker" && (
-        <AttackerButtons {...props} />
-      )}
-      {group === "setter" && (
-        <SetterButtons {...props} />
-      )}
-      {group === "defensive" && (
-        <DefensiveButtons {...props} />
-      )}
+      {group === "attacker" && <AttackerButtons {...props} />}
+      {group === "setter" && <SetterButtons {...props} />}
+      {group === "defensive" && <DefensiveButtons {...props} />}
     </section>
   );
 }
 
 function positionBadge(group: ReturnType<typeof getPositionGroup>, pos: PlayerType["position"]) {
-  if (group === "attacker") return { label: "⚡ Attacker", bg: "rgba(57,255,20,0.18)", fg: "#39FF14" };
+  if (group === "attacker")
+    return { label: "⚡ Attacker", bg: "rgba(57,255,20,0.18)", fg: "#39FF14" };
   if (group === "setter") return { label: "★ Setter", bg: "rgba(57,255,20,0.18)", fg: "#39FF14" };
   return { label: pos === "L" ? "🛡 Libero" : "🛡 DS", bg: "rgba(0,172,193,0.18)", fg: "#22D3EE" };
 }
@@ -1023,7 +1039,9 @@ function SetterButtons(props: PositionPanelProps) {
         className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
         style={{ backgroundColor: "#39FF14", color: "#0A2200" }}
       >
-        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>Set ▾</span>
+        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
+          Set ▾
+        </span>
       </button>
       {/* Secondary row */}
       <div className="grid grid-cols-3 gap-2.5">
@@ -1048,10 +1066,16 @@ function DefensiveButtons(props: PositionPanelProps) {
         className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
         style={{ backgroundColor: "#00B4FF", color: "#06283D" }}
       >
-        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>Pass ▾</span>
+        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
+          Pass ▾
+        </span>
       </button>
       {/* Inline grade picker */}
-      <PassGradeSheet open={props.passSheetOpen} onSelect={props.onPassGrade} onCancel={props.onPassCancel} />
+      <PassGradeSheet
+        open={props.passSheetOpen}
+        onSelect={props.onPassGrade}
+        onCancel={props.onPassCancel}
+      />
       {/* Secondary row */}
       <div className="grid grid-cols-3 gap-2.5">
         <StatButton stat="dig" label="Dig" onPress={props.onDig} />

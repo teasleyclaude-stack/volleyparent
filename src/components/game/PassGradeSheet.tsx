@@ -34,12 +34,25 @@ export function PassGradeSheet({ open, onSelect, onCancel }: Props) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         {GRADES.slice(0, 3).map((g) => (
-          <GradeBtn key={g.grade} {...g} onPress={() => { tapHaptic("medium"); onSelect(g.grade); }} />
+          <GradeBtn
+            key={g.grade}
+            {...g}
+            onPress={() => {
+              tapHaptic("medium");
+              onSelect(g.grade);
+            }}
+          />
         ))}
       </div>
       <div className="mt-2 grid grid-cols-3 gap-2">
         <div />
-        <GradeBtn {...GRADES[3]} onPress={() => { tapHaptic("heavy"); onSelect(0); }} />
+        <GradeBtn
+          {...GRADES[3]}
+          onPress={() => {
+            tapHaptic("heavy");
+            onSelect(0);
+          }}
+        />
         <div />
       </div>
       <button
@@ -74,7 +87,10 @@ function GradeBtn({
       style={{ backgroundColor: color, color: fg }}
     >
       <span className="text-2xl font-black leading-none">{label}</span>
-      <span className="px-1 text-center text-[9px] font-bold uppercase leading-tight" style={{ letterSpacing: "0.5px" }}>
+      <span
+        className="px-1 text-center text-[9px] font-bold uppercase leading-tight"
+        style={{ letterSpacing: "0.5px" }}
+      >
         {desc}
       </span>
     </button>

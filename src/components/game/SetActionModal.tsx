@@ -101,7 +101,9 @@ export function SetActionModal({ open, onSelect, onCancel }: Props) {
               </span>
               <div className="min-w-0 flex-1 text-left">
                 <div className="text-[17px] font-black text-foreground">{opt.label}</div>
-                <div className="text-[13px] font-medium text-muted-foreground">{opt.description}</div>
+                <div className="text-[13px] font-medium text-muted-foreground">
+                  {opt.description}
+                </div>
               </div>
             </button>
           );
