@@ -219,6 +219,8 @@ function LivePage() {
   const tracked = session.roster.find((p) => p.isTracked) ?? session.roster[0];
   const ourTeamKey: "home" | "away" = session.isHomeTeam ? "home" : "away";
   const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
+  const weServe = session.isHomeServing === session.isHomeTeam;
+  const isMyPlayerServing = weServe && ourRotation[0] === tracked.id;
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
