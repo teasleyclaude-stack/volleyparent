@@ -1040,7 +1040,7 @@ function SetterButtons(props: PositionPanelProps) {
         style={{ backgroundColor: "#39FF14", color: "#0A2200" }}
       >
         <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
-          Set ▾
+          Setting ▾
         </span>
       </button>
       {/* Secondary row */}
