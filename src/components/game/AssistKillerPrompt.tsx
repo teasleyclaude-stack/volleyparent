@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import type { Player, RotationState } from "@/types";
-import { FRONT_ROW_INDICES } from "@/types";
 import { tapHaptic } from "@/utils/haptics";
 
 interface Props {
@@ -13,14 +12,14 @@ interface Props {
   autoDismissMs?: number;
 }
 
-/** Bottom-sheet prompt: tap a front-row teammate who got the kill, or skip. */
+/** Bottom-sheet prompt: tap an on-court teammate who got the kill, or skip. */
 export function AssistKillerPrompt({
   open,
   rotation,
   roster,
   setterId,
   onResolve,
-  autoDismissMs = 2500,
+  autoDismissMs = 10000,
 }: Props) {
   const [resolved, setResolved] = useState(false);
 
