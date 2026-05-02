@@ -446,12 +446,37 @@ function LivePage() {
           onBlock={() => handleStat("block")}
           onAce={() => handleStat("ace")}
           onAssistTap={() => {
+            if (shouldShowTip("assistFlow", isPractice)) {
+              setShowAssistFlowTip(true);
+              window.setTimeout(() => {
+                setShowAssistFlowTip(false);
+                dismissTip("assistFlow");
+              }, 4000);
+            }
             recordAssist(tracked.id);
             setAssistPromptOpen(true);
           }}
           onErrorTap={() => setErrorModal("standalone")}
-          onSetTap={() => setSetActionOpen(true)}
-          onPassTap={() => setPassSheetOpen((v) => !v)}
+          onSetTap={() => {
+            if (shouldShowTip("setterFlow", isPractice)) {
+              setShowSetterFlowTip(true);
+              window.setTimeout(() => {
+                setShowSetterFlowTip(false);
+                dismissTip("setterFlow");
+              }, 4500);
+            }
+            setSetActionOpen(true);
+          }}
+          onPassTap={() => {
+            if (shouldShowTip("passingFlow", isPractice)) {
+              setShowPassingFlowTip(true);
+              window.setTimeout(() => {
+                setShowPassingFlowTip(false);
+                dismissTip("passingFlow");
+              }, 4500);
+            }
+            setPassSheetOpen((v) => !v);
+          }}
           passSheetOpen={passSheetOpen}
           onPassGrade={(g: PassGrade) => {
             recordPass(tracked.id, g);
@@ -462,6 +487,21 @@ function LivePage() {
           onDismissAttemptFlowTip={() => {
             setShowAttemptFlowTip(false);
             dismissTip("attemptFlow");
+          }}
+          showSetterFlowTip={showSetterFlowTip}
+          onDismissSetterFlowTip={() => {
+            setShowSetterFlowTip(false);
+            dismissTip("setterFlow");
+          }}
+          showPassingFlowTip={showPassingFlowTip}
+          onDismissPassingFlowTip={() => {
+            setShowPassingFlowTip(false);
+            dismissTip("passingFlow");
+          }}
+          showAssistFlowTip={showAssistFlowTip}
+          onDismissAssistFlowTip={() => {
+            setShowAssistFlowTip(false);
+            dismissTip("assistFlow");
           }}
         />
 
