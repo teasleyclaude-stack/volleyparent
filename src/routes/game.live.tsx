@@ -585,6 +585,7 @@ function LivePage() {
         open={errorModal !== null}
         onSelect={handleErrorTypeSelected}
         onCancel={() => setErrorModal(null)}
+        isServing={isMyPlayerServing}
       />
 
       {/* Setter SET sub-menu */}
