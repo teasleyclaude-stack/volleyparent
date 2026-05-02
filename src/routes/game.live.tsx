@@ -410,99 +410,33 @@ function LivePage() {
         </div>
 
         {/* Tracked player + stat buttons */}
-        <section className="px-4 pt-3">
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Tracking
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="truncate text-base font-black text-foreground">{tracked.name}</span>
-                <span className="text-sm font-bold text-muted-foreground">#{tracked.number}</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hit %</div>
-              <div className="text-2xl font-black tabular-nums text-primary">
-                {hittingPercentage(tracked.stats)}
-              </div>
-            </div>
-          </div>
+        <PositionAwareStatPanel
+          tracked={tracked}
+          attemptMenuOpen={attemptMenuOpen}
+          onAttempt={() => handleStat("kill")}
+          onAttemptOutcome={handleAttemptOutcome}
+          onDig={() => handleStat("dig")}
+          onBlock={() => handleStat("block")}
+          onAce={() => handleStat("ace")}
+          onAssistTap={() => {
+            recordAssist(tracked.id);
+            setAssistPromptOpen(true);
+          }}
+          onSetTap={() => setSetActionOpen(true)}
+          onPassTap={() => setPassSheetOpen((v) => !v)}
+          passSheetOpen={passSheetOpen}
+          onPassGrade={(g: PassGrade) => {
+            recordPass(tracked.id, g);
+            setPassSheetOpen(false);
+          }}
+          onPassCancel={() => setPassSheetOpen(false)}
+          showAttemptFlowTip={showAttemptFlowTip}
+          onDismissAttemptFlowTip={() => {
+            setShowAttemptFlowTip(false);
+            dismissTip("attemptFlow");
+          }}
+        />
 
-          <div className="mt-2 grid grid-cols-4 gap-2 text-center">
-            {[
-              { l: "K", v: tracked.stats.kills, c: "text-[var(--kill)]" },
-              { l: "D", v: tracked.stats.digs, c: "text-[var(--dig)]" },
-              { l: "B", v: tracked.stats.blocks, c: "text-[var(--block)]" },
-              { l: "A", v: tracked.stats.aces, c: "text-[var(--ace)]" },
-            ].map((s) => (
-              <div key={s.l} className="rounded-xl bg-card py-1.5">
-                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
-                  {s.l}
-                </div>
-                <div className={cn("text-lg font-black tabular-nums", s.c)}>{s.v}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-3 space-y-2.5">
-            <div data-tutorial="btn-attempt">
-              <StatButton stat="kill" label="Attempt" onPress={() => handleStat("kill")} />
-            </div>
-            <div data-tutorial="defense-row" className="grid grid-cols-3 gap-2.5">
-              <StatButton stat="dig" label="Dig" onPress={() => handleStat("dig")} />
-              <StatButton stat="block" label="Block" onPress={() => handleStat("block")} />
-              <StatButton stat="ace" label="Ace" onPress={() => handleStat("ace")} />
-            </div>
-          </div>
-
-          {attemptMenuOpen && (
-            <div className="relative mt-2.5 rounded-2xl border border-border bg-popover p-2.5">
-              <div className="mb-1.5 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Attempt outcome
-              </div>
-              {showAttemptFlowTip && (
-                <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
-                  <Tip
-                    show={showAttemptFlowTip}
-                    message="Choose what happened — Kill scores, Dug means they passed it, Error gives them a point."
-                    arrow="down"
-                    autoDismissMs={4000}
-                    onDismiss={() => {
-                      setShowAttemptFlowTip(false);
-                      dismissTip("attemptFlow");
-                    }}
-                  />
-                </div>
-              )}
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAttemptOutcome("kill")}
-                  data-tutorial="attempt-kill"
-                  className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--kill)] text-[var(--kill-foreground)] shadow-lg shadow-black/30"
-                >
-                  <span className="text-[13px] font-black uppercase tracking-widest">Kill</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAttemptOutcome("dug")}
-                  className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--timeout)] text-black shadow-lg shadow-black/30"
-                >
-                  <span className="text-[13px] font-black uppercase tracking-widest">Dug</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAttemptOutcome("error")}
-                  className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--error)] text-[var(--error-foreground)] shadow-lg shadow-black/30"
-                >
-                  <span className="text-[13px] font-black uppercase tracking-widest">Error</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-        </section>
 
         {/* Game controls */}
         <section className="mt-3 grid grid-cols-3 gap-2 px-4">
