@@ -25,7 +25,7 @@ import { tapHaptic } from "@/utils/haptics";
 import { fireWinConfetti } from "@/utils/winConfetti";
 import { Tip } from "@/components/common/Tip";
 import { shouldShowTip, dismissTip } from "@/lib/tips";
-import type { ErrorType, KillZone, PassGrade, StatType } from "@/types";
+import type { ErrorType, KillZone, PassGrade, Player as PlayerType, StatType } from "@/types";
 import { getPositionGroup, passAverage } from "@/types";
 import { SetActionModal, type SetOutcome } from "@/components/game/SetActionModal";
 import { PassGradeSheet } from "@/components/game/PassGradeSheet";
@@ -828,8 +828,6 @@ function SubSheet({
 /* ──────────────────────────────────────────────
    Position-aware stat panel
    ────────────────────────────────────────────── */
-
-import type { Player as PlayerType } from "@/types";
 
 interface PositionPanelProps {
   tracked: PlayerType;
