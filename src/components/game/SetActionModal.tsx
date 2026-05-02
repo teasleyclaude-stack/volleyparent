@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { X, Star, ArrowUpRight, AlertOctagon, ArrowDownRight } from "lucide-react";
+import { X, Star, ArrowUpRight, AlertOctagon } from "lucide-react";
 import { tapHaptic } from "@/utils/haptics";
 
-export type SetOutcome = "assist" | "dump_kill" | "setting_error" | "dump_error";
+export type SetOutcome = "assist" | "dump_kill" | "setting_error";
 
 interface Props {
   open: boolean;
@@ -39,14 +39,6 @@ const OPTIONS: {
     label: "Setting Error",
     description: "Illegal set / net / out",
     Icon: AlertOctagon,
-    bg: "rgba(255,77,77,0.12)",
-    fg: "#FF4D4D",
-  },
-  {
-    key: "dump_error",
-    label: "Dump Error",
-    description: "Dump attempt failed",
-    Icon: ArrowDownRight,
     bg: "rgba(255,77,77,0.12)",
     fg: "#FF4D4D",
   },
