@@ -422,6 +422,7 @@ function LivePage() {
             recordAssist(tracked.id);
             setAssistPromptOpen(true);
           }}
+          onErrorTap={() => setErrorModal("standalone")}
           onSetTap={() => setSetActionOpen(true)}
           onPassTap={() => setPassSheetOpen((v) => !v)}
           passSheetOpen={passSheetOpen}
@@ -838,6 +839,7 @@ interface PositionPanelProps {
   onBlock: () => void;
   onAce: () => void;
   onAssistTap: () => void;
+  onErrorTap: () => void;
   onSetTap: () => void;
   onPassTap: () => void;
   passSheetOpen: boolean;
@@ -1027,7 +1029,7 @@ function SetterButtons(props: PositionPanelProps) {
       <div className="grid grid-cols-3 gap-2.5">
         <StatButton stat="dig" label="Dig" onPress={props.onDig} />
         <StatButton stat="ace" label="Ace" onPress={props.onAce} />
-        <StatButton stat="error" label="Error" onPress={() => {/* handled by ControlBtn */}} />
+        <StatButton stat="error" label="Error" onPress={props.onErrorTap} />
       </div>
     </div>
   );
