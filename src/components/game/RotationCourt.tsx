@@ -156,7 +156,7 @@ export function RotationCourt({
                   {player?.number ?? "—"}
                 </span>
                 <span className="mt-0.5 max-w-full truncate text-[10px] font-medium text-muted-foreground">
-                  {player?.name?.split(" ")[0] ?? "Empty"}
+                  {player ? `${player.name.split(" ")[0]} · ${player.position}` : "Empty"}
                 </span>
                 {liberoCell ? (
                   <span className="mt-0.5 text-[9px] font-black uppercase tracking-wider text-[#00ACC1]">
