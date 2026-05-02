@@ -78,6 +78,13 @@ function LivePage() {
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [setOverPopup, setSetOverPopup] = useState<{ winner: "home" | "away"; setNumber: number; homeScore: number; awayScore: number } | null>(null);
   const [matchOverPopup, setMatchOverPopup] = useState<{ winner: "home" | "away" } | null>(null);
+  // Position-aware modals
+  const [setActionOpen, setSetActionOpen] = useState(false);
+  const [passSheetOpen, setPassSheetOpen] = useState(false);
+  const [assistPromptOpen, setAssistPromptOpen] = useState(false);
+  const [dumpKillZoneOpen, setDumpKillZoneOpen] = useState(false);
+  const [settingErrorTypeOpen, setSettingErrorTypeOpen] = useState(false);
+  const [dumpErrorTypeOpen, setDumpErrorTypeOpen] = useState(false);
   /** Set numbers we've already prompted for, so re-entering the same score (e.g. after undo + redo) won't re-trigger. */
   const [dismissedSetWins, setDismissedSetWins] = useState<Set<number>>(new Set());
 
