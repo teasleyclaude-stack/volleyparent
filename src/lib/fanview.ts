@@ -39,6 +39,8 @@ export interface FanviewTrackedStats {
   passAttempts: number;
   passAvg: string;
   positionGroup: "attacker" | "setter" | "defensive";
+  /** True when the tracked player is currently in P1 and their team is serving. */
+  isServingNow: boolean;
 }
 
 export interface FanviewState {
