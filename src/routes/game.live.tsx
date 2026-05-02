@@ -1022,15 +1022,15 @@ function AttackerButtons(props: PositionPanelProps) {
         <div data-tutorial="defense-row" className="grid grid-cols-3 gap-2.5">
           <StatButton stat="dig" label="Dig" onPress={props.onDig} />
           <StatButton stat="block" label="Block" onPress={props.onBlock} />
-          <AceOrAlt
-            isServing={props.isMyPlayerServing}
-            onAce={props.onAce}
-            altLabel="Assist"
-            altOnPress={props.onAssistTap}
-            altStat="assist"
-          />
+          <div key={props.isMyPlayerServing ? "ace" : "assist"} className="animate-in fade-in duration-150">
+            {props.isMyPlayerServing ? (
+              <StatButton stat="ace" label="Ace" onPress={props.onAce} />
+            ) : (
+              <AssistButton onPress={props.onAssistTap} compact />
+            )}
+          </div>
         </div>
-        {/* Tertiary row — Assist only when serving (otherwise it's promoted into ACE slot) */}
+        {/* Tertiary row — only show extra Assist when ACE occupies the secondary slot */}
         {props.isMyPlayerServing && (
           <div className="grid grid-cols-2 gap-2.5">
             <AssistButton onPress={props.onAssistTap} />
