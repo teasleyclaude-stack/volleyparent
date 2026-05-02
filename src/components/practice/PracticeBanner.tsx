@@ -25,7 +25,7 @@ export function PracticeBanner() {
     >
       <span className="flex items-center gap-2">
         <span className="rounded-full bg-[#39FF14] px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#0A0E1A]">
-          Practice
+          Guided Tour
         </span>
         <span className="text-white/80">No stats saved</span>
       </span>

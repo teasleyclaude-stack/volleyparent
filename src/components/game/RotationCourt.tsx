@@ -84,6 +84,21 @@ export function RotationCourt({
               "linear-gradient(to bottom, transparent 49%, var(--foreground) 49%, var(--foreground) 51%, transparent 51%)",
           }}
         />
+        {/* NET bar — top of the court (opponents are on the other side) */}
+        <div
+          className="relative mb-2 flex h-[14px] items-center justify-center"
+          style={{
+            backgroundColor: "#1A5C58",
+            borderTop: "2px solid #FFFFFF",
+            borderBottom: "2px solid #FFFFFF",
+          }}
+        >
+          <span aria-hidden className="absolute left-0 top-1/2 h-3 w-1 -translate-y-1/2" style={{ backgroundColor: "#FF4D4D" }} />
+          <span aria-hidden className="absolute right-0 top-1/2 h-3 w-1 -translate-y-1/2" style={{ backgroundColor: "#FF4D4D" }} />
+          <span className="text-[9px] font-bold uppercase" style={{ letterSpacing: "2px", color: "rgba(255,255,255,0.5)" }}>
+            NET
+          </span>
+        </div>
         <div className="relative grid grid-cols-3 gap-2">
           {cellOrder.map((rotIdx, gridIdx) => {
             const player = find(rotation[rotIdx] ?? "");
@@ -155,12 +170,6 @@ export function RotationCourt({
               </div>
             );
           })}
-        </div>
-
-        <div className="mt-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          NET
-          <span className="h-px flex-1 bg-border" />
         </div>
       </div>
     </div>

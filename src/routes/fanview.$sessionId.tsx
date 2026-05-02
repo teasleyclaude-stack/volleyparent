@@ -339,6 +339,21 @@ function Court({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
         Court — Live Rotation
       </div>
       <div className="rounded-2xl border border-border bg-popover p-3">
+        {/* NET bar — top of court */}
+        <div
+          className="relative mb-2 flex h-[14px] items-center justify-center"
+          style={{
+            backgroundColor: "#1A5C58",
+            borderTop: "2px solid #FFFFFF",
+            borderBottom: "2px solid #FFFFFF",
+          }}
+        >
+          <span aria-hidden className="absolute left-0 top-1/2 h-3 w-1 -translate-y-1/2" style={{ backgroundColor: "#FF4D4D" }} />
+          <span aria-hidden className="absolute right-0 top-1/2 h-3 w-1 -translate-y-1/2" style={{ backgroundColor: "#FF4D4D" }} />
+          <span className="text-[9px] font-bold uppercase" style={{ letterSpacing: "2px", color: "rgba(255,255,255,0.5)" }}>
+            NET
+          </span>
+        </div>
         <div className="grid grid-cols-3 gap-2">
           {cellOrder.map((rotIdx, gridIdx) => {
             const id = state.rotationState[rotIdx];
@@ -388,11 +403,6 @@ function Court({ state, meta }: { state: FanviewState; meta: FanviewMeta }) {
               </div>
             );
           })}
-        </div>
-        <div className="mt-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          NET
-          <span className="h-px flex-1 bg-border" />
         </div>
       </div>
     </section>
