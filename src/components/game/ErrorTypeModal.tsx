@@ -85,7 +85,14 @@ export function ErrorTypeModal({ open, onSelect, onCancel, isServing = true }: P
       {/* List */}
       <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
         {TIER1.map((opt) => (
-          <ErrorButton key={opt.type} opt={opt} flashing={flashing === opt.type} onClick={() => handleSelect(opt.type)} />
+          <ErrorButton
+            key={opt.type}
+            opt={opt}
+            flashing={flashing === opt.type}
+            onClick={() => handleSelect(opt.type)}
+            dimmed={opt.type === "foot_fault" && !isServing}
+            note={opt.type === "foot_fault" && !isServing ? "Tracked player isn't serving" : undefined}
+          />
         ))}
 
         {/* OTHER accordion */}
