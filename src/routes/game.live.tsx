@@ -909,6 +909,12 @@ interface PositionPanelProps {
   onPassCancel: () => void;
   showAttemptFlowTip: boolean;
   onDismissAttemptFlowTip: () => void;
+  showSetterFlowTip: boolean;
+  onDismissSetterFlowTip: () => void;
+  showPassingFlowTip: boolean;
+  onDismissPassingFlowTip: () => void;
+  showAssistFlowTip: boolean;
+  onDismissAssistFlowTip: () => void;
 }
 
 function PositionAwareStatPanel(props: PositionPanelProps) {
