@@ -67,7 +67,7 @@ export function AssistKillerPrompt({
         <div className="grid grid-cols-3 gap-2">
           {candidates.length === 0 && (
             <div className="col-span-3 rounded-xl border border-dashed border-border p-2 text-center text-[11px] text-muted-foreground">
-              No front-row teammates
+              No teammates on court
             </div>
           )}
           {candidates.map((p) => (
