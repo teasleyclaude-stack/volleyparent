@@ -136,7 +136,12 @@ export const useGameStore = create<GameStore>()(
           roster: roster.map((p) => ({
             ...p,
             liberoPartnerId: null,
-            stats: { kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0 },
+            stats: {
+              kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0,
+              settingErrors: 0, dumpKills: 0, dumpErrors: 0, dumpAttempts: 0,
+              passAttempts: 0, passTotal: 0,
+              passGrade3: 0, passGrade2: 0, passGrade1: 0, passGrade0: 0,
+            },
           })),
           events: [],
           completedSets: [],
