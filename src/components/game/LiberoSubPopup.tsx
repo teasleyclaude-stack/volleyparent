@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import type { Player, RotationState } from "@/types";
-import { FRONT_ROW_INDICES } from "@/types";
+import { isLibero } from "@/types";
 import { tapHaptic } from "@/utils/haptics";
 import { cn } from "@/lib/utils";
 import { Tip } from "@/components/common/Tip";
