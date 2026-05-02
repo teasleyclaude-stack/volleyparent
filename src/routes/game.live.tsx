@@ -25,7 +25,11 @@ import { tapHaptic } from "@/utils/haptics";
 import { fireWinConfetti } from "@/utils/winConfetti";
 import { Tip } from "@/components/common/Tip";
 import { shouldShowTip, dismissTip } from "@/lib/tips";
-import type { ErrorType, KillZone, StatType } from "@/types";
+import type { ErrorType, KillZone, PassGrade, StatType } from "@/types";
+import { getPositionGroup, passAverage } from "@/types";
+import { SetActionModal, type SetOutcome } from "@/components/game/SetActionModal";
+import { PassGradeSheet } from "@/components/game/PassGradeSheet";
+import { AssistKillerPrompt } from "@/components/game/AssistKillerPrompt";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/game/live")({
