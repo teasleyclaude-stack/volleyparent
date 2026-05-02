@@ -1133,6 +1133,7 @@ function SetterButtons(props: PositionPanelProps) {
 }
 
 function DefensiveButtons(props: PositionPanelProps) {
+  const isLib = props.tracked.position === "L";
   return (
     <div className="mt-3 space-y-2.5">
       {/* Primary PASS button */}
@@ -1144,7 +1145,7 @@ function DefensiveButtons(props: PositionPanelProps) {
             props.onPassTap();
           }}
           className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
-          style={{ backgroundColor: "#00B4FF", color: "#06283D" }}
+          style={{ backgroundColor: "#39FF14", color: "#0A2200" }}
         >
           <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
             Passing ▾
@@ -1168,31 +1169,72 @@ function DefensiveButtons(props: PositionPanelProps) {
         onSelect={props.onPassGrade}
         onCancel={props.onPassCancel}
       />
-      {/* Secondary row */}
-      <div className="grid grid-cols-3 gap-2.5">
-        <StatButton stat="dig" label="Dig" onPress={props.onDig} />
-        <AceOrAlt
-          isServing={props.isMyPlayerServing}
-          onAce={props.onAce}
-          altLabel="Block"
-          altOnPress={props.onBlock}
-          altStat="block"
-        />
-        <div className="relative">
-          <AssistButton onPress={props.onAssistTap} compact />
-          {props.showAssistFlowTip && (
-            <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
-              <Tip
-                show={props.showAssistFlowTip}
-                message="Assist auto-scores +1 — then tag the teammate who got the kill."
-                arrow="down"
-                autoDismissMs={4000}
-                onDismiss={props.onDismissAssistFlowTip}
-              />
+      {/* Secondary row — Liberos cannot block, so omit the block slot entirely. */}
+      {isLib ? (
+        props.isMyPlayerServing ? (
+          <div className="grid grid-cols-3 gap-2.5">
+            <StatButton stat="dig" label="Dig" onPress={props.onDig} />
+            <StatButton stat="ace" label="Ace" onPress={props.onAce} />
+            <div className="relative">
+              <AssistButton onPress={props.onAssistTap} compact />
+              {props.showAssistFlowTip && (
+                <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+                  <Tip
+                    show={props.showAssistFlowTip}
+                    message="Assist auto-scores +1 — then tag the teammate who got the kill."
+                    arrow="down"
+                    autoDismissMs={4000}
+                    onDismiss={props.onDismissAssistFlowTip}
+                  />
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2.5">
+            <StatButton stat="dig" label="Dig" onPress={props.onDig} />
+            <div className="relative">
+              <AssistButton onPress={props.onAssistTap} compact />
+              {props.showAssistFlowTip && (
+                <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+                  <Tip
+                    show={props.showAssistFlowTip}
+                    message="Assist auto-scores +1 — then tag the teammate who got the kill."
+                    arrow="down"
+                    autoDismissMs={4000}
+                    onDismiss={props.onDismissAssistFlowTip}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      ) : (
+        <div className="grid grid-cols-3 gap-2.5">
+          <StatButton stat="dig" label="Dig" onPress={props.onDig} />
+          <AceOrAlt
+            isServing={props.isMyPlayerServing}
+            onAce={props.onAce}
+            altLabel="Block"
+            altOnPress={props.onBlock}
+            altStat="block"
+          />
+          <div className="relative">
+            <AssistButton onPress={props.onAssistTap} compact />
+            {props.showAssistFlowTip && (
+              <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+                <Tip
+                  show={props.showAssistFlowTip}
+                  message="Assist auto-scores +1 — then tag the teammate who got the kill."
+                  arrow="down"
+                  autoDismissMs={4000}
+                  onDismiss={props.onDismissAssistFlowTip}
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
