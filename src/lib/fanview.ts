@@ -239,9 +239,35 @@ export function eventToFeedItem(
         break;
       }
       case "assist":
-        message = `${trackedFirst} Assist`;
+        message = `🤝 ${trackedFirst} Assist`;
         tone = "neutral";
         break;
+      case "dump_kill":
+        message = ev.killZone
+          ? `⚡ ${trackedFirst} Dump Kill → Zone ${ev.killZone}`
+          : `⚡ ${trackedFirst} Dump Kill`;
+        tone = "kill";
+        break;
+      case "dump_error":
+        message = `${trackedFirst} Dump Error (point to ${oppTeamName})`;
+        tone = "error";
+        break;
+      case "setting_error":
+        message = `${trackedFirst} Setting Error (point to ${oppTeamName})`;
+        tone = "error";
+        break;
+      case "pass": {
+        const grade = ev.passGrade ?? 0;
+        const labels: Record<number, string> = {
+          3: "Perfect",
+          2: "Good",
+          1: "Poor",
+          0: "Error",
+        };
+        message = `🎯 ${trackedFirst} Pass — ${grade} (${labels[grade]})`;
+        tone = grade >= 2 ? "kill" : grade === 0 ? "error" : "neutral";
+        break;
+      }
       default:
         return null;
     }
