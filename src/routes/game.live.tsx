@@ -1022,13 +1022,21 @@ function AttackerButtons(props: PositionPanelProps) {
         <div data-tutorial="defense-row" className="grid grid-cols-3 gap-2.5">
           <StatButton stat="dig" label="Dig" onPress={props.onDig} />
           <StatButton stat="block" label="Block" onPress={props.onBlock} />
-          <StatButton stat="ace" label="Ace" onPress={props.onAce} />
+          <AceOrAlt
+            isServing={props.isMyPlayerServing}
+            onAce={props.onAce}
+            altLabel="Assist"
+            altOnPress={props.onAssistTap}
+            altStat="assist"
+          />
         </div>
-        {/* Tertiary row — Assist (de-emphasized) */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <AssistButton onPress={props.onAssistTap} />
-          <div />
-        </div>
+        {/* Tertiary row — Assist only when serving (otherwise it's promoted into ACE slot) */}
+        {props.isMyPlayerServing && (
+          <div className="grid grid-cols-2 gap-2.5">
+            <AssistButton onPress={props.onAssistTap} />
+            <div />
+          </div>
+        )}
       </div>
 
       {props.attemptMenuOpen && (
@@ -1110,7 +1118,13 @@ function SetterButtons(props: PositionPanelProps) {
       {/* Secondary row */}
       <div className="grid grid-cols-3 gap-2.5">
         <StatButton stat="dig" label="Dig" onPress={props.onDig} />
-        <StatButton stat="ace" label="Ace" onPress={props.onAce} />
+        <AceOrAlt
+          isServing={props.isMyPlayerServing}
+          onAce={props.onAce}
+          altLabel="Block"
+          altOnPress={props.onBlock}
+          altStat="block"
+        />
         <StatButton stat="error" label="Error" onPress={props.onErrorTap} />
       </div>
     </div>
@@ -1156,7 +1170,13 @@ function DefensiveButtons(props: PositionPanelProps) {
       {/* Secondary row */}
       <div className="grid grid-cols-3 gap-2.5">
         <StatButton stat="dig" label="Dig" onPress={props.onDig} />
-        <StatButton stat="ace" label="Ace" onPress={props.onAce} />
+        <AceOrAlt
+          isServing={props.isMyPlayerServing}
+          onAce={props.onAce}
+          altLabel="Block"
+          altOnPress={props.onBlock}
+          altStat="block"
+        />
         <div className="relative">
           <AssistButton onPress={props.onAssistTap} compact />
           {props.showAssistFlowTip && (
@@ -1176,6 +1196,29 @@ function DefensiveButtons(props: PositionPanelProps) {
   );
 }
 
+function AceOrAlt({
+  isServing,
+  onAce,
+  altLabel,
+  altOnPress,
+  altStat,
+}: {
+  isServing: boolean;
+  onAce: () => void;
+  altLabel: string;
+  altOnPress: () => void;
+  altStat: StatType;
+}) {
+  return (
+    <div key={isServing ? "ace" : "alt"} className="animate-in fade-in duration-150">
+      {isServing ? (
+        <StatButton stat="ace" label="Ace" onPress={onAce} />
+      ) : (
+        <StatButton stat={altStat} label={altLabel} onPress={altOnPress} />
+      )}
+    </div>
+  );
+}
 
 function AssistButton({ onPress, compact = false }: { onPress: () => void; compact?: boolean }) {
   return (
