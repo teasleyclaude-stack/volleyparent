@@ -1,5 +1,5 @@
 import type { GameSession, MatchEvent, MatchFormat, Player, RotationState } from "@/types";
-import { ERROR_TYPE_LABELS } from "@/types";
+import { ERROR_TYPE_LABELS, getPositionGroup, passAverage, dumpHittingPct } from "@/types";
 import { hittingPercentage } from "@/utils/stats";
 
 export interface FanviewMeta {
@@ -29,6 +29,16 @@ export interface FanviewTrackedStats {
   blocks: number;
   aces: number;
   hittingPct: string;
+  assists: number;
+  // Setter
+  dumpKills: number;
+  settingErrors: number;
+  dumpAttempts: number;
+  dumpHittingPct: string;
+  // Defensive
+  passAttempts: number;
+  passAvg: string;
+  positionGroup: "attacker" | "setter" | "defensive";
 }
 
 export interface FanviewState {
@@ -127,6 +137,14 @@ export function buildState(session: GameSession): FanviewState {
       blocks: tracked?.stats.blocks ?? 0,
       aces: tracked?.stats.aces ?? 0,
       hittingPct: tracked ? hittingPercentage(tracked.stats) : ".000",
+      assists: tracked?.stats.assists ?? 0,
+      dumpKills: tracked?.stats.dumpKills ?? 0,
+      settingErrors: tracked?.stats.settingErrors ?? 0,
+      dumpAttempts: tracked?.stats.dumpAttempts ?? 0,
+      dumpHittingPct: tracked ? dumpHittingPct(tracked.stats) : ".000",
+      passAttempts: tracked?.stats.passAttempts ?? 0,
+      passAvg: tracked ? passAverage(tracked.stats) : "0.00",
+      positionGroup: tracked ? getPositionGroup(tracked.position) : "attacker",
     },
     lastUpdated: Date.now(),
   };
@@ -221,9 +239,35 @@ export function eventToFeedItem(
         break;
       }
       case "assist":
-        message = `${trackedFirst} Assist`;
+        message = `🤝 ${trackedFirst} Assist`;
         tone = "neutral";
         break;
+      case "dump_kill":
+        message = ev.killZone
+          ? `⚡ ${trackedFirst} Dump Kill → Zone ${ev.killZone}`
+          : `⚡ ${trackedFirst} Dump Kill`;
+        tone = "kill";
+        break;
+      case "dump_error":
+        message = `${trackedFirst} Dump Error (point to ${oppTeamName})`;
+        tone = "error";
+        break;
+      case "setting_error":
+        message = `${trackedFirst} Setting Error (point to ${oppTeamName})`;
+        tone = "error";
+        break;
+      case "pass": {
+        const grade = ev.passGrade ?? 0;
+        const labels: Record<number, string> = {
+          3: "Perfect",
+          2: "Good",
+          1: "Poor",
+          0: "Error",
+        };
+        message = `🎯 ${trackedFirst} Pass — ${grade} (${labels[grade]})`;
+        tone = grade >= 2 ? "kill" : grade === 0 ? "error" : "neutral";
+        break;
+      }
       default:
         return null;
     }

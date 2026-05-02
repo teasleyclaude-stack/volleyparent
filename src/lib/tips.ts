@@ -10,6 +10,9 @@ export const TIP_KEYS = {
   winByTwo: "tip_win_by_two",
   liberoSub: "tip_libero_sub",
   setComplete: "tip_set_complete",
+  setterFlow: "tip_setter_flow",
+  passingFlow: "tip_passing_flow",
+  assistFlow: "tip_assist_flow",
 } as const;
 
 export type TipKey = keyof typeof TIP_KEYS;

@@ -10,7 +10,7 @@ import { useMemo } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
 import { formatLabelShort } from "@/utils/setRules";
 import { exportSessionPDF } from "@/utils/pdfReport";
-import { ERROR_TYPE_LABELS, type ErrorType } from "@/types";
+import { ERROR_TYPE_LABELS, type ErrorType, getPositionGroup, passAverage, dumpHittingPct } from "@/types";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
@@ -53,7 +53,25 @@ function ReportPage() {
   const csvBlobUrl = useMemo(() => {
     if (!session) return null;
     const rows: string[][] = [
-      ["Player", "Number", "Position", "Kills", "Errors", "Att", "Hit%", "Digs", "Blocks", "Aces"],
+      [
+        "Player",
+        "Number",
+        "Position",
+        "Kills",
+        "Errors",
+        "Att",
+        "Hit%",
+        "Digs",
+        "Blocks",
+        "Aces",
+        "Assists",
+        "DumpKills",
+        "DumpErrors",
+        "DumpAtt",
+        "SettingErrors",
+        "PassAtt",
+        "PassAvg",
+      ],
       ...session.roster.map((p) => {
         const hp =
           p.stats.totalAttempts === 0
@@ -70,12 +88,21 @@ function ReportPage() {
           String(p.stats.digs),
           String(p.stats.blocks),
           String(p.stats.aces),
+          String(p.stats.assists),
+          String(p.stats.dumpKills ?? 0),
+          String(p.stats.dumpErrors ?? 0),
+          String(p.stats.dumpAttempts ?? 0),
+          String(p.stats.settingErrors ?? 0),
+          String(p.stats.passAttempts ?? 0),
+          passAverage(p.stats),
         ];
       }),
     ];
     const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
     return URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   }, [session]);
+
+  const trackedGroup = tracked ? getPositionGroup(tracked.position) : "attacker";
 
   if (!session || !tracked) {
     return (
@@ -222,7 +249,55 @@ function ReportPage() {
           </div>
         )}
 
-        <ShotChart killZones={killZones} />
+        {trackedGroup === "attacker" && <ShotChart killZones={killZones} />}
+
+        {trackedGroup === "setter" && (
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <h3 className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+              Setter Summary
+            </h3>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <ReportStat label="Assists" value={tracked.stats.assists} color="#A78BFA" />
+              <ReportStat label="Dump Kills" value={tracked.stats.dumpKills ?? 0} color="var(--kill)" />
+              <ReportStat label="Setting Err" value={tracked.stats.settingErrors ?? 0} color="var(--error)" />
+              <ReportStat label="Dump Att" value={tracked.stats.dumpAttempts ?? 0} color="var(--foreground)" />
+              <ReportStat label="Dump Err" value={tracked.stats.dumpErrors ?? 0} color="var(--error)" />
+              <ReportStat label="Dump %" value={dumpHittingPct(tracked.stats)} color="var(--primary)" />
+            </div>
+          </div>
+        )}
+
+        {trackedGroup === "defensive" && (
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <h3 className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+              Passing Report
+            </h3>
+            <div className="flex items-end justify-between">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Pass Average
+                </div>
+                <div className="text-4xl font-black tabular-nums text-[#22D3EE]">
+                  {passAverage(tracked.stats)}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Total Passes
+                </div>
+                <div className="text-2xl font-black tabular-nums text-foreground">
+                  {tracked.stats.passAttempts ?? 0}
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+              <PassPill grade="3" value={tracked.stats.passGrade3 ?? 0} color="#39FF14" />
+              <PassPill grade="2" value={tracked.stats.passGrade2 ?? 0} color="#22D3EE" />
+              <PassPill grade="1" value={tracked.stats.passGrade1 ?? 0} color="#F4B400" />
+              <PassPill grade="0" value={tracked.stats.passGrade0 ?? 0} color="#FF4D4D" />
+            </div>
+          </div>
+        )}
 
         <MomentumGraph
           events={session.events}
@@ -265,5 +340,31 @@ function ReportPage() {
         </Link>
       </main>
     </PhoneShell>
+  );
+}
+
+function ReportStat({ label, value, color }: { label: string; value: number | string; color: string }) {
+  return (
+    <div className="rounded-xl bg-popover py-2">
+      <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+        {label}
+      </div>
+      <div className="text-xl font-black tabular-nums" style={{ color }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function PassPill({ grade, value, color }: { grade: string; value: number; color: string }) {
+  return (
+    <div className="rounded-xl bg-popover py-2">
+      <div className="text-2xl font-black tabular-nums" style={{ color }}>
+        {value}
+      </div>
+      <div className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+        Grade {grade}
+      </div>
+    </div>
   );
 }

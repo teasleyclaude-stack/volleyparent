@@ -74,6 +74,9 @@ function LivePage() {
   const [showLongPressTip, setShowLongPressTip] = useState(false);
   const [showFanviewTip, setShowFanviewTip] = useState(false);
   const [showAttemptFlowTip, setShowAttemptFlowTip] = useState(false);
+  const [showSetterFlowTip, setShowSetterFlowTip] = useState(false);
+  const [showPassingFlowTip, setShowPassingFlowTip] = useState(false);
+  const [showAssistFlowTip, setShowAssistFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [setOverPopup, setSetOverPopup] = useState<{
@@ -443,12 +446,37 @@ function LivePage() {
           onBlock={() => handleStat("block")}
           onAce={() => handleStat("ace")}
           onAssistTap={() => {
+            if (shouldShowTip("assistFlow", isPractice)) {
+              setShowAssistFlowTip(true);
+              window.setTimeout(() => {
+                setShowAssistFlowTip(false);
+                dismissTip("assistFlow");
+              }, 4000);
+            }
             recordAssist(tracked.id);
             setAssistPromptOpen(true);
           }}
           onErrorTap={() => setErrorModal("standalone")}
-          onSetTap={() => setSetActionOpen(true)}
-          onPassTap={() => setPassSheetOpen((v) => !v)}
+          onSetTap={() => {
+            if (shouldShowTip("setterFlow", isPractice)) {
+              setShowSetterFlowTip(true);
+              window.setTimeout(() => {
+                setShowSetterFlowTip(false);
+                dismissTip("setterFlow");
+              }, 4500);
+            }
+            setSetActionOpen(true);
+          }}
+          onPassTap={() => {
+            if (shouldShowTip("passingFlow", isPractice)) {
+              setShowPassingFlowTip(true);
+              window.setTimeout(() => {
+                setShowPassingFlowTip(false);
+                dismissTip("passingFlow");
+              }, 4500);
+            }
+            setPassSheetOpen((v) => !v);
+          }}
           passSheetOpen={passSheetOpen}
           onPassGrade={(g: PassGrade) => {
             recordPass(tracked.id, g);
@@ -459,6 +487,21 @@ function LivePage() {
           onDismissAttemptFlowTip={() => {
             setShowAttemptFlowTip(false);
             dismissTip("attemptFlow");
+          }}
+          showSetterFlowTip={showSetterFlowTip}
+          onDismissSetterFlowTip={() => {
+            setShowSetterFlowTip(false);
+            dismissTip("setterFlow");
+          }}
+          showPassingFlowTip={showPassingFlowTip}
+          onDismissPassingFlowTip={() => {
+            setShowPassingFlowTip(false);
+            dismissTip("passingFlow");
+          }}
+          showAssistFlowTip={showAssistFlowTip}
+          onDismissAssistFlowTip={() => {
+            setShowAssistFlowTip(false);
+            dismissTip("assistFlow");
           }}
         />
 
@@ -866,6 +909,12 @@ interface PositionPanelProps {
   onPassCancel: () => void;
   showAttemptFlowTip: boolean;
   onDismissAttemptFlowTip: () => void;
+  showSetterFlowTip: boolean;
+  onDismissSetterFlowTip: () => void;
+  showPassingFlowTip: boolean;
+  onDismissPassingFlowTip: () => void;
+  showAssistFlowTip: boolean;
+  onDismissAssistFlowTip: () => void;
 }
 
 function PositionAwareStatPanel(props: PositionPanelProps) {
@@ -1028,19 +1077,32 @@ function SetterButtons(props: PositionPanelProps) {
   return (
     <div className="mt-3 space-y-2.5">
       {/* Primary SET button */}
-      <button
-        type="button"
-        onClick={() => {
-          tapHaptic("medium");
-          props.onSetTap();
-        }}
-        className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
-        style={{ backgroundColor: "#39FF14", color: "#0A2200" }}
-      >
-        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
-          Setting ▾
-        </span>
-      </button>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => {
+            tapHaptic("medium");
+            props.onSetTap();
+          }}
+          className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
+          style={{ backgroundColor: "#39FF14", color: "#0A2200" }}
+        >
+          <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
+            Setting ▾
+          </span>
+        </button>
+        {props.showSetterFlowTip && (
+          <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+            <Tip
+              show={props.showSetterFlowTip}
+              message="Tap SETTING after every set — log Assist, Dump Kill, or Setting Error."
+              arrow="down"
+              autoDismissMs={4500}
+              onDismiss={props.onDismissSetterFlowTip}
+            />
+          </div>
+        )}
+      </div>
       {/* Secondary row */}
       <div className="grid grid-cols-3 gap-2.5">
         <StatButton stat="dig" label="Dig" onPress={props.onDig} />
@@ -1055,19 +1117,32 @@ function DefensiveButtons(props: PositionPanelProps) {
   return (
     <div className="mt-3 space-y-2.5">
       {/* Primary PASS button */}
-      <button
-        type="button"
-        onClick={() => {
-          tapHaptic("medium");
-          props.onPassTap();
-        }}
-        className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
-        style={{ backgroundColor: "#00B4FF", color: "#06283D" }}
-      >
-        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
-          Passing ▾
-        </span>
-      </button>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => {
+            tapHaptic("medium");
+            props.onPassTap();
+          }}
+          className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
+          style={{ backgroundColor: "#00B4FF", color: "#06283D" }}
+        >
+          <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
+            Passing ▾
+          </span>
+        </button>
+        {props.showPassingFlowTip && (
+          <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+            <Tip
+              show={props.showPassingFlowTip}
+              message="Grade every pass: 3 Perfect, 2 Good, 1 Poor, 0 Error. Tracks your average."
+              arrow="down"
+              autoDismissMs={4500}
+              onDismiss={props.onDismissPassingFlowTip}
+            />
+          </div>
+        )}
+      </div>
       {/* Inline grade picker */}
       <PassGradeSheet
         open={props.passSheetOpen}
@@ -1078,11 +1153,25 @@ function DefensiveButtons(props: PositionPanelProps) {
       <div className="grid grid-cols-3 gap-2.5">
         <StatButton stat="dig" label="Dig" onPress={props.onDig} />
         <StatButton stat="ace" label="Ace" onPress={props.onAce} />
-        <AssistButton onPress={props.onAssistTap} compact />
+        <div className="relative">
+          <AssistButton onPress={props.onAssistTap} compact />
+          {props.showAssistFlowTip && (
+            <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+              <Tip
+                show={props.showAssistFlowTip}
+                message="Assist auto-scores +1 — then tag the teammate who got the kill."
+                arrow="down"
+                autoDismissMs={4000}
+                onDismiss={props.onDismissAssistFlowTip}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
 
 function AssistButton({ onPress, compact = false }: { onPress: () => void; compact?: boolean }) {
   return (

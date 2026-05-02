@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { readableTextColor } from "@/lib/colorContrast";
 import { fireWinConfetti } from "@/utils/winConfetti";
 import { formatLabel, maxSets } from "@/utils/setRules";
+import { getPositionGroup, passAverage, dumpHittingPct, type Position } from "@/types";
 
 /** Pull team text colors from meta with auto-contrast applied. */
 function teamTextColors(meta: FanviewMeta) {
@@ -423,11 +424,31 @@ function TrackedStatsBar({ state }: { state: FanviewState }) {
         </div>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-black tabular-nums">
-        <Chip label="K" value={s.kills} />
-        <Chip label="D" value={s.digs} />
-        <Chip label="B" value={s.blocks} />
-        <Chip label="A" value={s.aces} />
-        <Chip label="Hit%" value={s.hittingPct} accent />
+        {s.positionGroup === "setter" ? (
+          <>
+            <Chip label="Ast" value={s.assists} />
+            <Chip label="DmpK" value={s.dumpKills} />
+            <Chip label="SetE" value={s.settingErrors} />
+            <Chip label="D" value={s.digs} />
+            <Chip label="Dmp%" value={s.dumpHittingPct} accent />
+          </>
+        ) : s.positionGroup === "defensive" ? (
+          <>
+            <Chip label="Pass" value={s.passAttempts} />
+            <Chip label="D" value={s.digs} />
+            <Chip label="A" value={s.aces} />
+            <Chip label="Ast" value={s.assists} />
+            <Chip label="PassAvg" value={s.passAvg} accent />
+          </>
+        ) : (
+          <>
+            <Chip label="K" value={s.kills} />
+            <Chip label="D" value={s.digs} />
+            <Chip label="B" value={s.blocks} />
+            <Chip label="A" value={s.aces} />
+            <Chip label="Hit%" value={s.hittingPct} accent />
+          </>
+        )}
       </div>
     </section>
   );
@@ -603,43 +624,95 @@ function SummaryView({ row }: { row: SessionRow }) {
         )}
       </section>
 
-      {summary?.trackedPlayer && (
-        <section className="mt-4 rounded-2xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-black text-foreground">
-              {summary.trackedPlayer.name}{" "}
-              <span className="text-muted-foreground">#{summary.trackedPlayer.number}</span>
-            </div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {summary.trackedPlayer.position}
-            </div>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-            <StatBox label="Kills" value={summary.trackedPlayer.stats.kills} />
-            <StatBox label="Digs" value={summary.trackedPlayer.stats.digs} />
-            <StatBox label="Blocks" value={summary.trackedPlayer.stats.blocks} />
-            <StatBox label="Aces" value={summary.trackedPlayer.stats.aces} />
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-            <div className="rounded-xl bg-popover py-2">
+      {summary?.trackedPlayer && (() => {
+        const tp = summary.trackedPlayer;
+        const group = getPositionGroup(tp.position as Position);
+        return (
+          <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-black text-foreground">
+                {tp.name} <span className="text-muted-foreground">#{tp.number}</span>
+              </div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Opp. Digs (Att)
-              </div>
-              <div className="text-lg font-black tabular-nums text-foreground">
-                {summary.trackedPlayer.stats.dugAttempts}
+                {tp.position}
               </div>
             </div>
-            <div className="rounded-xl bg-primary/10 py-2">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                Hitting %
-              </div>
-              <div className="text-lg font-black tabular-nums text-primary">
-                {summary.trackedPlayer.hittingPct}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+
+            {group === "attacker" && (
+              <>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                  <StatBox label="Kills" value={tp.stats.kills} />
+                  <StatBox label="Digs" value={tp.stats.digs} />
+                  <StatBox label="Blocks" value={tp.stats.blocks} />
+                  <StatBox label="Aces" value={tp.stats.aces} />
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                  <div className="rounded-xl bg-popover py-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Opp. Digs (Att)
+                    </div>
+                    <div className="text-lg font-black tabular-nums text-foreground">
+                      {tp.stats.dugAttempts}
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-primary/10 py-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                      Hitting %
+                    </div>
+                    <div className="text-lg font-black tabular-nums text-primary">
+                      {tp.hittingPct}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {group === "setter" && (
+              <>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <StatBox label="Assists" value={tp.stats.assists} />
+                  <StatBox label="Dump K" value={tp.stats.dumpKills ?? 0} />
+                  <StatBox label="Set Err" value={tp.stats.settingErrors ?? 0} />
+                  <StatBox label="Dump Att" value={tp.stats.dumpAttempts ?? 0} />
+                  <StatBox label="Dump Err" value={tp.stats.dumpErrors ?? 0} />
+                  <div className="rounded-xl bg-primary/10 py-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                      Dump %
+                    </div>
+                    <div className="text-lg font-black tabular-nums text-primary">
+                      {dumpHittingPct(tp.stats)}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {group === "defensive" && (
+              <>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                  <div className="rounded-xl bg-primary/10 py-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                      Pass Avg
+                    </div>
+                    <div className="text-lg font-black tabular-nums text-primary">
+                      {passAverage(tp.stats)}
+                    </div>
+                  </div>
+                  <StatBox label="Passes" value={tp.stats.passAttempts ?? 0} />
+                  <StatBox label="Digs" value={tp.stats.digs} />
+                  <StatBox label="Aces" value={tp.stats.aces} />
+                </div>
+                <div className="mt-3 grid grid-cols-4 gap-1.5 text-center">
+                  <PassPill grade="3" value={tp.stats.passGrade3 ?? 0} color="#39FF14" />
+                  <PassPill grade="2" value={tp.stats.passGrade2 ?? 0} color="#22D3EE" />
+                  <PassPill grade="1" value={tp.stats.passGrade1 ?? 0} color="#F4B400" />
+                  <PassPill grade="0" value={tp.stats.passGrade0 ?? 0} color="#FF4D4D" />
+                </div>
+              </>
+            )}
+          </section>
+        );
+      })()}
 
       <section className="mt-4">
         <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
@@ -662,6 +735,19 @@ function StatBox({ label, value }: { label: string; value: number | string }) {
         {label}
       </div>
       <div className="text-xl font-black tabular-nums text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function PassPill({ grade, value, color }: { grade: string; value: number; color: string }) {
+  return (
+    <div className="rounded-lg bg-popover py-1.5">
+      <div className="text-base font-black tabular-nums" style={{ color }}>
+        {value}
+      </div>
+      <div className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+        Gr {grade}
+      </div>
     </div>
   );
 }
