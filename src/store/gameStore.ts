@@ -623,24 +623,7 @@ export const useGameStore = create<GameStore>()(
 
         if (last.type === "STAT" && last.playerId && last.statType) {
           const p = s.roster.find((x) => x.id === last.playerId);
-          if (p) {
-            const st = last.statType;
-            if (st === "kill") {
-              p.stats.kills = Math.max(0, p.stats.kills - 1);
-              p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-            } else if (st === "error") {
-              p.stats.errors = Math.max(0, p.stats.errors - 1);
-              // Only attempt-flow errors counted toward totalAttempts.
-              const wasAttack = last.errorSource ? last.errorSource === "attempt" : true;
-              if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-            } else if (st === "dug") {
-              p.stats.dugAttempts = Math.max(0, p.stats.dugAttempts - 1);
-              p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-            } else if (st === "dig") p.stats.digs = Math.max(0, p.stats.digs - 1);
-            else if (st === "block") p.stats.blocks = Math.max(0, p.stats.blocks - 1);
-            else if (st === "ace") p.stats.aces = Math.max(0, p.stats.aces - 1);
-            else if (st === "assist") p.stats.assists = Math.max(0, p.stats.assists - 1);
-          }
+          if (p) reverseStatOnPlayer(p, last);
         }
 
         if (last.type === "SCORE" && last.scoringTeam) {
