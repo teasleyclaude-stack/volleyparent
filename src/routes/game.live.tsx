@@ -1172,38 +1172,6 @@ function DefensiveButtons(props: PositionPanelProps) {
   );
 }
 
-function DefensiveButtons(props: PositionPanelProps) {
-  return (
-    <div className="mt-3 space-y-2.5">
-      {/* Primary PASS button */}
-      <button
-        type="button"
-        onClick={() => {
-          tapHaptic("medium");
-          props.onPassTap();
-        }}
-        className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
-        style={{ backgroundColor: "#00B4FF", color: "#06283D" }}
-      >
-        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
-          Passing ▾
-        </span>
-      </button>
-      {/* Inline grade picker */}
-      <PassGradeSheet
-        open={props.passSheetOpen}
-        onSelect={props.onPassGrade}
-        onCancel={props.onPassCancel}
-      />
-      {/* Secondary row */}
-      <div className="grid grid-cols-3 gap-2.5">
-        <StatButton stat="dig" label="Dig" onPress={props.onDig} />
-        <StatButton stat="ace" label="Ace" onPress={props.onAce} />
-        <AssistButton onPress={props.onAssistTap} compact />
-      </div>
-    </div>
-  );
-}
 
 function AssistButton({ onPress, compact = false }: { onPress: () => void; compact?: boolean }) {
   return (
