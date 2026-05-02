@@ -738,3 +738,16 @@ function StatBox({ label, value }: { label: string; value: number | string }) {
     </div>
   );
 }
+
+function PassPill({ grade, value, color }: { grade: string; value: number; color: string }) {
+  return (
+    <div className="rounded-lg bg-popover py-1.5">
+      <div className="text-base font-black tabular-nums" style={{ color }}>
+        {value}
+      </div>
+      <div className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+        Gr {grade}
+      </div>
+    </div>
+  );
+}
