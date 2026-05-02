@@ -1,7 +1,36 @@
 export type Position = "S" | "MB" | "OH" | "RS" | "L" | "DS";
-export type StatType = "kill" | "error" | "dig" | "block" | "ace" | "assist" | "dug";
+export type StatType =
+  | "kill"
+  | "error"
+  | "dig"
+  | "block"
+  | "ace"
+  | "assist"
+  | "dug"
+  | "dump_kill"
+  | "dump_error"
+  | "setting_error"
+  | "pass";
 export type KillZone = 1 | 2 | 3 | 4 | 5 | 6;
 export type MatchFormat = "club" | "highschool";
+export type PassGrade = 0 | 1 | 2 | 3;
+export type PositionGroup = "attacker" | "setter" | "defensive";
+
+export function getPositionGroup(position: Position): PositionGroup {
+  switch (position) {
+    case "OH":
+    case "RS":
+    case "MB":
+      return "attacker";
+    case "S":
+      return "setter";
+    case "L":
+    case "DS":
+      return "defensive";
+    default:
+      return "attacker";
+  }
+}
 
 export type ErrorType =
   | "hit_error"
@@ -43,6 +72,18 @@ export interface PlayerStats {
   aces: number;
   assists: number;
   dugAttempts: number;
+  // Setter-specific (optional for back-compat with persisted sessions)
+  settingErrors?: number;
+  dumpKills?: number;
+  dumpErrors?: number;
+  dumpAttempts?: number;
+  // Libero/DS-specific
+  passAttempts?: number;
+  passTotal?: number;
+  passGrade3?: number;
+  passGrade2?: number;
+  passGrade1?: number;
+  passGrade0?: number;
 }
 
 export interface Player {
