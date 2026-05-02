@@ -43,10 +43,12 @@ export function LiberoSubPopup({
 
   if (!open) return null;
   const libero = roster.find((p) => p.id === liberoId);
-  // Candidate sub-out players are the OTHER front-row positions.
-  const candidates = FRONT_ROW_INDICES.filter((i) => i !== rotationIndex)
-    .map((i) => roster.find((p) => p.id === rotation[i]))
-    .filter((p): p is Player => Boolean(p));
+  // Candidate sub-in players are bench players (not currently on court),
+  // excluding other Liberos (a Libero cannot sub in for a Libero in the front row).
+  const onCourt = new Set(rotation);
+  const candidates = roster.filter(
+    (p) => !onCourt.has(p.id) && !isLibero(p),
+  );
   // Sort so the remembered partner shows first.
   const partnerId = libero?.liberoPartnerId ?? null;
   candidates.sort((a, b) => {
