@@ -152,6 +152,10 @@ export interface MatchEvent {
   // Error metadata (when type === "STAT" && statType === "error")
   errorType?: ErrorType;
   errorSource?: ErrorSource;
+  // Pass grade (when type === "STAT" && statType === "pass")
+  passGrade?: PassGrade;
+  // Optional tag for ASSIST events: who got the kill
+  killerId?: string;
 }
 
 export interface SetSummary {
