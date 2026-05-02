@@ -171,12 +171,6 @@ export function RotationCourt({
             );
           })}
         </div>
-
-        <div className="mt-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          NET
-          <span className="h-px flex-1 bg-border" />
-        </div>
       </div>
     </div>
   );
