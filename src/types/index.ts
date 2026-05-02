@@ -208,4 +208,29 @@ export const defaultStats = (): PlayerStats => ({
   aces: 0,
   assists: 0,
   dugAttempts: 0,
+  settingErrors: 0,
+  dumpKills: 0,
+  dumpErrors: 0,
+  dumpAttempts: 0,
+  passAttempts: 0,
+  passTotal: 0,
+  passGrade3: 0,
+  passGrade2: 0,
+  passGrade1: 0,
+  passGrade0: 0,
 });
+
+export function passAverage(stats: PlayerStats): string {
+  const attempts = stats.passAttempts ?? 0;
+  if (attempts === 0) return "0.00";
+  return ((stats.passTotal ?? 0) / attempts).toFixed(2);
+}
+
+export function dumpHittingPct(stats: PlayerStats): string {
+  const attempts = stats.dumpAttempts ?? 0;
+  if (attempts === 0) return ".000";
+  const pct = ((stats.dumpKills ?? 0) - (stats.dumpErrors ?? 0)) / attempts;
+  const sign = pct < 0 ? "-" : "";
+  const abs = Math.abs(pct).toFixed(3);
+  return sign + (abs.startsWith("0") ? abs.slice(1) : abs);
+}
