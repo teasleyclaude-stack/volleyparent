@@ -74,6 +74,9 @@ function LivePage() {
   const [showLongPressTip, setShowLongPressTip] = useState(false);
   const [showFanviewTip, setShowFanviewTip] = useState(false);
   const [showAttemptFlowTip, setShowAttemptFlowTip] = useState(false);
+  const [showSetterFlowTip, setShowSetterFlowTip] = useState(false);
+  const [showPassingFlowTip, setShowPassingFlowTip] = useState(false);
+  const [showAssistFlowTip, setShowAssistFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [setOverPopup, setSetOverPopup] = useState<{
