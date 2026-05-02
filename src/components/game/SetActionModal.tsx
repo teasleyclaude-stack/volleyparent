@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { X, Star, ArrowUpRight, AlertOctagon, ArrowDownRight } from "lucide-react";
+import { X, Star, ArrowUpRight, AlertOctagon } from "lucide-react";
 import { tapHaptic } from "@/utils/haptics";
 
 export type SetOutcome = "assist" | "dump_kill" | "setting_error" | "dump_error";
