@@ -13,6 +13,7 @@ import type {
   KillZone,
   MatchEvent,
   MatchFormat,
+  PassGrade,
   Player,
   RotationState,
   StatType,
@@ -39,6 +40,16 @@ interface GameStore {
   recordStat: (playerId: string, stat: StatType, killZone?: KillZone | null) => void;
   recordError: (playerId: string, errorType: ErrorType, source: ErrorSource) => void;
   recordTimeout: (team: "home" | "away") => void;
+  /** Setter dump kill (with optional zone). Scores for our team and counts toward kills + dumpKills. */
+  recordDumpKill: (playerId: string, killZone?: KillZone | null) => void;
+  /** Setter dump error. Awards point to opponent and counts toward errors + dumpErrors. */
+  recordDumpError: (playerId: string, errorType: ErrorType) => void;
+  /** Setting error. Awards point to opponent. Counts toward errors + settingErrors. */
+  recordSettingError: (playerId: string, errorType: ErrorType) => void;
+  /** Setter / any-position assist. Scores for our team. Optionally tags the killer. */
+  recordAssist: (playerId: string, killerId?: string | null) => void;
+  /** Libero/DS pass grade. Updates passing stats only — never modifies score. */
+  recordPass: (playerId: string, grade: PassGrade) => void;
   makeSubstitution: (benchPlayerId: string, courtPositionIndex: number) => void;
   correctScore: (team: "home" | "away") => void;
   /** Overwrite one team's rotation tuple (used by lineup modal & auto-repair). */
