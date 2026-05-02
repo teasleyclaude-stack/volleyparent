@@ -32,9 +32,11 @@ interface Props {
   open: boolean;
   onSelect: (type: ErrorType) => void;
   onCancel: () => void;
+  /** When false, Foot Fault is shown with a soft visual cue (dim + caption). */
+  isServing?: boolean;
 }
 
-export function ErrorTypeModal({ open, onSelect, onCancel }: Props) {
+export function ErrorTypeModal({ open, onSelect, onCancel, isServing = true }: Props) {
   const [otherOpen, setOtherOpen] = useState(false);
   const [flashing, setFlashing] = useState<ErrorType | null>(null);
 
@@ -83,7 +85,14 @@ export function ErrorTypeModal({ open, onSelect, onCancel }: Props) {
       {/* List */}
       <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
         {TIER1.map((opt) => (
-          <ErrorButton key={opt.type} opt={opt} flashing={flashing === opt.type} onClick={() => handleSelect(opt.type)} />
+          <ErrorButton
+            key={opt.type}
+            opt={opt}
+            flashing={flashing === opt.type}
+            onClick={() => handleSelect(opt.type)}
+            dimmed={opt.type === "foot_fault" && !isServing}
+            note={opt.type === "foot_fault" && !isServing ? "Tracked player isn't serving" : undefined}
+          />
         ))}
 
         {/* OTHER accordion */}
@@ -118,11 +127,15 @@ function ErrorButton({
   onClick,
   flashing,
   compact = false,
+  dimmed = false,
+  note,
 }: {
   opt: ErrorOption;
   onClick: () => void;
   flashing: boolean;
   compact?: boolean;
+  dimmed?: boolean;
+  note?: string;
 }) {
   return (
     <button
@@ -132,6 +145,7 @@ function ErrorButton({
         "flex w-full items-center gap-4 rounded-xl border border-border px-4 active:scale-[0.99] transition-colors",
         compact ? "h-[60px] bg-popover" : "h-[72px] bg-card",
         flashing && "bg-[rgba(255,77,77,0.2)]",
+        dimmed && "opacity-50",
       )}
     >
       <span className="text-2xl leading-none">{opt.emoji}</span>
@@ -140,7 +154,7 @@ function ErrorButton({
           {opt.label}
         </div>
         <div className={cn("font-medium text-muted-foreground", compact ? "text-[12px]" : "text-[13px]")}>
-          {opt.description}
+          {note ?? opt.description}
         </div>
       </div>
       <ChevronRight className="h-5 w-5 text-[#FF4D4D]" />

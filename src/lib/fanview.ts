@@ -39,6 +39,8 @@ export interface FanviewTrackedStats {
   passAttempts: number;
   passAvg: string;
   positionGroup: "attacker" | "setter" | "defensive";
+  /** True when the tracked player is currently in P1 and their team is serving. */
+  isServingNow: boolean;
 }
 
 export interface FanviewState {
@@ -145,6 +147,10 @@ export function buildState(session: GameSession): FanviewState {
       passAttempts: tracked?.stats.passAttempts ?? 0,
       passAvg: tracked ? passAverage(tracked.stats) : "0.00",
       positionGroup: tracked ? getPositionGroup(tracked.position) : "attacker",
+      isServingNow:
+        !!tracked &&
+        session.isHomeServing === session.isHomeTeam &&
+        ourRotation[0] === tracked.id,
     },
     lastUpdated: Date.now(),
   };
