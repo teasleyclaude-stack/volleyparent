@@ -76,6 +76,52 @@ const pushEvent = (s: GameSession, e: Omit<MatchEvent, "id" | "timestamp">) => {
   s.events.push(ev);
 };
 
+/** Reverse the stat counters for a player based on a STAT MatchEvent. */
+function reverseStatOnPlayer(p: Player, ev: MatchEvent) {
+  const st = ev.statType;
+  if (!st) return;
+  if (st === "kill") {
+    p.stats.kills = Math.max(0, p.stats.kills - 1);
+    p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+  } else if (st === "error") {
+    p.stats.errors = Math.max(0, p.stats.errors - 1);
+    const wasAttack = ev.errorSource ? ev.errorSource === "attempt" : true;
+    if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+  } else if (st === "dug") {
+    p.stats.dugAttempts = Math.max(0, p.stats.dugAttempts - 1);
+    p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+  } else if (st === "dig") {
+    p.stats.digs = Math.max(0, p.stats.digs - 1);
+  } else if (st === "block") {
+    p.stats.blocks = Math.max(0, p.stats.blocks - 1);
+  } else if (st === "ace") {
+    p.stats.aces = Math.max(0, p.stats.aces - 1);
+  } else if (st === "assist") {
+    p.stats.assists = Math.max(0, p.stats.assists - 1);
+  } else if (st === "dump_kill") {
+    p.stats.kills = Math.max(0, p.stats.kills - 1);
+    p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+    p.stats.dumpKills = Math.max(0, (p.stats.dumpKills ?? 0) - 1);
+    p.stats.dumpAttempts = Math.max(0, (p.stats.dumpAttempts ?? 0) - 1);
+  } else if (st === "dump_error") {
+    p.stats.errors = Math.max(0, p.stats.errors - 1);
+    p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+    p.stats.dumpErrors = Math.max(0, (p.stats.dumpErrors ?? 0) - 1);
+    p.stats.dumpAttempts = Math.max(0, (p.stats.dumpAttempts ?? 0) - 1);
+  } else if (st === "setting_error") {
+    p.stats.errors = Math.max(0, p.stats.errors - 1);
+    p.stats.settingErrors = Math.max(0, (p.stats.settingErrors ?? 0) - 1);
+  } else if (st === "pass") {
+    const grade = ev.passGrade ?? 0;
+    p.stats.passAttempts = Math.max(0, (p.stats.passAttempts ?? 0) - 1);
+    p.stats.passTotal = Math.max(0, (p.stats.passTotal ?? 0) - grade);
+    if (grade === 3) p.stats.passGrade3 = Math.max(0, (p.stats.passGrade3 ?? 0) - 1);
+    else if (grade === 2) p.stats.passGrade2 = Math.max(0, (p.stats.passGrade2 ?? 0) - 1);
+    else if (grade === 1) p.stats.passGrade1 = Math.max(0, (p.stats.passGrade1 ?? 0) - 1);
+    else if (grade === 0) p.stats.passGrade0 = Math.max(0, (p.stats.passGrade0 ?? 0) - 1);
+  }
+}
+
 /** If a Libero is in any front-row index of the rotation, return the (firstViolating)
  *  rotation index and the Libero's player id. */
 function findLiberoFrontRowViolation(
