@@ -553,7 +553,7 @@ function LivePage() {
           } else if (outcome === "dump_kill") {
             setDumpKillZoneOpen(true);
           } else if (outcome === "setting_error") {
-            setSettingErrorTypeOpen(true);
+            recordSettingError(tracked.id, "other");
           } else if (outcome === "dump_error") {
             setDumpErrorTypeOpen(true);
           }
