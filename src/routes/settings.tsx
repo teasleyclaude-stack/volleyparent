@@ -56,7 +56,7 @@ function SettingsPage() {
       <main className="flex-1 space-y-3 overflow-y-auto px-4 pb-4">
         <section>
           <h2 className="mb-2 px-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-            Practice Mode
+            Guided Tour
           </h2>
           <button
             type="button"
@@ -66,7 +66,7 @@ function SettingsPage() {
             <div className="flex items-center gap-3">
               <Star className="h-5 w-5 fill-[#39FF14] text-[#39FF14]" strokeWidth={1.5} />
               <div>
-                <div className="text-sm font-black text-foreground">Launch Practice Game</div>
+                <div className="text-sm font-black text-foreground">Launch Guided Tour</div>
                 <div className="text-[11px] text-muted-foreground">Learn the app before game day</div>
               </div>
             </div>

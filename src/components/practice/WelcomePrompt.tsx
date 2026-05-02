@@ -56,7 +56,7 @@ export function WelcomePrompt({ open, onSkip }: WelcomePromptProps) {
           className="mt-8 h-14 w-full max-w-[420px] rounded-2xl text-base font-black uppercase tracking-widest active:scale-[0.98]"
           style={{ backgroundColor: "#39FF14", color: "#0A0E1A" }}
         >
-          Start Practice Mode
+          Start Guided Tour
         </button>
 
         <button
@@ -72,7 +72,7 @@ export function WelcomePrompt({ open, onSkip }: WelcomePromptProps) {
       <div className="flex items-center justify-center gap-1.5 px-4 pb-2">
         <SettingsIcon className="h-3.5 w-3.5 text-muted-foreground" />
         <p className="text-center text-[12px] text-muted-foreground">
-          You can always find Practice Mode in Settings whenever you're ready.
+          You can always find the Guided Tour in Settings whenever you're ready.
         </p>
       </div>
     </div>
