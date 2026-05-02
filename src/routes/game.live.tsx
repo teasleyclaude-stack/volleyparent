@@ -824,3 +824,266 @@ function SubSheet({
     </div>
   );
 }
+
+/* ──────────────────────────────────────────────
+   Position-aware stat panel
+   ────────────────────────────────────────────── */
+
+import type { Player as PlayerType } from "@/types";
+
+interface PositionPanelProps {
+  tracked: PlayerType;
+  attemptMenuOpen: boolean;
+  onAttempt: () => void;
+  onAttemptOutcome: (o: "kill" | "dug" | "error") => void;
+  onDig: () => void;
+  onBlock: () => void;
+  onAce: () => void;
+  onAssistTap: () => void;
+  onSetTap: () => void;
+  onPassTap: () => void;
+  passSheetOpen: boolean;
+  onPassGrade: (g: PassGrade) => void;
+  onPassCancel: () => void;
+  showAttemptFlowTip: boolean;
+  onDismissAttemptFlowTip: () => void;
+}
+
+function PositionAwareStatPanel(props: PositionPanelProps) {
+  const { tracked } = props;
+  const group = getPositionGroup(tracked.position);
+  const badge = positionBadge(group, tracked.position);
+
+  return (
+    <section className="px-4 pt-3">
+      {/* Header: name + position badge + primary stat */}
+      <div className="flex items-center justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            Tracking
+            <span
+              className="rounded-full px-1.5 py-0.5 text-[9px] font-black uppercase"
+              style={{ backgroundColor: badge.bg, color: badge.fg, letterSpacing: "1px" }}
+            >
+              {badge.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="truncate text-base font-black text-foreground">{tracked.name}</span>
+            <span className="text-sm font-bold text-muted-foreground">#{tracked.number}</span>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            {group === "setter" ? "Assists" : group === "defensive" ? "Pass Avg" : "Hit %"}
+          </div>
+          <div className="text-2xl font-black tabular-nums text-primary">
+            {group === "setter"
+              ? tracked.stats.assists
+              : group === "defensive"
+                ? passAverage(tracked.stats)
+                : hittingPercentage(tracked.stats)}
+          </div>
+        </div>
+      </div>
+
+      {/* Stat strip */}
+      <div className="mt-2 grid grid-cols-4 gap-2 text-center">
+        {statStripFor(group, tracked).map((s) => (
+          <div key={s.l} className="rounded-xl bg-card py-1.5">
+            <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+              {s.l}
+            </div>
+            <div className={cn("text-lg font-black tabular-nums", s.c)}>{s.v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Action buttons by position */}
+      {group === "attacker" && (
+        <AttackerButtons {...props} />
+      )}
+      {group === "setter" && (
+        <SetterButtons {...props} />
+      )}
+      {group === "defensive" && (
+        <DefensiveButtons {...props} />
+      )}
+    </section>
+  );
+}
+
+function positionBadge(group: ReturnType<typeof getPositionGroup>, pos: PlayerType["position"]) {
+  if (group === "attacker") return { label: "⚡ Attacker", bg: "rgba(57,255,20,0.18)", fg: "#39FF14" };
+  if (group === "setter") return { label: "★ Setter", bg: "rgba(57,255,20,0.18)", fg: "#39FF14" };
+  return { label: pos === "L" ? "🛡 Libero" : "🛡 DS", bg: "rgba(0,172,193,0.18)", fg: "#22D3EE" };
+}
+
+function statStripFor(group: ReturnType<typeof getPositionGroup>, tracked: PlayerType) {
+  const s = tracked.stats;
+  if (group === "setter") {
+    return [
+      { l: "Ast", v: s.assists, c: "text-[#A78BFA]" },
+      { l: "DmpK", v: s.dumpKills ?? 0, c: "text-[var(--kill)]" },
+      { l: "SetE", v: s.settingErrors ?? 0, c: "text-[var(--error)]" },
+      { l: "D", v: s.digs, c: "text-[var(--dig)]" },
+    ];
+  }
+  if (group === "defensive") {
+    return [
+      { l: "Pass", v: s.passAttempts ?? 0, c: "text-[#22D3EE]" },
+      { l: "D", v: s.digs, c: "text-[var(--dig)]" },
+      { l: "A", v: s.aces, c: "text-[var(--ace)]" },
+      { l: "Ast", v: s.assists, c: "text-[#A78BFA]" },
+    ];
+  }
+  return [
+    { l: "K", v: s.kills, c: "text-[var(--kill)]" },
+    { l: "D", v: s.digs, c: "text-[var(--dig)]" },
+    { l: "B", v: s.blocks, c: "text-[var(--block)]" },
+    { l: "A", v: s.aces, c: "text-[var(--ace)]" },
+  ];
+}
+
+function AttackerButtons(props: PositionPanelProps) {
+  return (
+    <>
+      <div className="mt-3 space-y-2.5">
+        <div data-tutorial="btn-attempt">
+          <StatButton stat="kill" label="Attempt" onPress={props.onAttempt} />
+        </div>
+        <div data-tutorial="defense-row" className="grid grid-cols-3 gap-2.5">
+          <StatButton stat="dig" label="Dig" onPress={props.onDig} />
+          <StatButton stat="block" label="Block" onPress={props.onBlock} />
+          <StatButton stat="ace" label="Ace" onPress={props.onAce} />
+        </div>
+        {/* Tertiary row — Assist (de-emphasized) */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <AssistButton onPress={props.onAssistTap} />
+          <div />
+        </div>
+      </div>
+
+      {props.attemptMenuOpen && (
+        <div className="relative mt-2.5 rounded-2xl border border-border bg-popover p-2.5">
+          <div className="mb-1.5 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            Attempt outcome
+          </div>
+          {props.showAttemptFlowTip && (
+            <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2 -translate-y-full">
+              <Tip
+                show={props.showAttemptFlowTip}
+                message="Choose what happened — Kill scores, Dug means they passed it, Error gives them a point."
+                arrow="down"
+                autoDismissMs={4000}
+                onDismiss={props.onDismissAttemptFlowTip}
+              />
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => props.onAttemptOutcome("kill")}
+              data-tutorial="attempt-kill"
+              className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--kill)] text-[var(--kill-foreground)] shadow-lg shadow-black/30"
+            >
+              <span className="text-[13px] font-black uppercase tracking-widest">Kill</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => props.onAttemptOutcome("dug")}
+              className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--timeout)] text-black shadow-lg shadow-black/30"
+            >
+              <span className="text-[13px] font-black uppercase tracking-widest">Dug</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => props.onAttemptOutcome("error")}
+              className="vp-press-anim flex h-[70px] flex-col items-center justify-center rounded-xl bg-[var(--error)] text-[var(--error-foreground)] shadow-lg shadow-black/30"
+            >
+              <span className="text-[13px] font-black uppercase tracking-widest">Error</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function SetterButtons(props: PositionPanelProps) {
+  return (
+    <div className="mt-3 space-y-2.5">
+      {/* Primary SET button */}
+      <button
+        type="button"
+        onClick={() => {
+          tapHaptic("medium");
+          props.onSetTap();
+        }}
+        className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
+        style={{ backgroundColor: "#39FF14", color: "#0A2200" }}
+      >
+        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>Set ▾</span>
+      </button>
+      {/* Secondary row */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <StatButton stat="dig" label="Dig" onPress={props.onDig} />
+        <StatButton stat="ace" label="Ace" onPress={props.onAce} />
+        <StatButton stat="error" label="Error" onPress={() => {/* handled by ControlBtn */}} />
+      </div>
+    </div>
+  );
+}
+
+function DefensiveButtons(props: PositionPanelProps) {
+  return (
+    <div className="mt-3 space-y-2.5">
+      {/* Primary PASS button */}
+      <button
+        type="button"
+        onClick={() => {
+          tapHaptic("medium");
+          props.onPassTap();
+        }}
+        className="vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30"
+        style={{ backgroundColor: "#00B4FF", color: "#06283D" }}
+      >
+        <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>Pass ▾</span>
+      </button>
+      {/* Inline grade picker */}
+      <PassGradeSheet open={props.passSheetOpen} onSelect={props.onPassGrade} onCancel={props.onPassCancel} />
+      {/* Secondary row */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <StatButton stat="dig" label="Dig" onPress={props.onDig} />
+        <StatButton stat="ace" label="Ace" onPress={props.onAce} />
+        <AssistButton onPress={props.onAssistTap} compact />
+      </div>
+    </div>
+  );
+}
+
+function AssistButton({ onPress, compact = false }: { onPress: () => void; compact?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        tapHaptic("medium");
+        onPress();
+      }}
+      className={cn(
+        "vp-press-anim flex w-full flex-col items-center justify-center gap-1 rounded-2xl border shadow-lg shadow-black/30",
+        compact ? "h-[88px]" : "h-[64px]",
+      )}
+      style={{
+        backgroundColor: "rgba(139,92,246,0.12)",
+        borderColor: "#8B5CF6",
+        color: "#A78BFA",
+      }}
+    >
+      <span className="text-2xl leading-none">★</span>
+      <span className="text-[11px] font-black uppercase" style={{ letterSpacing: "2px" }}>
+        Assist
+      </span>
+    </button>
+  );
+}
