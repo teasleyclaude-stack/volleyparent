@@ -554,8 +554,6 @@ function LivePage() {
             setDumpKillZoneOpen(true);
           } else if (outcome === "setting_error") {
             recordSettingError(tracked.id, "other");
-          } else if (outcome === "dump_error") {
-            setDumpErrorTypeOpen(true);
           }
         }}
       />
@@ -1067,7 +1065,7 @@ function DefensiveButtons(props: PositionPanelProps) {
         style={{ backgroundColor: "#00B4FF", color: "#06283D" }}
       >
         <span className="text-[12px] font-black uppercase" style={{ letterSpacing: "3px" }}>
-          Pass ▾
+          Passing ▾
         </span>
       </button>
       {/* Inline grade picker */}
