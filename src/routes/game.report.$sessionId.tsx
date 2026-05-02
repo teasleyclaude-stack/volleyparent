@@ -342,3 +342,29 @@ function ReportPage() {
     </PhoneShell>
   );
 }
+
+function ReportStat({ label, value, color }: { label: string; value: number | string; color: string }) {
+  return (
+    <div className="rounded-xl bg-popover py-2">
+      <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+        {label}
+      </div>
+      <div className="text-xl font-black tabular-nums" style={{ color }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function PassPill({ grade, value, color }: { grade: string; value: number; color: string }) {
+  return (
+    <div className="rounded-xl bg-popover py-2">
+      <div className="text-2xl font-black tabular-nums" style={{ color }}>
+        {value}
+      </div>
+      <div className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+        Grade {grade}
+      </div>
+    </div>
+  );
+}
