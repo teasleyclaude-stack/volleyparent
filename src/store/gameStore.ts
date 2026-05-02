@@ -1,11 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { toast } from "sonner";
-import {
-  BACK_ROW_INDICES,
-  FRONT_ROW_INDICES,
-  isLibero,
-} from "@/types";
+import { BACK_ROW_INDICES, FRONT_ROW_INDICES, isLibero } from "@/types";
 import type {
   ErrorSource,
   ErrorType,
@@ -13,6 +9,7 @@ import type {
   KillZone,
   MatchEvent,
   MatchFormat,
+  PassGrade,
   Player,
   RotationState,
   StatType,
@@ -39,6 +36,16 @@ interface GameStore {
   recordStat: (playerId: string, stat: StatType, killZone?: KillZone | null) => void;
   recordError: (playerId: string, errorType: ErrorType, source: ErrorSource) => void;
   recordTimeout: (team: "home" | "away") => void;
+  /** Setter dump kill (with optional zone). Scores for our team and counts toward kills + dumpKills. */
+  recordDumpKill: (playerId: string, killZone?: KillZone | null) => void;
+  /** Setter dump error. Awards point to opponent and counts toward errors + dumpErrors. */
+  recordDumpError: (playerId: string, errorType: ErrorType) => void;
+  /** Setting error. Awards point to opponent. Counts toward errors + settingErrors. */
+  recordSettingError: (playerId: string, errorType: ErrorType) => void;
+  /** Setter / any-position assist. Scores for our team. Optionally tags the killer. */
+  recordAssist: (playerId: string, killerId?: string | null) => void;
+  /** Libero/DS pass grade. Updates passing stats only — never modifies score. */
+  recordPass: (playerId: string, grade: PassGrade) => void;
   makeSubstitution: (benchPlayerId: string, courtPositionIndex: number) => void;
   correctScore: (team: "home" | "away") => void;
   /** Overwrite one team's rotation tuple (used by lineup modal & auto-repair). */
@@ -65,6 +72,52 @@ const pushEvent = (s: GameSession, e: Omit<MatchEvent, "id" | "timestamp">) => {
   s.events.push(ev);
 };
 
+/** Reverse the stat counters for a player based on a STAT MatchEvent. */
+function reverseStatOnPlayer(p: Player, ev: MatchEvent) {
+  const st = ev.statType;
+  if (!st) return;
+  if (st === "kill") {
+    p.stats.kills = Math.max(0, p.stats.kills - 1);
+    p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+  } else if (st === "error") {
+    p.stats.errors = Math.max(0, p.stats.errors - 1);
+    const wasAttack = ev.errorSource ? ev.errorSource === "attempt" : true;
+    if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+  } else if (st === "dug") {
+    p.stats.dugAttempts = Math.max(0, p.stats.dugAttempts - 1);
+    p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+  } else if (st === "dig") {
+    p.stats.digs = Math.max(0, p.stats.digs - 1);
+  } else if (st === "block") {
+    p.stats.blocks = Math.max(0, p.stats.blocks - 1);
+  } else if (st === "ace") {
+    p.stats.aces = Math.max(0, p.stats.aces - 1);
+  } else if (st === "assist") {
+    p.stats.assists = Math.max(0, p.stats.assists - 1);
+  } else if (st === "dump_kill") {
+    p.stats.kills = Math.max(0, p.stats.kills - 1);
+    p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+    p.stats.dumpKills = Math.max(0, (p.stats.dumpKills ?? 0) - 1);
+    p.stats.dumpAttempts = Math.max(0, (p.stats.dumpAttempts ?? 0) - 1);
+  } else if (st === "dump_error") {
+    p.stats.errors = Math.max(0, p.stats.errors - 1);
+    p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
+    p.stats.dumpErrors = Math.max(0, (p.stats.dumpErrors ?? 0) - 1);
+    p.stats.dumpAttempts = Math.max(0, (p.stats.dumpAttempts ?? 0) - 1);
+  } else if (st === "setting_error") {
+    p.stats.errors = Math.max(0, p.stats.errors - 1);
+    p.stats.settingErrors = Math.max(0, (p.stats.settingErrors ?? 0) - 1);
+  } else if (st === "pass") {
+    const grade = ev.passGrade ?? 0;
+    p.stats.passAttempts = Math.max(0, (p.stats.passAttempts ?? 0) - 1);
+    p.stats.passTotal = Math.max(0, (p.stats.passTotal ?? 0) - grade);
+    if (grade === 3) p.stats.passGrade3 = Math.max(0, (p.stats.passGrade3 ?? 0) - 1);
+    else if (grade === 2) p.stats.passGrade2 = Math.max(0, (p.stats.passGrade2 ?? 0) - 1);
+    else if (grade === 1) p.stats.passGrade1 = Math.max(0, (p.stats.passGrade1 ?? 0) - 1);
+    else if (grade === 0) p.stats.passGrade0 = Math.max(0, (p.stats.passGrade0 ?? 0) - 1);
+  }
+}
+
 /** If a Libero is in any front-row index of the rotation, return the (firstViolating)
  *  rotation index and the Libero's player id. */
 function findLiberoFrontRowViolation(
@@ -83,11 +136,14 @@ function findLiberoFrontRowViolation(
 function maybeAutoLiberoReturn(
   rotation: RotationState,
   roster: Player[],
-): { rotation: RotationState; liberoId: string; partnerOutId: string; rotationIndex: number } | null {
+): {
+  rotation: RotationState;
+  liberoId: string;
+  partnerOutId: string;
+  rotationIndex: number;
+} | null {
   const onCourt = new Set(rotation);
-  const liberos = roster.filter(
-    (p) => isLibero(p) && p.liberoPartnerId && !onCourt.has(p.id),
-  );
+  const liberos = roster.filter((p) => isLibero(p) && p.liberoPartnerId && !onCourt.has(p.id));
   for (const lib of liberos) {
     const partnerId = lib.liberoPartnerId!;
     const partnerIdx = rotation.indexOf(partnerId);
@@ -95,7 +151,12 @@ function maybeAutoLiberoReturn(
     if ((BACK_ROW_INDICES as readonly number[]).includes(partnerIdx)) {
       const next = [...rotation] as RotationState;
       next[partnerIdx] = lib.id;
-      return { rotation: next, liberoId: lib.id, partnerOutId: partnerId, rotationIndex: partnerIdx };
+      return {
+        rotation: next,
+        liberoId: lib.id,
+        partnerOutId: partnerId,
+        rotationIndex: partnerIdx,
+      };
     }
   }
   return null;
@@ -136,7 +197,26 @@ export const useGameStore = create<GameStore>()(
           roster: roster.map((p) => ({
             ...p,
             liberoPartnerId: null,
-            stats: { kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0 },
+            stats: {
+              kills: 0,
+              errors: 0,
+              totalAttempts: 0,
+              digs: 0,
+              blocks: 0,
+              aces: 0,
+              assists: 0,
+              dugAttempts: 0,
+              settingErrors: 0,
+              dumpKills: 0,
+              dumpErrors: 0,
+              dumpAttempts: 0,
+              passAttempts: 0,
+              passTotal: 0,
+              passGrade3: 0,
+              passGrade2: 0,
+              passGrade1: 0,
+              passGrade0: 0,
+            },
           })),
           events: [],
           completedSets: [],
@@ -199,7 +279,9 @@ export const useGameStore = create<GameStore>()(
               if (ourTeamKey === "home") s.homeLiberoSubs = (s.homeLiberoSubs ?? 0) + 1;
               else s.awayLiberoSubs = (s.awayLiberoSubs ?? 0) + 1;
               if (typeof window !== "undefined" && lib) {
-                toast(`${lib.name.split(" ")[0]} back in for ${partner?.name.split(" ")[0] ?? "partner"}`);
+                toast(
+                  `${lib.name.split(" ")[0]} back in for ${partner?.name.split(" ")[0] ?? "partner"}`,
+                );
               }
             }
 
@@ -327,6 +409,140 @@ export const useGameStore = create<GameStore>()(
         set({ session: s });
       },
 
+      recordDumpKill: (playerId, killZone = null) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const p = s.roster.find((r) => r.id === playerId);
+        if (!p) return;
+        p.stats.kills += 1;
+        p.stats.totalAttempts += 1;
+        p.stats.dumpKills = (p.stats.dumpKills ?? 0) + 1;
+        p.stats.dumpAttempts = (p.stats.dumpAttempts ?? 0) + 1;
+        pushEvent(s, {
+          type: "STAT",
+          playerId,
+          statType: "dump_kill",
+          killZone: killZone ?? null,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+        });
+        set({ session: s });
+        get().addPoint(s.isHomeTeam ? "home" : "away");
+      },
+
+      recordDumpError: (playerId, errorType) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const p = s.roster.find((r) => r.id === playerId);
+        if (!p) return;
+        p.stats.errors += 1;
+        p.stats.totalAttempts += 1;
+        p.stats.dumpErrors = (p.stats.dumpErrors ?? 0) + 1;
+        p.stats.dumpAttempts = (p.stats.dumpAttempts ?? 0) + 1;
+        pushEvent(s, {
+          type: "STAT",
+          playerId,
+          statType: "dump_error",
+          killZone: null,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          errorType,
+          errorSource: "attempt",
+        });
+        set({ session: s });
+        get().addPoint(s.isHomeTeam ? "away" : "home");
+      },
+
+      recordSettingError: (playerId, errorType) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const p = s.roster.find((r) => r.id === playerId);
+        if (!p) return;
+        p.stats.errors += 1;
+        p.stats.settingErrors = (p.stats.settingErrors ?? 0) + 1;
+        pushEvent(s, {
+          type: "STAT",
+          playerId,
+          statType: "setting_error",
+          killZone: null,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          errorType,
+          errorSource: "standalone",
+        });
+        set({ session: s });
+        get().addPoint(s.isHomeTeam ? "away" : "home");
+      },
+
+      recordAssist: (playerId, killerId = null) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const p = s.roster.find((r) => r.id === playerId);
+        if (!p) return;
+        p.stats.assists += 1;
+        pushEvent(s, {
+          type: "STAT",
+          playerId,
+          statType: "assist",
+          killZone: null,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          killerId: killerId ?? undefined,
+        });
+        set({ session: s });
+        // Always score for OUR team.
+        get().addPoint(s.isHomeTeam ? "home" : "away");
+      },
+
+      recordPass: (playerId, grade) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const p = s.roster.find((r) => r.id === playerId);
+        if (!p) return;
+        p.stats.passAttempts = (p.stats.passAttempts ?? 0) + 1;
+        p.stats.passTotal = (p.stats.passTotal ?? 0) + grade;
+        if (grade === 3) p.stats.passGrade3 = (p.stats.passGrade3 ?? 0) + 1;
+        else if (grade === 2) p.stats.passGrade2 = (p.stats.passGrade2 ?? 0) + 1;
+        else if (grade === 1) p.stats.passGrade1 = (p.stats.passGrade1 ?? 0) + 1;
+        else if (grade === 0) p.stats.passGrade0 = (p.stats.passGrade0 ?? 0) + 1;
+        pushEvent(s, {
+          type: "STAT",
+          playerId,
+          statType: "pass",
+          killZone: null,
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          passGrade: grade,
+        });
+        set({ session: s });
+        // Pass grades are purely metrics — they never modify the score.
+      },
+
       makeSubstitution: (benchPlayerId, courtPositionIndex) => {
         const cur = get().session;
         if (!cur) return;
@@ -367,11 +583,7 @@ export const useGameStore = create<GameStore>()(
         let rotationReversed = false;
         let servingFlipped = false;
         const lastEvent = s.events[s.events.length - 1];
-        if (
-          lastEvent &&
-          lastEvent.type === "SCORE" &&
-          lastEvent.scoringTeam === team
-        ) {
+        if (lastEvent && lastEvent.type === "SCORE" && lastEvent.scoringTeam === team) {
           let prevIsHomeServing = s.isHomeServing;
           for (let i = s.events.length - 2; i >= 0; i--) {
             const ev = s.events[i];
@@ -473,24 +685,7 @@ export const useGameStore = create<GameStore>()(
 
         if (last.type === "STAT" && last.playerId && last.statType) {
           const p = s.roster.find((x) => x.id === last.playerId);
-          if (p) {
-            const st = last.statType;
-            if (st === "kill") {
-              p.stats.kills = Math.max(0, p.stats.kills - 1);
-              p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-            } else if (st === "error") {
-              p.stats.errors = Math.max(0, p.stats.errors - 1);
-              // Only attempt-flow errors counted toward totalAttempts.
-              const wasAttack = last.errorSource ? last.errorSource === "attempt" : true;
-              if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-            } else if (st === "dug") {
-              p.stats.dugAttempts = Math.max(0, p.stats.dugAttempts - 1);
-              p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-            } else if (st === "dig") p.stats.digs = Math.max(0, p.stats.digs - 1);
-            else if (st === "block") p.stats.blocks = Math.max(0, p.stats.blocks - 1);
-            else if (st === "ace") p.stats.aces = Math.max(0, p.stats.aces - 1);
-            else if (st === "assist") p.stats.assists = Math.max(0, p.stats.assists - 1);
-          }
+          if (p) reverseStatOnPlayer(p, last);
         }
 
         if (last.type === "SCORE" && last.scoringTeam) {
@@ -507,34 +702,37 @@ export const useGameStore = create<GameStore>()(
             s.awayScore = 0;
           }
           const prevTop = s.events[s.events.length - 1];
+          // Reverse the paired stat that produced this score (kill/ace/error/dump_kill/dump_error/setting_error/assist).
           if (
             prevTop &&
             prevTop.type === "STAT" &&
-            (prevTop.statType === "kill" || prevTop.statType === "ace" || prevTop.statType === "error")
+            prevTop.statType &&
+            (prevTop.statType === "kill" ||
+              prevTop.statType === "ace" ||
+              prevTop.statType === "error" ||
+              prevTop.statType === "dump_kill" ||
+              prevTop.statType === "dump_error" ||
+              prevTop.statType === "setting_error" ||
+              prevTop.statType === "assist")
           ) {
             const p = s.roster.find((x) => x.id === prevTop.playerId);
-            if (p && prevTop.statType) {
-              if (prevTop.statType === "kill") {
-                p.stats.kills = Math.max(0, p.stats.kills - 1);
-                p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-              } else if (prevTop.statType === "ace") {
-                p.stats.aces = Math.max(0, p.stats.aces - 1);
-              } else if (prevTop.statType === "error") {
-                p.stats.errors = Math.max(0, p.stats.errors - 1);
-                const wasAttack = prevTop.errorSource ? prevTop.errorSource === "attempt" : true;
-                if (wasAttack) p.stats.totalAttempts = Math.max(0, p.stats.totalAttempts - 1);
-              }
-            }
+            if (p) reverseStatOnPlayer(p, prevTop);
             s.events.pop();
           }
         }
 
         if (last.type === "TIMEOUT" && last.timeoutTeam) {
-          if (last.timeoutTeam === "home") s.homeTimeoutsThisSet = Math.max(0, s.homeTimeoutsThisSet - 1);
+          if (last.timeoutTeam === "home")
+            s.homeTimeoutsThisSet = Math.max(0, s.homeTimeoutsThisSet - 1);
           else s.awayTimeoutsThisSet = Math.max(0, s.awayTimeoutsThisSet - 1);
         }
 
-        if (last.type === "SUB" && last.subInId && last.subOutId && last.subPosition !== undefined) {
+        if (
+          last.type === "SUB" &&
+          last.subInId &&
+          last.subOutId &&
+          last.subPosition !== undefined
+        ) {
           const ourKey = s.isHomeTeam ? "homeRotationState" : "awayRotationState";
           const newRot = [...s[ourKey]] as RotationState;
           newRot[last.subPosition] = last.subOutId;
@@ -664,7 +862,14 @@ export const useGameStore = create<GameStore>()(
           const sess = state.session as Record<string, unknown>;
           const oldRot = sess.rotationState as RotationState | undefined;
           if (oldRot && !sess.homeRotationState) {
-            const placeholder: RotationState = ["opp-1", "opp-2", "opp-3", "opp-4", "opp-5", "opp-6"];
+            const placeholder: RotationState = [
+              "opp-1",
+              "opp-2",
+              "opp-3",
+              "opp-4",
+              "opp-5",
+              "opp-6",
+            ];
             const isHome = Boolean(sess.isHomeTeam);
             sess.homeRotationState = isHome ? oldRot : placeholder;
             sess.awayRotationState = isHome ? placeholder : oldRot;
@@ -693,7 +898,11 @@ export const useGameStore = create<GameStore>()(
       storage: createJSONStorage(() =>
         typeof window !== "undefined"
           ? window.localStorage
-          : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as unknown as Storage),
+          : ({
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            } as unknown as Storage),
       ),
     },
   ),
