@@ -517,6 +517,65 @@ function LivePage() {
         onCancel={() => setErrorModal(null)}
       />
 
+      {/* Setter SET sub-menu */}
+      <SetActionModal
+        open={setActionOpen}
+        onCancel={() => setSetActionOpen(false)}
+        onSelect={(outcome: SetOutcome) => {
+          setSetActionOpen(false);
+          if (outcome === "assist") {
+            recordAssist(tracked.id);
+            setAssistPromptOpen(true);
+          } else if (outcome === "dump_kill") {
+            setDumpKillZoneOpen(true);
+          } else if (outcome === "setting_error") {
+            setSettingErrorTypeOpen(true);
+          } else if (outcome === "dump_error") {
+            setDumpErrorTypeOpen(true);
+          }
+        }}
+      />
+
+      {/* Dump Kill zone picker — reuses KillHeatMap */}
+      <KillHeatMap
+        open={dumpKillZoneOpen}
+        onSelect={(zone) => {
+          setDumpKillZoneOpen(false);
+          recordDumpKill(tracked.id, zone);
+        }}
+        onCancel={() => setDumpKillZoneOpen(false)}
+        previousByZone={previousByZone}
+      />
+
+      {/* Setting Error type picker */}
+      <ErrorTypeModal
+        open={settingErrorTypeOpen}
+        onSelect={(t) => {
+          setSettingErrorTypeOpen(false);
+          recordSettingError(tracked.id, t);
+        }}
+        onCancel={() => setSettingErrorTypeOpen(false)}
+      />
+
+      {/* Dump Error type picker */}
+      <ErrorTypeModal
+        open={dumpErrorTypeOpen}
+        onSelect={(t) => {
+          setDumpErrorTypeOpen(false);
+          recordDumpError(tracked.id, t);
+        }}
+        onCancel={() => setDumpErrorTypeOpen(false)}
+      />
+
+      {/* Assist "who got the kill?" prompt */}
+      <AssistKillerPrompt
+        open={assistPromptOpen}
+        rotation={ourRotation}
+        roster={session.roster}
+        setterId={tracked.id}
+        onResolve={() => setAssistPromptOpen(false)}
+      />
+
       {subSheetOpen && (
         <SubSheet
           onClose={() => setSubSheetOpen(false)}
