@@ -417,11 +417,16 @@ function TrackedStatsBar({ state }: { state: FanviewState }) {
   if (!tracked) return null;
   return (
     <section className="mt-4 rounded-2xl border border-border bg-card p-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-black text-foreground">
           {tracked.name} <span className="text-muted-foreground">#{tracked.number}</span>{" "}
           <span className="text-xs font-bold text-muted-foreground">· {tracked.position}</span>
         </div>
+        {s.isServingNow && (
+          <span className="flex items-center gap-1 rounded-full bg-[var(--ace)]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-[var(--ace)] animate-pulse">
+            🟡 Serving Now
+          </span>
+        )}
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-black tabular-nums">
         {s.positionGroup === "setter" ? (
