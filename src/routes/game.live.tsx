@@ -82,6 +82,12 @@ function LivePage() {
   const [showAssistFlowTip, setShowAssistFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const [trackedPickerOpen, setTrackedPickerOpen] = useState(false);
+  const [trackedChangeFlash, setTrackedChangeFlash] = useState<{
+    name: string;
+    context: "set-break" | "mid-set";
+  } | null>(null);
   const [setOverPopup, setSetOverPopup] = useState<{
     winner: "home" | "away";
     setNumber: number;
