@@ -30,6 +30,71 @@ function ReportPage() {
 
   const tracked = useMemo(() => session?.roster.find((p) => p.isTracked) ?? session?.roster[0], [session]);
 
+  // Compute which players were tracked during which sets, in order of first tracking.
+  const trackedSegments = useMemo(() => {
+    if (!session) return [] as Array<{ playerId: string; sets: number[]; partial: Set<number> }>;
+    // Find the initial tracked player (first one marked or first roster entry).
+    const initial = session.roster.find((p) => p.isTracked) ?? session.roster[0];
+    if (!initial) return [];
+    // Determine the very first tracked player by walking events backwards through TRACKING_CHANGE.
+    let firstId = initial.id;
+    for (const ev of session.events) {
+      if (ev.type === "TRACKING_CHANGE" && ev.previousTrackedId) {
+        firstId = ev.previousTrackedId;
+        break;
+      }
+    }
+    // Walk events forward, tracking which player is active per set and segment order.
+    const order: string[] = [firstId];
+    const setsByPlayer: Record<string, Set<number>> = { [firstId]: new Set() };
+    const partialByPlayer: Record<string, Set<number>> = { [firstId]: new Set() };
+    let activeId = firstId;
+    let activeSet = 1;
+    let madeStatThisSet = false;
+    const markActiveForSet = (setNum: number) => {
+      if (!setsByPlayer[activeId]) setsByPlayer[activeId] = new Set();
+      setsByPlayer[activeId].add(setNum);
+    };
+    for (const ev of session.events) {
+      if (ev.setNumber !== activeSet) {
+        activeSet = ev.setNumber;
+        madeStatThisSet = false;
+      }
+      if (ev.type === "TRACKING_CHANGE" && ev.newTrackedId) {
+        const newId = ev.newTrackedId;
+        // If the previous player had any stats this set, mark partial for both.
+        if (madeStatThisSet) {
+          markActiveForSet(activeSet);
+          if (!partialByPlayer[activeId]) partialByPlayer[activeId] = new Set();
+          partialByPlayer[activeId].add(activeSet);
+          if (!partialByPlayer[newId]) partialByPlayer[newId] = new Set();
+          partialByPlayer[newId].add(activeSet);
+        }
+        activeId = newId;
+        if (!setsByPlayer[activeId]) setsByPlayer[activeId] = new Set();
+        if (!order.includes(activeId)) order.push(activeId);
+        madeStatThisSet = false;
+        continue;
+      }
+      if (ev.type === "STAT" && ev.playerId === activeId) {
+        madeStatThisSet = true;
+        markActiveForSet(activeSet);
+      } else if (ev.type === "SET_END") {
+        markActiveForSet(ev.setNumber);
+        madeStatThisSet = false;
+      }
+    }
+    // Always include the final active set.
+    markActiveForSet(activeSet);
+    return order.map((pid) => ({
+      playerId: pid,
+      sets: Array.from(setsByPlayer[pid] ?? []).sort((a, b) => a - b),
+      partial: partialByPlayer[pid] ?? new Set<number>(),
+    }));
+  }, [session]);
+
+  const hasMultipleTracked = trackedSegments.length > 1;
+
   const killZones = useMemo(
     () =>
       session?.events
