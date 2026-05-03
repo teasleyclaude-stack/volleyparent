@@ -437,3 +437,95 @@ function PassPill({ grade, value, color }: { grade: string; value: number; color
     </div>
   );
 }
+
+interface Segment {
+  playerId: string;
+  sets: number[];
+  partial: Set<number>;
+}
+
+function formatSets(sets: number[], partial: Set<number>): string {
+  if (sets.length === 0) return "—";
+  return sets
+    .map((n) => (partial.has(n) ? `Set ${n} (partial)` : `Set ${n}`))
+    .join(", ");
+}
+
+function TrackedPlayersList({
+  session,
+  segments,
+}: {
+  session: NonNullable<ReturnType<typeof useHistoryStore.getState>["sessions"][number]>;
+  segments: Segment[];
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3">
+      <h3 className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+        Tracked Players
+      </h3>
+      <div className="space-y-2">
+        {segments.map((seg) => {
+          const player = session.roster.find((p) => p.id === seg.playerId);
+          if (!player) return null;
+          const group = getPositionGroup(player.position);
+          const expanded = expandedId === seg.playerId;
+          const hp =
+            player.stats.totalAttempts === 0
+              ? ".000"
+              : (
+                  (player.stats.kills - player.stats.errors) /
+                  player.stats.totalAttempts
+                ).toFixed(3);
+          const primary =
+            group === "attacker"
+              ? `Hit% ${hp.startsWith("0") ? hp.slice(1) : hp}`
+              : group === "setter"
+                ? `Assists ${player.stats.assists}`
+                : `Pass Avg ${passAverage(player.stats)}`;
+          return (
+            <div
+              key={seg.playerId}
+              className="overflow-hidden rounded-xl border border-border bg-popover"
+            >
+              <button
+                type="button"
+                onClick={() => setExpandedId(expanded ? null : seg.playerId)}
+                className="flex w-full items-center gap-3 p-3 text-left active:scale-[0.99]"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card text-sm font-black tabular-nums">
+                  {player.number}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-black text-foreground">
+                    {player.name}{" "}
+                    <span className="font-bold text-muted-foreground">
+                      #{player.number} · {player.position}
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Sets tracked: {formatSets(seg.sets, seg.partial)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-black tabular-nums text-foreground">
+                    {primary}
+                  </div>
+                  <div className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    K {player.stats.kills} · D {player.stats.digs} · B{" "}
+                    {player.stats.blocks}
+                  </div>
+                </div>
+              </button>
+              {expanded && (
+                <div className="border-t border-border p-3">
+                  <StatSummaryCard player={player} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
