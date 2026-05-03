@@ -455,7 +455,7 @@ function TrackedPlayersList({
   session,
   segments,
 }: {
-  session: NonNullable<ReturnType<typeof useHistoryStore.getState>["sessions"][number]>;
+  session: { roster: import("@/types").Player[] };
   segments: Segment[];
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
