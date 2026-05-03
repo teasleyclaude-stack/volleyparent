@@ -70,9 +70,7 @@ export function LastActionLine({ session }: Props) {
         className="h-5 w-[3px] shrink-0 rounded-full"
         style={{ backgroundColor: display.accent }}
       />
-      <span
-        className={`truncate text-[13px] text-muted-foreground ${isEmpty ? "italic" : ""}`}
-      >
+      <span className={`truncate text-[13px] text-muted-foreground ${isEmpty ? "italic" : ""}`}>
         {display.text}
       </span>
     </div>
