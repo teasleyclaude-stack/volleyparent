@@ -117,7 +117,8 @@ export type EventType =
   | "TIMEOUT"
   | "SET_END"
   | "SCORE_CORRECTION"
-  | "LIBERO_SUB";
+  | "LIBERO_SUB"
+  | "TRACKING_CHANGE";
 
 export interface MatchEvent {
   id: string;
