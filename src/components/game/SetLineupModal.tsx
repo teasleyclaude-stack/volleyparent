@@ -251,6 +251,17 @@ export function SetLineupModal({
           </div>
         </footer>
       </div>
+
+      <TrackedPlayerPicker
+        open={pickerOpen}
+        roster={roster}
+        currentTrackedId={(roster.find((p) => p.isTracked) ?? roster[0])?.id}
+        onSelect={(id) => {
+          setPickerOpen(false);
+          onChangeTracked?.(id);
+        }}
+        onCancel={() => setPickerOpen(false)}
+      />
     </div>
   );
 }
