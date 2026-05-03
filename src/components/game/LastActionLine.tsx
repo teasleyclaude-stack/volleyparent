@@ -27,13 +27,51 @@ export function LastActionLine({ session }: Props) {
   const events = session.events;
 
   // Find the most recent event that produces a fan-facing message.
+  // Prefer descriptive STAT/LIBERO_SUB/SUB/TIMEOUT events over the bare SCORE
+  // bookkeeping event that the store appends after a point. If the most recent
+  // event is a SCORE, look back through events at the same score to find a
+  // richer description (kill, dump kill, block, ace, error, setting error,
+  // dump error, dug, etc.) and surface that instead.
   let lastSummary: Summary | null = null;
   for (let i = events.length - 1; i >= 0; i--) {
-    const item = eventToFeedItem(session, events[i]);
-    if (item) {
-      lastSummary = { text: item.message, accent: TONE_ACCENT[item.tone] ?? MUTED };
-      break;
+    const ev = events[i];
+    const item = eventToFeedItem(session, ev);
+    if (!item) continue;
+
+    if (ev.type === "SCORE") {
+      // Look backward for a richer event tied to this same point.
+      for (let j = i - 1; j >= 0; j--) {
+        const prev = events[j];
+        // Stop searching once we cross into an earlier point.
+        if (prev.type === "SCORE" || prev.type === "SET_END") break;
+        if (
+          prev.homeScore !== ev.homeScore ||
+          prev.awayScore !== ev.awayScore
+        ) {
+          // Different score snapshot — these belong to the prior rally.
+          break;
+        }
+        const richer = eventToFeedItem(session, prev);
+        if (
+          richer &&
+          (prev.type === "STAT" ||
+            prev.type === "LIBERO_SUB" ||
+            prev.type === "SUB" ||
+            prev.type === "TIMEOUT")
+        ) {
+          lastSummary = {
+            text: richer.message,
+            accent: TONE_ACCENT[richer.tone] ?? MUTED,
+          };
+          break;
+        }
+      }
     }
+
+    if (!lastSummary) {
+      lastSummary = { text: item.message, accent: TONE_ACCENT[item.tone] ?? MUTED };
+    }
+    break;
   }
 
   const prevCountRef = useRef(events.length);
