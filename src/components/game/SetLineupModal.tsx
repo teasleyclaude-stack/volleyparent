@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Star, ChevronRight } from "lucide-react";
 import type { Player, RotationState } from "@/types";
 import { cn } from "@/lib/utils";
+import { TrackedPlayerPicker } from "./TrackedPlayerPicker";
 
 interface SetLineupModalProps {
   open: boolean;
@@ -9,6 +11,7 @@ interface SetLineupModalProps {
   roster: Player[];
   onKeep: () => void;
   onConfirm: (newRotation: RotationState) => void;
+  onChangeTracked?: (newPlayerId: string) => void;
 }
 
 export function SetLineupModal({
@@ -18,9 +21,11 @@ export function SetLineupModal({
   roster,
   onKeep,
   onConfirm,
+  onChangeTracked,
 }: SetLineupModalProps) {
   const [draft, setDraft] = useState<RotationState>(rotation);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   if (!open) return null;
 
