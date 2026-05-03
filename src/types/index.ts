@@ -117,7 +117,8 @@ export type EventType =
   | "TIMEOUT"
   | "SET_END"
   | "SCORE_CORRECTION"
-  | "LIBERO_SUB";
+  | "LIBERO_SUB"
+  | "TRACKING_CHANGE";
 
 export interface MatchEvent {
   id: string;
@@ -156,6 +157,9 @@ export interface MatchEvent {
   passGrade?: PassGrade;
   // Optional tag for ASSIST events: who got the kill
   killerId?: string;
+  // TRACKING_CHANGE
+  previousTrackedId?: string;
+  newTrackedId?: string;
 }
 
 export interface SetSummary {

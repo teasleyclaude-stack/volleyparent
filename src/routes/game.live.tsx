@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag } from "lucide-react";
+import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag, MoreVertical, UserCheck } from "lucide-react";
+import { TrackedPlayerPicker } from "@/components/game/TrackedPlayerPicker";
 import { ErrorTypeModal } from "@/components/game/ErrorTypeModal";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { Scoreboard } from "@/components/game/Scoreboard";
@@ -57,6 +58,7 @@ function LivePage() {
   const correctScore = useGameStore((s) => s.correctScore);
   const setRotationStore = useGameStore((s) => s.setRotation);
   const confirmLiberoSub = useGameStore((s) => s.confirmLiberoSub);
+  const changeTrackedPlayer = useGameStore((s) => s.changeTrackedPlayer);
   const recordDumpKill = useGameStore((s) => s.recordDumpKill);
   const recordDumpError = useGameStore((s) => s.recordDumpError);
   const recordSettingError = useGameStore((s) => s.recordSettingError);
@@ -80,6 +82,12 @@ function LivePage() {
   const [showAssistFlowTip, setShowAssistFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const [trackedPickerOpen, setTrackedPickerOpen] = useState(false);
+  const [trackedChangeFlash, setTrackedChangeFlash] = useState<{
+    name: string;
+    context: "set-break" | "mid-set";
+  } | null>(null);
   const [setOverPopup, setSetOverPopup] = useState<{
     winner: "home" | "away";
     setNumber: number;
@@ -362,13 +370,23 @@ function LivePage() {
             </div>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => setEndConfirmOpen(true)}
-          className="flex h-9 items-center gap-1 rounded-full bg-card px-3 text-[11px] font-black uppercase tracking-widest text-destructive"
-        >
-          <Flag className="h-3.5 w-3.5" /> End
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setOverflowOpen(true)}
+            aria-label="More options"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setEndConfirmOpen(true)}
+            className="flex h-9 items-center gap-1 rounded-full bg-card px-3 text-[11px] font-black uppercase tracking-widest text-destructive"
+          >
+            <Flag className="h-3.5 w-3.5" /> End
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto pb-2">
@@ -752,6 +770,14 @@ function LivePage() {
           setRotationStore(ourTeamKey, newRot);
           setLineupModalOpen(false);
         }}
+        onChangeTracked={(id) => {
+          changeTrackedPlayer(id);
+          const p = session.roster.find((r) => r.id === id);
+          if (p) {
+            setTrackedChangeFlash({ name: p.name.split(" ")[0], context: "set-break" });
+            window.setTimeout(() => setTrackedChangeFlash(null), 2500);
+          }
+        }}
       />
 
       {session.pendingLiberoViolation && session.pendingLiberoViolation.team === ourTeamKey && (
@@ -763,6 +789,85 @@ function LivePage() {
           roster={session.roster}
           onConfirm={(subOutId) => confirmLiberoSub(subOutId)}
         />
+      )}
+
+      {overflowOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-end bg-black/50"
+          onClick={() => setOverflowOpen(false)}
+        >
+          <div
+            className="mr-3 mt-14 w-56 overflow-hidden rounded-2xl border border-border bg-popover shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setOverflowOpen(false);
+                setTrackedPickerOpen(true);
+              }}
+              className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
+            >
+              <UserCheck className="h-4 w-4" /> Change Tracked Player
+            </button>
+            {!isFinalSet && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOverflowOpen(false);
+                  endSet();
+                  const after = useGameStore.getState().session;
+                  if (after && after.currentSet <= maxSets(after.matchFormat)) {
+                    setLineupModalOpen(true);
+                  }
+                }}
+                className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
+              >
+                <Flag className="h-4 w-4" /> End Set Early
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setOverflowOpen(false);
+                setEndConfirmOpen(true);
+              }}
+              className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm font-bold text-destructive hover:bg-card"
+            >
+              <Flag className="h-4 w-4" /> End Game
+            </button>
+          </div>
+        </div>
+      )}
+
+      <TrackedPlayerPicker
+        open={trackedPickerOpen}
+        roster={session.roster}
+        currentTrackedId={tracked.id}
+        onSelect={(id) => {
+          setTrackedPickerOpen(false);
+          changeTrackedPlayer(id);
+          const p = session.roster.find((r) => r.id === id);
+          if (p) {
+            setTrackedChangeFlash({ name: p.name.split(" ")[0], context: "mid-set" });
+            window.setTimeout(() => setTrackedChangeFlash(null), 2500);
+          }
+        }}
+        onCancel={() => setTrackedPickerOpen(false)}
+      />
+
+      {trackedChangeFlash && (
+        <div className="pointer-events-none fixed inset-x-0 top-16 z-[70] flex justify-center px-4">
+          <div
+            className="rounded-full border-l-4 px-4 py-2 text-sm font-black text-foreground shadow-lg"
+            style={{ backgroundColor: "hsl(var(--popover))", borderLeftColor: "#8B5CF6" }}
+          >
+            Now tracking {trackedChangeFlash.name} —{" "}
+            {trackedChangeFlash.context === "set-break"
+              ? `Set ${session.currentSet} begins`
+              : "mid-set change"}
+          </div>
+        </div>
       )}
     </PhoneShell>
   );

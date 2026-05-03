@@ -52,6 +52,8 @@ interface GameStore {
   setRotation: (team: "home" | "away", rotation: RotationState) => void;
   /** Resolve a pending Libero front-row violation by selecting which front-row player they replace. */
   confirmLiberoSub: (subOutPlayerId: string) => void;
+  /** Switch which roster player has isTracked=true. Logs a TRACKING_CHANGE event. */
+  changeTrackedPlayer: (newPlayerId: string) => void;
   undoLastAction: () => void;
   endSet: () => void;
   endGame: () => void;
@@ -677,10 +679,45 @@ export const useGameStore = create<GameStore>()(
         set({ session: s });
       },
 
+      changeTrackedPlayer: (newPlayerId) => {
+        const cur = get().session;
+        if (!cur) return;
+        const target = cur.roster.find((p) => p.id === newPlayerId);
+        if (!target) return;
+        const current = cur.roster.find((p) => p.isTracked);
+        if (current && current.id === newPlayerId) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        s.roster = s.roster.map((p) => ({
+          ...p,
+          isTracked: p.id === newPlayerId,
+        }));
+        pushEvent(s, {
+          type: "TRACKING_CHANGE",
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          previousTrackedId: current?.id,
+          newTrackedId: newPlayerId,
+        });
+        set({ session: s });
+      },
+
       undoLastAction: () => {
         const cur = get().session;
         if (!cur || cur.events.length === 0) return;
         const s: GameSession = JSON.parse(JSON.stringify(cur));
+        // Skip TRACKING_CHANGE events — they are intentional, not undoable.
+        // Pop them off the top until we hit something undoable.
+        while (s.events.length > 0 && s.events[s.events.length - 1].type === "TRACKING_CHANGE") {
+          s.events.pop();
+        }
+        if (s.events.length === 0) {
+          set({ session: s });
+          return;
+        }
         const last = s.events.pop()!;
 
         if (last.type === "STAT" && last.playerId && last.statType) {

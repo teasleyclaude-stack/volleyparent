@@ -6,7 +6,7 @@ import { useGameStore } from "@/store/gameStore";
 import { StatSummaryCard } from "@/components/report/StatSummaryCard";
 import { ShotChart } from "@/components/report/ShotChart";
 import { MomentumGraph } from "@/components/report/MomentumGraph";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
 import { formatLabelShort } from "@/utils/setRules";
 import { exportSessionPDF } from "@/utils/pdfReport";
@@ -29,6 +29,71 @@ function ReportPage() {
   const session = fromHistory ?? (live?.id === sessionId ? live : null);
 
   const tracked = useMemo(() => session?.roster.find((p) => p.isTracked) ?? session?.roster[0], [session]);
+
+  // Compute which players were tracked during which sets, in order of first tracking.
+  const trackedSegments = useMemo(() => {
+    if (!session) return [] as Array<{ playerId: string; sets: number[]; partial: Set<number> }>;
+    // Find the initial tracked player (first one marked or first roster entry).
+    const initial = session.roster.find((p) => p.isTracked) ?? session.roster[0];
+    if (!initial) return [];
+    // Determine the very first tracked player by walking events backwards through TRACKING_CHANGE.
+    let firstId = initial.id;
+    for (const ev of session.events) {
+      if (ev.type === "TRACKING_CHANGE" && ev.previousTrackedId) {
+        firstId = ev.previousTrackedId;
+        break;
+      }
+    }
+    // Walk events forward, tracking which player is active per set and segment order.
+    const order: string[] = [firstId];
+    const setsByPlayer: Record<string, Set<number>> = { [firstId]: new Set() };
+    const partialByPlayer: Record<string, Set<number>> = { [firstId]: new Set() };
+    let activeId = firstId;
+    let activeSet = 1;
+    let madeStatThisSet = false;
+    const markActiveForSet = (setNum: number) => {
+      if (!setsByPlayer[activeId]) setsByPlayer[activeId] = new Set();
+      setsByPlayer[activeId].add(setNum);
+    };
+    for (const ev of session.events) {
+      if (ev.setNumber !== activeSet) {
+        activeSet = ev.setNumber;
+        madeStatThisSet = false;
+      }
+      if (ev.type === "TRACKING_CHANGE" && ev.newTrackedId) {
+        const newId = ev.newTrackedId;
+        // If the previous player had any stats this set, mark partial for both.
+        if (madeStatThisSet) {
+          markActiveForSet(activeSet);
+          if (!partialByPlayer[activeId]) partialByPlayer[activeId] = new Set();
+          partialByPlayer[activeId].add(activeSet);
+          if (!partialByPlayer[newId]) partialByPlayer[newId] = new Set();
+          partialByPlayer[newId].add(activeSet);
+        }
+        activeId = newId;
+        if (!setsByPlayer[activeId]) setsByPlayer[activeId] = new Set();
+        if (!order.includes(activeId)) order.push(activeId);
+        madeStatThisSet = false;
+        continue;
+      }
+      if (ev.type === "STAT" && ev.playerId === activeId) {
+        madeStatThisSet = true;
+        markActiveForSet(activeSet);
+      } else if (ev.type === "SET_END") {
+        markActiveForSet(ev.setNumber);
+        madeStatThisSet = false;
+      }
+    }
+    // Always include the final active set.
+    markActiveForSet(activeSet);
+    return order.map((pid) => ({
+      playerId: pid,
+      sets: Array.from(setsByPlayer[pid] ?? []).sort((a, b) => a - b),
+      partial: partialByPlayer[pid] ?? new Set<number>(),
+    }));
+  }, [session]);
+
+  const hasMultipleTracked = trackedSegments.length > 1;
 
   const killZones = useMemo(
     () =>
@@ -198,7 +263,11 @@ function ReportPage() {
           );
         })()}
 
-        <StatSummaryCard player={tracked} />
+        {hasMultipleTracked ? (
+          <TrackedPlayersList session={session} segments={trackedSegments} />
+        ) : (
+          <StatSummaryCard player={tracked} />
+        )}
 
         {/* Set scores */}
         {session.completedSets.length > 0 && (
@@ -364,6 +433,98 @@ function PassPill({ grade, value, color }: { grade: string; value: number; color
       </div>
       <div className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
         Grade {grade}
+      </div>
+    </div>
+  );
+}
+
+interface Segment {
+  playerId: string;
+  sets: number[];
+  partial: Set<number>;
+}
+
+function formatSets(sets: number[], partial: Set<number>): string {
+  if (sets.length === 0) return "—";
+  return sets
+    .map((n) => (partial.has(n) ? `Set ${n} (partial)` : `Set ${n}`))
+    .join(", ");
+}
+
+function TrackedPlayersList({
+  session,
+  segments,
+}: {
+  session: { roster: import("@/types").Player[] };
+  segments: Segment[];
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3">
+      <h3 className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+        Tracked Players
+      </h3>
+      <div className="space-y-2">
+        {segments.map((seg) => {
+          const player = session.roster.find((p) => p.id === seg.playerId);
+          if (!player) return null;
+          const group = getPositionGroup(player.position);
+          const expanded = expandedId === seg.playerId;
+          const hp =
+            player.stats.totalAttempts === 0
+              ? ".000"
+              : (
+                  (player.stats.kills - player.stats.errors) /
+                  player.stats.totalAttempts
+                ).toFixed(3);
+          const primary =
+            group === "attacker"
+              ? `Hit% ${hp.startsWith("0") ? hp.slice(1) : hp}`
+              : group === "setter"
+                ? `Assists ${player.stats.assists}`
+                : `Pass Avg ${passAverage(player.stats)}`;
+          return (
+            <div
+              key={seg.playerId}
+              className="overflow-hidden rounded-xl border border-border bg-popover"
+            >
+              <button
+                type="button"
+                onClick={() => setExpandedId(expanded ? null : seg.playerId)}
+                className="flex w-full items-center gap-3 p-3 text-left active:scale-[0.99]"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card text-sm font-black tabular-nums">
+                  {player.number}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-black text-foreground">
+                    {player.name}{" "}
+                    <span className="font-bold text-muted-foreground">
+                      #{player.number} · {player.position}
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Sets tracked: {formatSets(seg.sets, seg.partial)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-black tabular-nums text-foreground">
+                    {primary}
+                  </div>
+                  <div className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                    K {player.stats.kills} · D {player.stats.digs} · B{" "}
+                    {player.stats.blocks}
+                  </div>
+                </div>
+              </button>
+              {expanded && (
+                <div className="border-t border-border p-3">
+                  <StatSummaryCard player={player} />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

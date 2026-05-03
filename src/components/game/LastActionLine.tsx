@@ -153,6 +153,14 @@ function summarize(ev: MatchEvent, prev: MatchEvent | undefined, session: GameSe
         accent: "#8B5CF6",
       };
 
+    case "TRACKING_CHANGE": {
+      const newP = session.roster.find((p) => p.id === ev.newTrackedId);
+      return {
+        text: `Now tracking ${shortName(newP)} — ${prev?.type === "SET_END" ? `Set ${ev.setNumber} begins` : "mid-set change"}`,
+        accent: "#8B5CF6",
+      };
+    }
+
     default:
       return { text: "Action recorded", accent: MUTED };
   }
