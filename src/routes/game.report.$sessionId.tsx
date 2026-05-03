@@ -6,7 +6,7 @@ import { useGameStore } from "@/store/gameStore";
 import { StatSummaryCard } from "@/components/report/StatSummaryCard";
 import { ShotChart } from "@/components/report/ShotChart";
 import { MomentumGraph } from "@/components/report/MomentumGraph";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { readableTextColor } from "@/lib/colorContrast";
 import { formatLabelShort } from "@/utils/setRules";
 import { exportSessionPDF } from "@/utils/pdfReport";
