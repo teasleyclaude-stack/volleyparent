@@ -370,13 +370,23 @@ function LivePage() {
             </div>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => setEndConfirmOpen(true)}
-          className="flex h-9 items-center gap-1 rounded-full bg-card px-3 text-[11px] font-black uppercase tracking-widest text-destructive"
-        >
-          <Flag className="h-3.5 w-3.5" /> End
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setOverflowOpen(true)}
+            aria-label="More options"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setEndConfirmOpen(true)}
+            className="flex h-9 items-center gap-1 rounded-full bg-card px-3 text-[11px] font-black uppercase tracking-widest text-destructive"
+          >
+            <Flag className="h-3.5 w-3.5" /> End
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto pb-2">
