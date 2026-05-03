@@ -59,7 +59,10 @@ export function LiberoSubPopup({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl">
+      <div
+        className="flex w-full max-w-[440px] flex-col rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
+        style={{ maxHeight: "85vh" }}
+      >
         <div className="text-[10px] font-black uppercase tracking-widest text-[#00ACC1]">
           Libero Rotation
         </div>
@@ -70,7 +73,7 @@ export function LiberoSubPopup({
           Who will they sub out for?
         </p>
 
-        <div className="mt-4 space-y-2">
+        <div className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1" style={{ minHeight: 0 }}>
           {candidates.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
               No front-row players available.
