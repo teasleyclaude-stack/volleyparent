@@ -359,6 +359,41 @@ export function buildFeed(session: GameSession): FanviewFeedItem[] {
   return items;
 }
 
+const POINT_CAUSING_STATS = new Set([
+  "kill",
+  "ace",
+  "error",
+  "dump_kill",
+  "dump_error",
+  "setting_error",
+  "assist",
+]);
+
+export function latestFeedItem(session: GameSession): FanviewFeedItem | null {
+  const events = session.events;
+  for (let i = events.length - 1; i >= 0; i--) {
+    const ev = events[i];
+    const item = eventToFeedItem(session, ev);
+    if (!item) continue;
+
+    if (ev.type === "SCORE") {
+      for (let j = i - 1; j >= 0; j--) {
+        const prev = events[j];
+        if (prev.type === "SCORE" || prev.type === "SET_END" || prev.type === "SCORE_CORRECTION") {
+          break;
+        }
+        if (prev.type === "STAT" && prev.statType && POINT_CAUSING_STATS.has(prev.statType)) {
+          const pointCause = eventToFeedItem(session, prev);
+          if (pointCause) return pointCause;
+        }
+      }
+    }
+
+    return item;
+  }
+  return null;
+}
+
 export function buildSummary(session: GameSession): FanviewSummary {
   const homeSetsWon = session.completedSets.filter((s) => s.homeScore > s.awayScore).length;
   const awaySetsWon = session.completedSets.filter((s) => s.awayScore > s.homeScore).length;
