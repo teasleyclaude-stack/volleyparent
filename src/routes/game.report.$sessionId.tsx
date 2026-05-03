@@ -263,7 +263,11 @@ function ReportPage() {
           );
         })()}
 
-        <StatSummaryCard player={tracked} />
+        {hasMultipleTracked ? (
+          <TrackedPlayersList session={session} segments={trackedSegments} />
+        ) : (
+          <StatSummaryCard player={tracked} />
+        )}
 
         {/* Set scores */}
         {session.completedSets.length > 0 && (
