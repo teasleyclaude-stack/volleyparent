@@ -117,9 +117,7 @@ export function buildState(session: GameSession): FanviewState {
       isTracked: p.isTracked,
     };
   }
-  const ourRotation = session.isHomeTeam
-    ? session.homeRotationState
-    : session.awayRotationState;
+  const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
   return {
     isLive: !session.isCompleted,
     currentSet: session.currentSet,
@@ -148,9 +146,7 @@ export function buildState(session: GameSession): FanviewState {
       passAvg: tracked ? passAverage(tracked.stats) : "0.00",
       positionGroup: tracked ? getPositionGroup(tracked.position) : "attacker",
       isServingNow:
-        !!tracked &&
-        session.isHomeServing === session.isHomeTeam &&
-        ourRotation[0] === tracked.id,
+        !!tracked && session.isHomeServing === session.isHomeTeam && ourRotation[0] === tracked.id,
     },
     lastUpdated: Date.now(),
   };
@@ -162,14 +158,13 @@ function findPlayer(session: GameSession, id?: string) {
 }
 
 /** Convert a single MatchEvent into a feed item. Returns null to skip. */
-export function eventToFeedItem(
-  session: GameSession,
-  ev: MatchEvent,
-): FanviewFeedItem | null {
+export function eventToFeedItem(session: GameSession, ev: MatchEvent): FanviewFeedItem | null {
   const ourTeamName = session.isHomeTeam ? session.homeTeam : session.awayTeam;
   const oppTeamName = session.isHomeTeam ? session.awayTeam : session.homeTeam;
   const tracked = findPlayer(session, ev.playerId);
-  const trackedFirst = tracked ? `${firstName(tracked.name)} ${tracked.name.split(" ")[1]?.[0] ? tracked.name.split(" ")[1][0] + "." : ""}`.trim() : "";
+  const trackedFirst = tracked
+    ? `${firstName(tracked.name)} ${tracked.name.split(" ")[1]?.[0] ? tracked.name.split(" ")[1][0] + "." : ""}`.trim()
+    : "";
   const base = {
     id: ev.id,
     timestamp: ev.timestamp,
@@ -283,7 +278,8 @@ export function eventToFeedItem(
 
   if (ev.type === "TIMEOUT" && ev.timeoutTeam) {
     const teamName = ev.timeoutTeam === "home" ? session.homeTeam : session.awayTeam;
-    const used = ev.timeoutTeam === "home" ? session.homeTimeoutsThisSet : session.awayTimeoutsThisSet;
+    const used =
+      ev.timeoutTeam === "home" ? session.homeTimeoutsThisSet : session.awayTimeoutsThisSet;
     const remaining = Math.max(0, 2 - used);
     return {
       ...base,
@@ -357,6 +353,41 @@ export function buildFeed(session: GameSession): FanviewFeedItem[] {
     if (item) items.push(item);
   }
   return items;
+}
+
+const POINT_CAUSING_STATS = new Set([
+  "kill",
+  "ace",
+  "error",
+  "dump_kill",
+  "dump_error",
+  "setting_error",
+  "assist",
+]);
+
+export function latestFeedItem(session: GameSession): FanviewFeedItem | null {
+  const events = session.events;
+  for (let i = events.length - 1; i >= 0; i--) {
+    const ev = events[i];
+    const item = eventToFeedItem(session, ev);
+    if (!item) continue;
+
+    if (ev.type === "SCORE") {
+      for (let j = i - 1; j >= 0; j--) {
+        const prev = events[j];
+        if (prev.type === "SCORE" || prev.type === "SET_END" || prev.type === "SCORE_CORRECTION") {
+          break;
+        }
+        if (prev.type === "STAT" && prev.statType && POINT_CAUSING_STATS.has(prev.statType)) {
+          const pointCause = eventToFeedItem(session, prev);
+          if (pointCause) return pointCause;
+        }
+      }
+    }
+
+    return item;
+  }
+  return null;
 }
 
 export function buildSummary(session: GameSession): FanviewSummary {
