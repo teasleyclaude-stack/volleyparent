@@ -12,6 +12,7 @@ import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
 import { SetOverPopup } from "@/components/game/SetOverPopup";
 import { LiberoSubPopup } from "@/components/game/LiberoSubPopup";
+import { LastActionLine } from "@/components/game/LastActionLine";
 import { QuickSubSheet } from "@/components/game/QuickSubSheet";
 import { MatchOverPopup } from "@/components/game/MatchOverPopup";
 import { FanviewButton } from "@/components/game/FanviewButton";
@@ -437,6 +438,8 @@ function LivePage() {
             </div>
           )}
         </div>
+
+        <LastActionLine session={session} />
 
         {/* Tracked player + stat buttons */}
         <PositionAwareStatPanel
