@@ -52,6 +52,8 @@ interface GameStore {
   setRotation: (team: "home" | "away", rotation: RotationState) => void;
   /** Resolve a pending Libero front-row violation by selecting which front-row player they replace. */
   confirmLiberoSub: (subOutPlayerId: string) => void;
+  /** Switch which roster player has isTracked=true. Logs a TRACKING_CHANGE event. */
+  changeTrackedPlayer: (newPlayerId: string) => void;
   undoLastAction: () => void;
   endSet: () => void;
   endGame: () => void;
