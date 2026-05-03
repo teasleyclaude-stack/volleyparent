@@ -439,6 +439,8 @@ function LivePage() {
           )}
         </div>
 
+        <LastActionLine session={session} />
+
         {/* Tracked player + stat buttons */}
         <PositionAwareStatPanel
           tracked={tracked}
