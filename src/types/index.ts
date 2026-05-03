@@ -157,6 +157,9 @@ export interface MatchEvent {
   passGrade?: PassGrade;
   // Optional tag for ASSIST events: who got the kill
   killerId?: string;
+  // TRACKING_CHANGE
+  previousTrackedId?: string;
+  newTrackedId?: string;
 }
 
 export interface SetSummary {
