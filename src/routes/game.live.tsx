@@ -770,6 +770,14 @@ function LivePage() {
           setRotationStore(ourTeamKey, newRot);
           setLineupModalOpen(false);
         }}
+        onChangeTracked={(id) => {
+          changeTrackedPlayer(id);
+          const p = session.roster.find((r) => r.id === id);
+          if (p) {
+            setTrackedChangeFlash({ name: p.name.split(" ")[0], context: "set-break" });
+            window.setTimeout(() => setTrackedChangeFlash(null), 2500);
+          }
+        }}
       />
 
       {session.pendingLiberoViolation && session.pendingLiberoViolation.team === ourTeamKey && (
