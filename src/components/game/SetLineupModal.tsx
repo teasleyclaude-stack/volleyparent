@@ -80,6 +80,37 @@ export function SetLineupModal({
         </header>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
+          {onChangeTracked && (() => {
+            const tracked = roster.find((p) => p.isTracked) ?? roster[0];
+            if (!tracked) return null;
+            return (
+              <section className="mb-4">
+                <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                  Tracking
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-3 py-3 text-left active:scale-[0.99]"
+                >
+                  <Star className="h-5 w-5 shrink-0 fill-[#39FF14] text-[#39FF14]" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-black text-foreground">
+                      {tracked.name}{" "}
+                      <span className="font-bold text-muted-foreground">
+                        #{tracked.number} · {tracked.position}
+                      </span>
+                    </div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Tap to change tracked player
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </button>
+              </section>
+            );
+          })()}
+
           {/* On Court */}
           <section>
             <div className="mb-2 flex items-center justify-between">
