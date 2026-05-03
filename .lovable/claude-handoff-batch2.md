@@ -163,3 +163,28 @@ For each fix, paste back:
 3. "Verified by re-reading file after edit"
 
 Do not say "done" without proof.
+
+---
+
+## FIX 7 — Settings offers Light + Dark mode
+
+**Already implemented.**
+
+**File:** `src/routes/settings.tsx` lines 14–17
+```ts
+const THEME_OPTIONS = [
+  { value: "dark", label: "Dark", Icon: Moon },
+  { value: "light", label: "Light", Icon: Sun },
+] as const;
+```
+
+**Render — lines 99–130:** "Appearance" section renders both options as a 2-column toggle. Active option uses `bg-primary text-primary-foreground`; tap calls `setTheme(value)`.
+
+**Hook:** `src/hooks/useTheme.ts`
+- Persists choice to localStorage key `courtsideview_theme`.
+- Applies via `root.classList.toggle("light", theme === "light")` and sets `root.style.colorScheme`.
+- Default = `"dark"`.
+
+**CSS contract:** `src/styles.css` must define `:root { … }` (dark tokens) and `:root.light { … }` (light tokens) in oklch — both for `--background`, `--foreground`, `--primary`, `--card`, `--border`, `--muted-foreground`, etc.
+
+If Claude's build is missing the toggle: ensure `THEME_OPTIONS` includes both `"dark"` and `"light"` and `useTheme` exports `{ theme, setTheme }`. Do NOT add a "system" option unless the user asks — Lovable's spec is explicit Light/Dark only. FanView pages intentionally ignore this setting and follow the watcher's own OS preference.
