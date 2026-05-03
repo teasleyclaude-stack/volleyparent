@@ -29,6 +29,8 @@ export function LastActionLine({ session }: Props) {
   const lastSummary: Summary | null = lastItem
     ? { text: lastItem.message, accent: TONE_ACCENT[lastItem.tone] ?? MUTED }
     : null;
+  const lastSummaryText = lastSummary?.text;
+  const lastSummaryAccent = lastSummary?.accent;
 
   const prevCountRef = useRef(events.length);
   const [undoFlash, setUndoFlash] = useState<Summary | null>(null);
@@ -54,8 +56,10 @@ export function LastActionLine({ session }: Props) {
   };
 
   useEffect(() => {
-    if (lastSummary) lastSeenSummaryRef.current = lastSummary;
-  }, [lastSummary?.text]);
+    if (lastSummaryText && lastSummaryAccent) {
+      lastSeenSummaryRef.current = { text: lastSummaryText, accent: lastSummaryAccent };
+    }
+  }, [lastSummaryText, lastSummaryAccent]);
 
   const display = undoFlash ?? summary;
   const isEmpty = !lastSummary && !undoFlash;
