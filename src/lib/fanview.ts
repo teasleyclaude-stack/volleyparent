@@ -332,6 +332,17 @@ export function eventToFeedItem(
     };
   }
 
+  if (ev.type === "TRACKING_CHANGE" && ev.newTrackedId) {
+    const newP = findPlayer(session, ev.newTrackedId);
+    if (!newP) return null;
+    return {
+      ...base,
+      type: "LIBERO_SUB",
+      message: `Now tracking ${firstName(newP.name)} #${newP.number} · ${newP.position}`,
+      tone: "libero",
+    };
+  }
+
   // Skip score corrections from feed (silent fix)
   return null;
   // Suppress unused var lint
