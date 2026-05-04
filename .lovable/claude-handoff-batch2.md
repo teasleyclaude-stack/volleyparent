@@ -188,3 +188,80 @@ const THEME_OPTIONS = [
 **CSS contract:** `src/styles.css` must define `:root { … }` (dark tokens) and `:root.light { … }` (light tokens) in oklch — both for `--background`, `--foreground`, `--primary`, `--card`, `--border`, `--muted-foreground`, etc.
 
 If Claude's build is missing the toggle: ensure `THEME_OPTIONS` includes both `"dark"` and `"light"` and `useTheme` exports `{ theme, setTheme }`. Do NOT add a "system" option unless the user asks — Lovable's spec is explicit Light/Dark only. FanView pages intentionally ignore this setting and follow the watcher's own OS preference.
+
+---
+
+## FIX 9 — Native color wheel on the "+" button (not a HEX prompt)
+
+**File:** `src/routes/game.setup.tsx` lines 788–796
+
+**Already implemented in Lovable.** The "+" is a `<label>` wrapping a hidden native `<input type="color">`. Tapping the label opens the OS color wheel; the picker writes back via `onChange(e.target.value)`.
+
+### Current state — match exactly
+```tsx
+<label className="ml-auto inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-popover text-[10px] text-muted-foreground">
+  +
+  <input
+    type="color"
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className="sr-only"
+  />
+</label>
+```
+
+If Claude's build is showing a HEX text prompt, the bug is one of:
+1. `<input type="color">` was replaced with `type="text"` or a `window.prompt(...)`. **Fix:** restore `type="color"`.
+2. The `<input>` is not wrapped inside the `<label>` — the label's click won't open the picker. **Fix:** nest the input inside the label as shown above.
+3. The input was given `display: none` instead of `className="sr-only"`. Some browsers refuse to open native pickers on truly hidden inputs. **Fix:** use `sr-only` (visually hidden but still focusable).
+
+Do NOT add a custom HSL color wheel component. The native `<input type="color">` already provides the OS color wheel on iOS, Android, and desktop browsers.
+
+---
+
+## FIX 10 — Auto end-of-set works for sets 2, 3, 4, 5 (not just Set 1)
+
+**File:** `src/routes/game.live.tsx` lines 136–163
+
+**Already correct in Lovable** — the `useEffect` re-runs on every score change AND on `session.currentSet`, and `dismissedSetWins` is a `Set<number>` keyed by set number so dismissal in Set 1 does not block Set 2+.
+
+### Current state — match exactly
+```tsx
+// Auto-detect set win after every score change.
+useEffect(() => {
+  if (!session) return;
+  if (setOverPopup || matchOverPopup || lineupModalOpen) return;
+  const winner = checkSetWon(
+    session.homeScore,
+    session.awayScore,
+    session.currentSet,
+    session.matchFormat,
+  );
+  if (!winner) return;
+  if (dismissedSetWins.has(session.currentSet)) return;
+  setSetOverPopup({
+    winner,
+    setNumber: session.currentSet,
+    homeScore: session.homeScore,
+    awayScore: session.awayScore,
+  });
+}, [
+  session?.homeScore,
+  session?.awayScore,
+  session?.currentSet,
+  setOverPopup,
+  matchOverPopup,
+  lineupModalOpen,
+  dismissedSetWins,
+  session,
+]);
+```
+
+If Claude's build only fires on Set 1, the bug is one of:
+1. **`dismissedSetWins` is a `boolean` instead of `Set<number>`.** Once flipped true in Set 1, it blocks every later set. **Fix:** `const [dismissedSetWins, setDismissedSetWins] = useState<Set<number>>(new Set());` and check `dismissedSetWins.has(session.currentSet)`. When the user picks "Keep playing this set", add the current set number to the set, don't flip a global flag.
+2. **`session.currentSet` missing from the deps array.** When `endSet()` advances `currentSet` from 1→2 but the scores reset to 0–0, the effect won't re-evaluate until a score changes — which is fine — but if scores happen to land on the same values that triggered it before, React may bail. Including `session.currentSet` in deps guarantees a re-check on set change.
+3. **`endSet()` doesn't reset `homeScore`/`awayScore` to 0.** Then `checkSetWon` immediately fires again for Set 2 with stale scores. Verify `endSet` in `src/store/gameStore.ts` (~line 841) sets `s.homeScore = 0; s.awayScore = 0;` and increments `s.currentSet`.
+4. **`session.matchFormat` becomes undefined after Set 1.** `checkSetWon` would still work (target falls back to 25), but if `matchFormat` is read elsewhere as `session.matchFormat!` and crashes, the effect never re-runs. Verify `matchFormat` persists across `endSet()`.
+
+`checkSetWon` itself in `src/utils/setRules.ts` is set-number-aware: target is 25 for non-deciding sets and 15 for the deciding set (set 3 in club, set 5 in HS), with win-by-2 enforced. Do NOT rewrite it — confirm it's being called with the live `session.currentSet` each time.
+
