@@ -265,3 +265,89 @@ If Claude's build only fires on Set 1, the bug is one of:
 
 `checkSetWon` itself in `src/utils/setRules.ts` is set-number-aware: target is 25 for non-deciding sets and 15 for the deciding set (set 3 in club, set 5 in HS), with win-by-2 enforced. Do NOT rewrite it — confirm it's being called with the live `session.currentSet` each time.
 
+---
+
+## FIX 11 — "Load" roster button reuses players from previous games
+
+**Already implemented in Lovable.** The Load button opens a modal listing past saved sessions; tapping one copies that roster into the new game with fresh stats. Source of truth: `useHistoryStore` (persisted to localStorage as `volleyparent-history`).
+
+### a) Read past sessions — `src/routes/game.setup.tsx` line 27
+```ts
+const pastSessions = useHistoryStore((s) => s.sessions);
+```
+
+### b) Load handler — `src/routes/game.setup.tsx` lines 124–139
+```ts
+const loadFromSession = (sessionId: string) => {
+  const s = pastSessions.find((x) => x.id === sessionId);
+  if (!s) return;
+  // Reset stats, keep player identities
+  const fresh: Player[] = s.roster.map((p) => ({
+    ...p,
+    stats: defaultStats(),
+  }));
+  // ensure exactly one tracked
+  if (!fresh.some((p) => p.isTracked) && fresh.length > 0) {
+    fresh[0].isTracked = true;
+  }
+  setRoster(fresh);
+  setRotation(
+    fresh.slice(0, 6).map((p) => p.id)
+      .concat(Array(Math.max(0, 6 - fresh.length)).fill(null))
+      .slice(0, 6),
+  );
+  setShowLoad(false);
+};
+```
+
+### c) The button — lines 308–318
+```tsx
+<button
+  type="button"
+  onClick={() => setShowLoad(true)}
+  disabled={pastSessions.length === 0}
+  className={cn(
+    "flex h-11 items-center justify-center gap-1.5 rounded-xl border border-border text-[11px] font-black uppercase tracking-widest active:scale-[0.98]",
+    pastSessions.length === 0 ? "bg-card/50 text-muted-foreground/50" : "bg-card text-foreground",
+  )}
+>
+  <Users className="h-3.5 w-3.5" /> Load
+</button>
+```
+
+### d) The modal mount — lines 486–492
+```tsx
+{showLoad && (
+  <LoadRosterModal
+    sessions={pastSessions}
+    onClose={() => setShowLoad(false)}
+    onLoad={loadFromSession}
+  />
+)}
+```
+
+### e) The modal — `src/routes/game.setup.tsx` lines 705–760
+Renders each past session as a tappable row (`HomeTeam vs AwayTeam`, date, player count). Tapping calls `onLoad(s.id)`.
+
+### f) Persistence — `src/store/historyStore.ts`
+- Zustand store with `persist` middleware, key `volleyparent-history`, version 3.
+- `saveSession(s)` is called automatically when a match ends; it dedupes by id, keeps the last 50, and stores a clean `lastRoster` (stats reset).
+- `sessions` survives page reloads via localStorage.
+
+### If Claude's build's Load button does nothing or is permanently disabled, the bug is one of:
+
+1. **`pastSessions` is empty because nothing ever calls `saveSession`.** The Load button shows `disabled` when `pastSessions.length === 0`. **Fix:** confirm the end-of-match flow (e.g. `MatchOverPopup` → `endMatch` in `src/store/gameStore.ts`) calls `useHistoryStore.getState().saveSession(session)` before navigating away. If the store isn't being written, the button has nothing to load.
+
+2. **`useHistoryStore` is not persisted, or persisted under a different key.** Must be wrapped in `persist(...)` with `name: "volleyparent-history"` and a `createJSONStorage(() => window.localStorage)` storage that SSR-guards `typeof window !== "undefined"`. Without SSR-guard, TanStack Start's SSR pass crashes and the store silently resets on every page load.
+
+3. **`onClick={() => setShowLoad(true)}` is wired to a no-op or `setShowLoad` never declared.** Verify line 67: `const [showLoad, setShowLoad] = useState(false);`.
+
+4. **Modal not mounted.** Verify the `{showLoad && <LoadRosterModal ... />}` block at lines 486–492 is inside the same JSX tree as the button (still inside `<PhoneShell>`), not accidentally orphaned outside the return.
+
+5. **`loadFromSession` writes to local state but the new game ignores it.** `handleStart` (line 141) reads from `roster` and `rotation` state — confirm `setRoster(fresh)` and `setRotation(...)` from `loadFromSession` are using the SAME `useState` setters that `handleStart` reads, not a stale closure or a duplicate `useState` block.
+
+6. **`s.roster` on saved sessions is missing or `defaultStats()` is undefined.** Confirm `import { defaultStats } from "@/types"` and that historical sessions still have `roster: Player[]` (the v2/v3 migration in `historyStore.ts` does not drop roster — do NOT add a migration that does).
+
+### Proof required
+Paste BEFORE/AFTER of the exact lines changed in `game.setup.tsx` and `historyStore.ts` (if touched), plus one console line confirming `useHistoryStore.getState().sessions.length > 0` after finishing a match. Write "Verified by re-reading file after edit." Do NOT rewrite the modal or the store — the wiring above already works in Lovable.
+
