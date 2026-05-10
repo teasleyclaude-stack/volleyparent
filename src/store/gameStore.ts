@@ -861,10 +861,20 @@ export const useGameStore = create<GameStore>()(
         });
         const homeWonSet = s.homeScore > s.awayScore;
         const awayWonSet = s.awayScore > s.homeScore;
-        if (homeWonSet) s.isHomeServing = false;
-        else if (awayWonSet) s.isHomeServing = true;
 
-        s.currentSet += 1;
+        const nextSet = s.currentSet + 1;
+        const nextIsDecider =
+          nextSet === (s.matchFormat === "club" ? 3 : 5);
+
+        if (nextIsDecider) {
+          // Defer serve assignment to the coin-toss prompt.
+          s.pendingDecidingServePrompt = true;
+        } else {
+          if (homeWonSet) s.isHomeServing = false;
+          else if (awayWonSet) s.isHomeServing = true;
+        }
+
+        s.currentSet = nextSet;
         s.homeScore = 0;
         s.awayScore = 0;
         s.homeTimeoutsThisSet = 0;
@@ -872,6 +882,25 @@ export const useGameStore = create<GameStore>()(
         s.roster = s.roster.map((p) => (isLibero(p) ? { ...p, liberoPartnerId: null } : p));
         s.pendingLiberoViolation = null;
         s.awayTimeoutsThisSet = 0;
+        set({ session: s });
+      },
+
+      setDecidingFirstServer: (team) => {
+        const cur = get().session;
+        if (!cur) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        s.isHomeServing = team === "home";
+        s.pendingDecidingServePrompt = false;
+        pushEvent(s, {
+          type: "DECIDING_SERVE",
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          scoringTeam: team,
+        });
         set({ session: s });
       },
 
