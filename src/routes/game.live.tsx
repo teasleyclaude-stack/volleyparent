@@ -1281,6 +1281,8 @@ function PositionAwareStatPanel(props: PositionPanelProps) {
               show={props.showBenchTip}
               message={`${props.benchedFirstName} is on the bench — stat buttons are disabled until they return to court.`}
               arrow="up"
+              autoDismissMs={null}
+              showGotIt
               onDismiss={props.onDismissBenchTip}
             />
           </div>
