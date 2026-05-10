@@ -22,7 +22,7 @@ const STYLES: Record<
   error: { bg: "bg-[var(--error)]", fg: "text-[var(--error-foreground)]", ring: "ring-[var(--error)]", Icon: AlertTriangle },
 };
 
-export function StatButton({ stat, label, onPress }: StatButtonProps) {
+export function StatButton({ stat, label, onPress, disabled = false }: StatButtonProps) {
   const [animKey, setAnimKey] = useState(0);
   const s = STYLES[stat] ?? STYLES.kill;
   const { Icon } = s;
@@ -31,7 +31,9 @@ export function StatButton({ stat, label, onPress }: StatButtonProps) {
     <button
       key={animKey}
       type="button"
+      disabled={disabled}
       onClick={() => {
+        if (disabled) return;
         tapHaptic("medium");
         setAnimKey((k) => k + 1);
         onPress();
@@ -40,6 +42,7 @@ export function StatButton({ stat, label, onPress }: StatButtonProps) {
         "vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30",
         s.bg,
         s.fg,
+        disabled && "pointer-events-none cursor-not-allowed opacity-40 grayscale",
       )}
     >
       <Icon className="h-7 w-7" strokeWidth={2.4} />
