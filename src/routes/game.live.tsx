@@ -63,6 +63,7 @@ function LivePage() {
   const setRotationStore = useGameStore((s) => s.setRotation);
   const confirmLiberoSub = useGameStore((s) => s.confirmLiberoSub);
   const changeTrackedPlayer = useGameStore((s) => s.changeTrackedPlayer);
+  const correctRotation = useGameStore((s) => s.correctRotation);
   const recordDumpKill = useGameStore((s) => s.recordDumpKill);
   const recordDumpError = useGameStore((s) => s.recordDumpError);
   const recordSettingError = useGameStore((s) => s.recordSettingError);
