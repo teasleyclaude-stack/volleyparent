@@ -118,7 +118,8 @@ export type EventType =
   | "SET_END"
   | "SCORE_CORRECTION"
   | "LIBERO_SUB"
-  | "TRACKING_CHANGE";
+  | "TRACKING_CHANGE"
+  | "DECIDING_SERVE";
 
 export interface MatchEvent {
   id: string;
