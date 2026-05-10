@@ -1,100 +1,94 @@
-# Confirm before manually ending a set
+# Refactor: My Team / Opponent (us-vs-them model)
 
 ## Goal
-Prevent accidental taps on the manual **End Set** buttons. Show a "Keep Playing / End Set" confirmation popup before actually ending the set. Mirror the existing "End Game?" confirmation pattern already in the file — same look, same feel.
 
-The auto end-of-set popup (`SetOverPopup`, fired when a side-out completes a set) already has Confirm / Keep Playing buttons and is unaffected.
+Stop treating "Home" as a synonym for "the user's team." Today the data model already stores `isHomeTeam: boolean`, but a lot of code and labels assume **ours == home**. We'll keep home/away in storage (volleyball needs it for serve/court side and reports), and add a clean **us/them** layer on top so logic stops breaking when the tracked team is Away.
 
-## What triggers a manual end-of-set today
-Two places in `src/routes/game.live.tsx` call `endSet()` directly with no confirmation:
-1. **Line 583–596** — bottom-of-screen "End Set N" button (visible whenever it isn't the final set).
-2. **Line 817–830** — "End Set Early" item inside the overflow (⋯) menu.
+## What changes for the user
 
-Both need to route through the new confirm.
+- Scoreboard, stat buttons, reports, fanview, PDF, and history will say **"My Team" / "Opponent"** (or the team's actual name) instead of "Home" / "Away".
+- "Home" / "Away" wording survives only in the **setup screen** (where the user picks which side they are) and in any place where the literal court side actually matters.
+- Stats, momentum, and per-team displays will be correct regardless of which side the user picked.
 
-## Changes
+## What stays the same
 
-### 1. Add confirm state (`src/routes/game.live.tsx`, near line 83 next to `endConfirmOpen`)
+- Storage shape: `homeScore`, `awayScore`, `homeRotationState`, `awayRotationState`, `isHomeServing`, `isHomeTeam` are unchanged. No migration needed for existing saved games.
+- Volleyball rules engine in `gameStore.ts` (rotation, libero, serving) — already correct.
+
+---
+
+## Plan
+
+### 1. New selector module: `src/lib/teamPerspective.ts`
+
+Single source of truth for "us vs them." Pure functions over `GameSession`:
+
 ```ts
-const [endSetConfirmOpen, setEndSetConfirmOpen] = useState(false);
+type Side = "home" | "away";
+export const ourSide      = (s) => s.isHomeTeam ? "home" : "away";
+export const oppSide      = (s) => s.isHomeTeam ? "away" : "home";
+export const ourScore     = (s) => s.isHomeTeam ? s.homeScore : s.awayScore;
+export const oppScore     = (s) => s.isHomeTeam ? s.awayScore : s.homeScore;
+export const ourRotation  = (s) => s.isHomeTeam ? s.homeRotationState : s.awayRotationState;
+export const oppRotation  = (s) => ...
+export const weServe      = (s) => s.isHomeServing === s.isHomeTeam;
+export const ourTeamName  = (s) => s.isHomeTeam ? s.homeTeam : s.awayTeam;
+export const oppTeamName  = (s) => s.isHomeTeam ? s.awayTeam : s.homeTeam;
+export const ourColor     = (s) => s.isHomeTeam ? s.homeColor : s.awayColor;
+export const oppColor     = (s) => ...
+export const ourSetsWon   = (s) => s.completedSets.filter(x => (x.homeScore > x.awayScore) === s.isHomeTeam).length;
+export const oppSetsWon   = (s) => ...
+export const ourTimeouts  = (s) => s.isHomeTeam ? s.homeTimeoutsThisSet : s.awayTimeoutsThisSet;
+export const sideToOurs   = (s, side: Side) => side === ourSide(s) ? "ours" : "opp";
 ```
 
-### 2. Extract the actual "end set" effect into one helper
-Both call sites share identical follow-up logic (open lineup modal if more sets remain). Define once near other handlers:
-```ts
-const handleEndSetConfirmed = () => {
-  setEndSetConfirmOpen(false);
-  endSet();
-  const after = useGameStore.getState().session;
-  if (after && after.currentSet <= maxSets(after.matchFormat)) {
-    setLineupModalOpen(true);
-  }
-};
-```
+A tiny hook `useTeamPerspective(session)` returns the bundle for components.
 
-### 3. Wire both manual triggers to open the confirm instead
-- Line 583 button `onClick`: `() => setEndSetConfirmOpen(true)` (with haptic `tapHaptic("medium")`).
-- Line 819 overflow item `onClick`: close overflow, then `setEndSetConfirmOpen(true)`.
+### 2. Audit every usage
 
-### 4. Render the confirm popup
-Place right next to the existing `endConfirmOpen` block (~line 699). Same bottom-sheet-on-mobile / centered-on-desktop styling. Outside-tap = cancel:
+Sweep these files and replace ad-hoc ternaries with the selectors above:
 
-```tsx
-{endSetConfirmOpen && (
-  <div
-    className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
-    onClick={() => setEndSetConfirmOpen(false)}
-  >
-    <div
-      className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h3 className="text-lg font-black text-foreground">
-        End Set {session.currentSet} now?
-      </h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Current score is {session.homeScore}–{session.awayScore}. The set will close
-        and you'll set the lineup for Set {session.currentSet + 1}.
-      </p>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setEndSetConfirmOpen(false)}
-          className="h-12 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-muted-foreground"
-        >
-          Keep Playing
-        </button>
-        <button
-          type="button"
-          onClick={handleEndSetConfirmed}
-          className="h-12 rounded-2xl bg-destructive text-sm font-black uppercase tracking-widest text-destructive-foreground"
-        >
-          End Set {session.currentSet}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-```
+- `src/store/gameStore.ts` — internal logic stays, but `addPoint` callers and `ourTeamKey` derivations route through the selector for consistency.
+- `src/routes/game.live.tsx` — `weServe`, `ourRotation`, `ourTeamKey`, set-wins counters, timeout label, MatchOver winner color.
+- `src/routes/game.report.$sessionId.tsx` — `ourWin = (homeWon === isHomeTeam)` and the set chips.
+- `src/lib/fanview.ts` — already partially uses ours/opp; finish the conversion.
+- `src/utils/pdfReport.ts` — momentum + "+ X leads" line.
+- `src/components/report/MomentumGraph.tsx` — keep `isHomeOurs` as the existing prop name OR rename to `weAreHome`; either way values come from selector.
+- `src/components/game/Scoreboard.tsx`, `RotationCourt.tsx` — rename internal `isHomeOurs` to `weAreHome` for clarity (UI prop only).
+- `src/store/historyStore.ts` — `isHome` derivations.
 
-### 5. Haptic on the confirm tap
-`handleEndSetConfirmed` adds `tapHaptic("heavy")` before `endSet()` so it matches the auto popup's "destructive confirm" feel.
+### 3. Rename UI labels (presentation only)
 
-## What stays unchanged
-- `SetOverPopup` (auto end-of-set after a side-out) — already has Confirm / Keep Playing.
-- `gameStore.endSet()` — no logic changes.
-- "End Match" / End Game flow — already confirmed via `endConfirmOpen`, untouched.
-- Final-set behavior — when it's the final set the bottom button is "End Match" (different `setEndConfirmOpen` modal), so no double confirm.
+Replace literal `"Home"` / `"Away"` strings with team name OR fallback "My Team" / "Opponent":
 
-## Files touched
-- `src/routes/game.live.tsx` — add state, helper, two trigger swaps, one new modal block.
+- Scoreboard fallbacks: `homeTeam || (isHomeTeam ? "My Team" : "Opponent")` and same for away.
+- Stat buttons / +Home / +Away → `+My Team` / `+Opponent` (or just team names when set).
+- MatchOver / SetOver popups → use `ourTeamName`/`oppTeamName` with "My Team"/"Opponent" fallback.
+- `game.setup.tsx` keeps the literal "Home / Away" toggle since that's where the user explicitly chooses court side.
+- Tutorials, tips, and toasts that say "Home" / "Away" → switch to "My Team" / "Opponent".
 
-## Verification
-1. Mid-set, tap the bottom **End Set N** button → confirm popup appears, score and set number shown correctly.
-2. Tap **Keep Playing** or outside → popup closes, set is NOT ended (score unchanged).
-3. Tap **End Set N** in popup → set closes, lineup modal opens for next set.
-4. Open ⋯ menu → **End Set Early** → same confirm popup behavior.
-5. Auto end-of-set popup still works normally on a winning rally (no double prompt).
+### 4. Lint guard (lightweight)
 
-## Claude handoff
-After implementation, append this fix to `.lovable/claude-handoff-batch2.md` AND post the same prompt in chat (per user's standing rule).
+Add an ESLint `no-restricted-syntax` rule (or a simple grep check in CI) that flags new code references to `isHomeTeam ? "home" : "away"` outside `src/lib/teamPerspective.ts` and `src/store/gameStore.ts`. Prevents regressions.
+
+### 5. Verification
+
+Manual:
+- Setup → pick **Away**, play a kill → **our score** goes up; momentum graph trends positive; PDF says "+ {our team} leads".
+- Setup → Away, opponent serves an ace → opponent score goes up; rotation does NOT advance for our team.
+- Reports for an existing **Home** session render identically to before the refactor (regression check).
+- Fanview shows our team on the left/highlighted regardless of side.
+
+Automated (optional): a small unit test on `teamPerspective.ts` with two fixture sessions (Home and Away) producing mirror-image outputs.
+
+---
+
+## Out of scope
+
+- Schema migration of `fanview_sessions` JSON.
+- Storing rosters for the opponent.
+- Renaming `isHomeTeam` itself (touches saved sessions).
+
+## Risk
+
+Low–medium. All runtime logic in `gameStore.ts` already branches on `isHomeTeam`; the bugs are concentrated in display and report code, which is exactly what the selector layer fixes. Existing saved games remain readable because storage shape is unchanged.
