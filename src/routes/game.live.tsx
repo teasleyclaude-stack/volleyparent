@@ -1010,6 +1010,7 @@ function SubSheet({
 interface PositionPanelProps {
   tracked: PlayerType;
   isMyPlayerServing: boolean;
+  isMyPlayerFrontRow: boolean;
   attemptMenuOpen: boolean;
   onAttempt: () => void;
   onAttemptOutcome: (o: "kill" | "dug" | "error") => void;
