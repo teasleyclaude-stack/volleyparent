@@ -676,19 +676,34 @@ function AddPlayerModal({
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled={!valid}
-          onClick={() => onAdd(name, num, position)}
-          className={cn(
-            "h-13 flex h-13 w-full items-center justify-center rounded-2xl py-4 text-sm font-black uppercase tracking-widest transition-all",
-            valid
-              ? "bg-primary text-primary-foreground active:scale-[0.98]"
-              : "bg-card text-muted-foreground",
-          )}
-        >
-          Add Player
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            disabled={!valid}
+            onClick={() => submit(true)}
+            className={cn(
+              "flex h-13 items-center justify-center rounded-2xl py-4 text-xs font-black uppercase tracking-widest transition-all",
+              valid
+                ? "border border-primary/40 bg-card text-foreground active:scale-[0.98]"
+                : "border border-border bg-card text-muted-foreground",
+            )}
+          >
+            Save & Add Another
+          </button>
+          <button
+            type="button"
+            disabled={!valid}
+            onClick={() => submit(false)}
+            className={cn(
+              "flex h-13 items-center justify-center rounded-2xl py-4 text-xs font-black uppercase tracking-widest transition-all",
+              valid
+                ? "bg-primary text-primary-foreground active:scale-[0.98]"
+                : "bg-card text-muted-foreground",
+            )}
+          >
+            Add Player
+          </button>
+        </div>
       </div>
     </div>
   );
