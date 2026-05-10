@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag, MoreVertical, UserCheck } from "lucide-react";
 import { TrackedPlayerPicker } from "@/components/game/TrackedPlayerPicker";
 import { ErrorTypeModal } from "@/components/game/ErrorTypeModal";
@@ -109,6 +109,8 @@ function LivePage() {
   const [dumpErrorTypeOpen, setDumpErrorTypeOpen] = useState(false);
   /** Set numbers we've already prompted for, so re-entering the same score (e.g. after undo + redo) won't re-trigger. */
   const [dismissedSetWins, setDismissedSetWins] = useState<Set<number>>(new Set());
+  const [benchFlash, setBenchFlash] = useState<null | { kind: "bench" | "return"; name: string }>(null);
+  const [showBenchTip, setShowBenchTip] = useState(false);
 
   const previousByZone = useMemo(() => {
     const m: Record<number, number> = {};
@@ -226,6 +228,34 @@ function LivePage() {
     return () => window.clearTimeout(t);
   }, [isPractice]);
 
+  // Track tracked-player on-court transitions to flash a bench/return banner
+  // and fire the first-time benched tip.
+  const trackedOnCourtRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!session) return;
+    const t = session.roster.find((p) => p.isTracked) ?? session.roster[0];
+    if (!t) return;
+    const rot = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
+    const onCourt = rot.includes(t.id);
+    const prev = trackedOnCourtRef.current;
+    trackedOnCourtRef.current = onCourt;
+    if (prev === null || prev === onCourt) return;
+    const name = t.name.split(" ")[0];
+    setBenchFlash({ kind: onCourt ? "return" : "bench", name });
+    const timer = window.setTimeout(() => setBenchFlash(null), 2500);
+    if (!onCourt && shouldShowTip("playerBenched", isPractice)) {
+      setShowBenchTip(true);
+    }
+    return () => window.clearTimeout(timer);
+  }, [
+    session?.homeRotationState,
+    session?.awayRotationState,
+    session?.isHomeTeam,
+    session?.roster,
+    session,
+    isPractice,
+  ]);
+
   const dismissLongPressTip = () => {
     if (!showLongPressTip) return;
     setShowLongPressTip(false);
@@ -255,8 +285,11 @@ function LivePage() {
   const isMyPlayerServing = weServe && ourRotation[0] === tracked.id;
   const myPlayerRotIndex = ourRotation.indexOf(tracked.id);
   const isMyPlayerFrontRow = myPlayerRotIndex === 1 || myPlayerRotIndex === 2 || myPlayerRotIndex === 3;
+  const isOnCourt = myPlayerRotIndex !== -1;
+  const trackedFirstName = tracked.name.split(" ")[0];
 
   const handleStat = (stat: StatType) => {
+    if (!isOnCourt) return;
     if (stat === "kill") {
       setAttemptMenuOpen((v) => {
         const next = !v;
@@ -282,6 +315,7 @@ function LivePage() {
   };
 
   const handleAttemptOutcome = (outcome: "kill" | "dug" | "error") => {
+    if (!isOnCourt) return;
     setAttemptMenuOpen(false);
     if (outcome === "kill") {
       setKillModalOpen(true);
@@ -499,6 +533,13 @@ function LivePage() {
           tracked={tracked}
           isMyPlayerServing={isMyPlayerServing}
           isMyPlayerFrontRow={isMyPlayerFrontRow}
+          isOnCourt={isOnCourt}
+          benchedFirstName={trackedFirstName}
+          showBenchTip={showBenchTip}
+          onDismissBenchTip={() => {
+            setShowBenchTip(false);
+            dismissTip("playerBenched");
+          }}
           attemptMenuOpen={attemptMenuOpen}
           onAttempt={() => handleStat("kill")}
           onAttemptOutcome={handleAttemptOutcome}
@@ -506,6 +547,7 @@ function LivePage() {
           onBlock={() => handleStat("block")}
           onAce={() => handleStat("ace")}
           onAssistTap={() => {
+            if (!isOnCourt) return;
             if (shouldShowTip("assistFlow", isPractice)) {
               setShowAssistFlowTip(true);
               window.setTimeout(() => {
@@ -516,8 +558,12 @@ function LivePage() {
             recordAssist(tracked.id);
             setAssistPromptOpen(true);
           }}
-          onErrorTap={() => setErrorModal("standalone")}
+          onErrorTap={() => {
+            if (!isOnCourt) return;
+            setErrorModal("standalone");
+          }}
           onSetTap={() => {
+            if (!isOnCourt) return;
             if (shouldShowTip("setterFlow", isPractice)) {
               setShowSetterFlowTip(true);
               window.setTimeout(() => {
@@ -528,6 +574,7 @@ function LivePage() {
             setSetActionOpen(true);
           }}
           onPassTap={() => {
+            if (!isOnCourt) return;
             if (shouldShowTip("passingFlow", isPractice)) {
               setShowPassingFlowTip(true);
               window.setTimeout(() => {
@@ -931,6 +978,21 @@ function LivePage() {
         </div>
       )}
 
+      {benchFlash && (
+        <div className="pointer-events-none fixed inset-x-0 top-28 z-[70] flex justify-center px-4">
+          <div
+            className="rounded-full border-l-4 px-4 py-2 text-sm font-black text-foreground shadow-lg"
+            style={{
+              backgroundColor: "hsl(var(--popover))",
+              borderLeftColor: benchFlash.kind === "bench" ? "#FF4D4D" : "#39FF14",
+            }}
+          >
+            {benchFlash.kind === "bench"
+              ? `${benchFlash.name} is on the bench — stat tracking paused`
+              : `${benchFlash.name} is back on court — stat tracking resumed`}
+          </div>
+        </div>
+      )}
       <TrackedPlayerPicker
         open={trackedPickerOpen}
         roster={session.roster}
@@ -1099,6 +1161,10 @@ interface PositionPanelProps {
   tracked: PlayerType;
   isMyPlayerServing: boolean;
   isMyPlayerFrontRow: boolean;
+  isOnCourt: boolean;
+  benchedFirstName: string;
+  showBenchTip: boolean;
+  onDismissBenchTip: () => void;
   attemptMenuOpen: boolean;
   onAttempt: () => void;
   onAttemptOutcome: (o: "kill" | "dug" | "error") => void;
@@ -1147,16 +1213,27 @@ function PositionAwareStatPanel(props: PositionPanelProps) {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            {group === "setter" ? "Assists" : group === "defensive" ? "Pass Avg" : "Hit %"}
-          </div>
-          <div className="text-2xl font-black tabular-nums text-primary">
-            {group === "setter"
-              ? tracked.stats.assists
-              : group === "defensive"
-                ? passAverage(tracked.stats)
-                : hittingPercentage(tracked.stats)}
-          </div>
+          {props.isOnCourt ? (
+            <>
+              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                {group === "setter" ? "Assists" : group === "defensive" ? "Pass Avg" : "Hit %"}
+              </div>
+              <div className="text-2xl font-black tabular-nums text-primary">
+                {group === "setter"
+                  ? tracked.stats.assists
+                  : group === "defensive"
+                    ? passAverage(tracked.stats)
+                    : hittingPercentage(tracked.stats)}
+              </div>
+            </>
+          ) : (
+            <span
+              className="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-black uppercase text-white"
+              style={{ backgroundColor: "#FF4D4D", letterSpacing: "1.5px" }}
+            >
+              ● Bench
+            </span>
+          )}
         </div>
       </div>
 
@@ -1172,10 +1249,45 @@ function PositionAwareStatPanel(props: PositionPanelProps) {
         ))}
       </div>
 
+      {!props.isOnCourt && (
+        <div className="mt-2 text-center text-[11px] italic text-muted-foreground">
+          Stat buttons unavailable until {props.benchedFirstName} returns
+        </div>
+      )}
+
       {/* Action buttons by position */}
-      {group === "attacker" && <AttackerButtons {...props} />}
-      {group === "setter" && <SetterButtons {...props} />}
-      {group === "defensive" && <DefensiveButtons {...props} />}
+      <div className="relative">
+        {!props.isOnCourt && (
+          <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
+            <span className="rounded-full bg-popover/95 px-3 py-1 text-[12px] font-bold text-muted-foreground shadow">
+              {props.benchedFirstName} is on the bench
+            </span>
+          </div>
+        )}
+        <div
+          className={cn(
+            "transition-opacity duration-150",
+            !props.isOnCourt && "pointer-events-none opacity-30",
+          )}
+          aria-disabled={!props.isOnCourt}
+        >
+          {group === "attacker" && <AttackerButtons {...props} />}
+          {group === "setter" && <SetterButtons {...props} />}
+          {group === "defensive" && <DefensiveButtons {...props} />}
+        </div>
+        {props.showBenchTip && !props.isOnCourt && (
+          <div className="absolute left-1/2 top-2 z-30 -translate-x-1/2">
+            <Tip
+              show={props.showBenchTip}
+              message={`${props.benchedFirstName} is on the bench — stat buttons are disabled until they return to court.`}
+              arrow="up"
+              autoDismissMs={null}
+              showGotIt
+              onDismiss={props.onDismissBenchTip}
+            />
+          </div>
+        )}
+      </div>
     </section>
   );
 }

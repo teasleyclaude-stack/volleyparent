@@ -14,6 +14,7 @@ export const TIP_KEYS = {
   passingFlow: "tip_passing_flow",
   assistFlow: "tip_assist_flow",
   scoreboardFlip: "tip_scoreboard_flip",
+  playerBenched: "tip_player_benched",
 } as const;
 
 export type TipKey = keyof typeof TIP_KEYS;
