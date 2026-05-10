@@ -590,10 +590,24 @@ function AddPlayerModal({
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [position, setPosition] = useState<Position>("OH");
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const num = parseInt(number, 10);
   const numValid = !isNaN(num) && num >= 0 && num <= 99 && !existingNumbers.includes(num);
   const valid = name.trim().length > 0 && numValid;
+
+  const submit = (keepOpen: boolean) => {
+    if (!valid) return;
+    onAdd(name, num, position);
+    if (keepOpen) {
+      setName("");
+      setNumber("");
+      // keep position as-is for fast bulk entry
+      requestAnimationFrame(() => nameRef.current?.focus());
+    } else {
+      onClose();
+    }
+  };
 
   return (
     <div
