@@ -67,10 +67,36 @@ export function Scoreboard(props: ScoreboardProps) {
   const [flashAway, setFlashAway] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [showWinByTwoTip, setShowWinByTwoTip] = useState(false);
+  const [flipped, setFlipped] = useState(false);
+  const [iconSpin, setIconSpin] = useState(false);
+  const [showFlipTip, setShowFlipTip] = useState(false);
   const isPractice = usePracticeStore((s) => s.isPractice);
 
   const lastTapHome = useRef<number>(0);
   const lastTapAway = useRef<number>(0);
+
+  // Reset flip whenever a new set begins (teams may switch back).
+  useEffect(() => {
+    setFlipped(false);
+  }, [setNumber]);
+
+  // First-time tip: fires when set 2 or later starts.
+  useEffect(() => {
+    if (setNumber >= 2 && shouldShowTip("scoreboardFlip", isPractice)) {
+      setShowFlipTip(true);
+    }
+  }, [setNumber, isPractice]);
+
+  const toggleFlip = () => {
+    tapHaptic("light");
+    setFlipped((p) => !p);
+    setIconSpin(true);
+    window.setTimeout(() => setIconSpin(false), 220);
+    if (showFlipTip) {
+      setShowFlipTip(false);
+      dismissTip("scoreboardFlip");
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
