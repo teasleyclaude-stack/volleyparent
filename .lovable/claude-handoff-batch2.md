@@ -615,3 +615,62 @@ Then verify manually:
 - Win a rally that completes a set normally → original `SetOverPopup` still appears (no double prompt).
 
 Write "Verified by re-reading file after edit." Do NOT claim done without the BEFORE/AFTER paste.
+
+---
+
+## FIX 14 — My Team / Opponent perspective (us-vs-them)
+
+**Why:** External logic broke whenever the user picked the **Away** side because lots of code assumed `ours == home`. The data model already stores `isHomeTeam: boolean`; we now route every UI/stat read through a single perspective module so display & labels are correct on either side.
+
+### New file: `src/lib/teamPerspective.ts`
+
+Pure selectors over `GameSession`. Single source of truth. Key exports: `ourSide`, `oppSide`, `ourScore`, `oppScore`, `ourRotation`, `oppRotation`, `weServe`, `ourTeamName`, `oppTeamName`, `ourColor`, `oppColor`, `ourSetsWon`, `oppSetsWon`, `ourTimeouts`, `sideToOurs`, plus display fallbacks `ourTeamLabel`, `oppTeamLabel`, `homeLabel`, `awayLabel` (the latter two return `"My Team"` / `"Opponent"` when the team-name field is empty).
+
+### `src/routes/game.live.tsx`
+
+```ts
+// BEFORE
+const ourTeamKey: "home" | "away" = session.isHomeTeam ? "home" : "away";
+const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
+const weServe = session.isHomeServing === session.isHomeTeam;
+
+// AFTER
+const ourTeamKey = ourSide(session);
+const ourRotation = selOurRotation(session);
+const weServe = selWeServe(session);
+```
+
+Timeout button now reads `ourTimeouts(session)` and dispatches `recordTimeout(ourTeamKey)`. `<RotationWarning oursServing={weServe} />`. `SetOverPopup` and `MatchOverPopup` now receive `isHomeOurs={session.isHomeTeam}`.
+
+### `src/components/game/Scoreboard.tsx`
+
+- Compute `homeLabel`, `awayLabel`, `oursLabel`, `oppLabel` from `homeTeam`/`awayTeam` + `isHomeOurs`. Empty names fall back to **My Team** / **Opponent**.
+- Set-wins tracker, side captions, and the two big +score buttons now show `oursLabel` / `oppLabel`. The buttons map to `onScoreHome` / `onScoreAway` based on `isHomeOurs`, so the LEFT button is always the user's team.
+
+### `src/components/game/SetOverPopup.tsx` & `MatchOverPopup.tsx`
+
+Added `isHomeOurs: boolean` prop. Internally derive `homeLabel` / `awayLabel` so winner-name and "Home/Away sets:" lines never literally say "Home"/"Away" when the user has no team name set.
+
+### `src/routes/game.report.$sessionId.tsx`
+
+Final-result block uses `homeLabel(session)` / `awayLabel(session)`. `ourWin` is now derived from `ourSetsWon(session)` (not `homeWon === isHomeTeam`).
+
+### `src/routes/game.setup.tsx`
+
+- Default-when-blank changed from `"Home"`/`"Away"` to `"My Team"`/`"Opponent"` based on `isHomeTeam`.
+- Input placeholders are now contextual: `"My team name (Home side)"` etc.
+- Color-picker labels and "starting serve" toggle labels follow the same fallback.
+- The "We are the Home / Away" toggle on setup is INTENTIONALLY kept — that's where the user explicitly picks their court side.
+
+### What stays the same (do NOT change)
+
+- Storage shape: `homeScore`, `awayScore`, `homeRotationState`, `awayRotationState`, `isHomeServing`, `isHomeTeam`. No migration; existing saved games still load.
+- `gameStore.ts` rotation/libero/serve logic — already correct, branches on `isHomeTeam` internally.
+- `BottomTabs.tsx` "Home" label — that's the navigation route, unrelated.
+
+### Verification
+
+- Setup → pick **Away**, leave team names blank → scoreboard shows "My Team" left, "Opponent" right; +score buttons in same order.
+- Pick Away → kill → user's score goes up; momentum trends positive in report.
+- SetOverPopup and MatchOverPopup show correct winning team text on either side.
+- `bunx tsc --noEmit` — clean.

@@ -119,6 +119,11 @@ export function Scoreboard(props: ScoreboardProps) {
 
   const homeText = useMemo(() => readableTextColor(homeColor), [homeColor]);
   const awayText = useMemo(() => readableTextColor(awayColor), [awayColor]);
+  // "My Team" / "Opponent" fallbacks instead of generic "Home" / "Away".
+  const homeLabel = homeTeam || (isHomeOurs ? "My Team" : "Opponent");
+  const awayLabel = awayTeam || (isHomeOurs ? "Opponent" : "My Team");
+  const oursLabel = isHomeOurs ? homeLabel : awayLabel;
+  const oppLabel = isHomeOurs ? awayLabel : homeLabel;
 
   const scoreStyle = (leading: boolean, flash: boolean, color: string, textColor: string): React.CSSProperties => {
     if (flash) return {};
@@ -199,7 +204,7 @@ export function Scoreboard(props: ScoreboardProps) {
       {/* Set wins tracker — dots reflect format max (3 or 5). */}
       <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
         <span className={isHomeOurs ? "text-foreground" : ""}>
-          <span style={{ color: homeText }}>{homeTeam || "Home"}</span>{" "}
+          <span style={{ color: homeText }}>{homeLabel}</span>{" "}
           <span className="tabular-nums" style={{ color: homeText }}>{homeSetsWon}</span>
         </span>
         <div className="flex items-center gap-1">
@@ -220,7 +225,7 @@ export function Scoreboard(props: ScoreboardProps) {
         </div>
         <span className={!isHomeOurs ? "text-foreground" : ""}>
           <span className="tabular-nums" style={{ color: awayText }}>{awaySetsWon}</span>{" "}
-          <span style={{ color: awayText }}>{awayTeam || "Away"}</span>
+          <span style={{ color: awayText }}>{awayLabel}</span>
         </span>
         <span className="ml-1 rounded-full bg-card px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
           {formatLabelShort(matchFormat)}
@@ -235,7 +240,7 @@ export function Scoreboard(props: ScoreboardProps) {
               className="max-w-[110px] truncate text-[13px] font-semibold"
               style={{ color: homeText }}
             >
-              {homeTeam || "Home"}
+              {homeLabel}
             </span>
             {isHomeServing && (
               <span
@@ -280,7 +285,7 @@ export function Scoreboard(props: ScoreboardProps) {
               className="max-w-[110px] truncate text-[13px] font-semibold"
               style={{ color: awayText }}
             >
-              {awayTeam || "Away"}
+              {awayLabel}
             </span>
           </div>
           <button
@@ -316,19 +321,19 @@ export function Scoreboard(props: ScoreboardProps) {
       <div className="mt-3 grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={onScoreHome}
-          data-tutorial="score-home"
+          onClick={isHomeOurs ? onScoreHome : onScoreAway}
+          data-tutorial="score-ours"
           className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-card text-foreground active:scale-95 transition-transform border border-border"
         >
-          <Plus className="h-5 w-5" /> <span className="text-sm font-bold">Home</span>
+          <Plus className="h-5 w-5" /> <span className="text-sm font-bold">{oursLabel}</span>
         </button>
         <button
           type="button"
-          onClick={onScoreAway}
-          data-tutorial="score-away"
+          onClick={isHomeOurs ? onScoreAway : onScoreHome}
+          data-tutorial="score-opp"
           className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-card text-foreground active:scale-95 transition-transform border border-border"
         >
-          <Plus className="h-5 w-5" /> <span className="text-sm font-bold">Away</span>
+          <Plus className="h-5 w-5" /> <span className="text-sm font-bold">{oppLabel}</span>
         </button>
       </div>
     </div>

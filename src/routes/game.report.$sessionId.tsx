@@ -11,6 +11,7 @@ import { readableTextColor } from "@/lib/colorContrast";
 import { formatLabelShort } from "@/utils/setRules";
 import { exportSessionPDF } from "@/utils/pdfReport";
 import { ERROR_TYPE_LABELS, type ErrorType, getPositionGroup, passAverage, dumpHittingPct } from "@/types";
+import { homeLabel as homeLabelOf, awayLabel as awayLabelOf, ourSetsWon as selOurSetsWon } from "@/lib/teamPerspective";
 
 export const Route = createFileRoute("/game/report/$sessionId")({
   head: () => ({
@@ -225,8 +226,10 @@ function ReportPage() {
           const homeSetsWon = session.completedSets.filter((s) => s.homeScore > s.awayScore).length;
           const awaySetsWon = session.completedSets.filter((s) => s.awayScore > s.homeScore).length;
           const homeWon = homeSetsWon > awaySetsWon;
-          const winner = homeWon ? session.homeTeam : session.awayTeam;
-          const ourWin = homeWon === session.isHomeTeam;
+          const homeLbl = homeLabelOf(session);
+          const awayLbl = awayLabelOf(session);
+          const winner = homeWon ? homeLbl : awayLbl;
+          const ourWin = selOurSetsWon(session) > (session.completedSets.length - selOurSetsWon(session));
           const homeText = readableTextColor(session.homeColor);
           const awayText = readableTextColor(session.awayColor);
           return (
@@ -255,9 +258,9 @@ function ReportPage() {
                 </span>
               </div>
               <div className="mt-1 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-widest">
-                <span style={{ color: homeText }}>{session.homeTeam || "Home"}</span>
+                <span style={{ color: homeText }}>{homeLbl}</span>
                 <span className="text-muted-foreground">·</span>
-                <span style={{ color: awayText }}>{session.awayTeam || "Away"}</span>
+                <span style={{ color: awayText }}>{awayLbl}</span>
               </div>
             </div>
           );
