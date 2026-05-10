@@ -90,6 +90,7 @@ function LivePage() {
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [trackedPickerOpen, setTrackedPickerOpen] = useState(false);
+  const [correctRotationOpen, setCorrectRotationOpen] = useState(false);
   const [trackedChangeFlash, setTrackedChangeFlash] = useState<{
     name: string;
     context: "set-break" | "mid-set";
