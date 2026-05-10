@@ -15,6 +15,7 @@ import { SetOverPopup } from "@/components/game/SetOverPopup";
 import { CoinTossPopup } from "@/components/game/CoinTossPopup";
 import { LiberoSubPopup } from "@/components/game/LiberoSubPopup";
 import { LastActionLine } from "@/components/game/LastActionLine";
+import { CorrectRotationSheet } from "@/components/game/CorrectRotationSheet";
 import { QuickSubSheet } from "@/components/game/QuickSubSheet";
 import { MatchOverPopup } from "@/components/game/MatchOverPopup";
 import { FanviewButton } from "@/components/game/FanviewButton";
