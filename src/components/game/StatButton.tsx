@@ -8,6 +8,7 @@ interface StatButtonProps {
   stat: StatType;
   label: string;
   onPress: () => void;
+  disabled?: boolean;
 }
 
 const STYLES: Record<
