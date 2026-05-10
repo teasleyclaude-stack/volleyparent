@@ -54,6 +54,8 @@ interface GameStore {
   confirmLiberoSub: (subOutPlayerId: string) => void;
   /** Switch which roster player has isTracked=true. Logs a TRACKING_CHANGE event. */
   changeTrackedPlayer: (newPlayerId: string) => void;
+  /** Manual rotation correction. Applies netSteps forward (positive) or back (negative). Does not affect score, stats, or serving. */
+  correctRotation: (team: "home" | "away", netSteps: number) => void;
   undoLastAction: () => void;
   endSet: () => void;
   /** Resolve the deciding-set coin toss by recording which team serves first. */
