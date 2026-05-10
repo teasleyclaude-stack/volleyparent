@@ -230,6 +230,8 @@ function LivePage() {
   const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
   const weServe = session.isHomeServing === session.isHomeTeam;
   const isMyPlayerServing = weServe && ourRotation[0] === tracked.id;
+  const myPlayerRotIndex = ourRotation.indexOf(tracked.id);
+  const isMyPlayerFrontRow = myPlayerRotIndex === 1 || myPlayerRotIndex === 2 || myPlayerRotIndex === 3;
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
