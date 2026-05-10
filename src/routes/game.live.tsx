@@ -109,6 +109,8 @@ function LivePage() {
   const [dumpErrorTypeOpen, setDumpErrorTypeOpen] = useState(false);
   /** Set numbers we've already prompted for, so re-entering the same score (e.g. after undo + redo) won't re-trigger. */
   const [dismissedSetWins, setDismissedSetWins] = useState<Set<number>>(new Set());
+  const [benchFlash, setBenchFlash] = useState<null | { kind: "bench" | "return"; name: string }>(null);
+  const [showBenchTip, setShowBenchTip] = useState(false);
 
   const previousByZone = useMemo(() => {
     const m: Record<number, number> = {};
