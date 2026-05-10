@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, ArrowLeftRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { tapHaptic } from "@/utils/haptics";
@@ -67,10 +67,36 @@ export function Scoreboard(props: ScoreboardProps) {
   const [flashAway, setFlashAway] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [showWinByTwoTip, setShowWinByTwoTip] = useState(false);
+  const [flipped, setFlipped] = useState(false);
+  const [iconSpin, setIconSpin] = useState(false);
+  const [showFlipTip, setShowFlipTip] = useState(false);
   const isPractice = usePracticeStore((s) => s.isPractice);
 
   const lastTapHome = useRef<number>(0);
   const lastTapAway = useRef<number>(0);
+
+  // Reset flip whenever a new set begins (teams may switch back).
+  useEffect(() => {
+    setFlipped(false);
+  }, [setNumber]);
+
+  // First-time tip: fires when set 2 or later starts.
+  useEffect(() => {
+    if (setNumber >= 2 && shouldShowTip("scoreboardFlip", isPractice)) {
+      setShowFlipTip(true);
+    }
+  }, [setNumber, isPractice]);
+
+  const toggleFlip = () => {
+    tapHaptic("light");
+    setFlipped((p) => !p);
+    setIconSpin(true);
+    window.setTimeout(() => setIconSpin(false), 220);
+    if (showFlipTip) {
+      setShowFlipTip(false);
+      dismissTip("scoreboardFlip");
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -122,8 +148,7 @@ export function Scoreboard(props: ScoreboardProps) {
   // "My Team" / "Opponent" fallbacks instead of generic "Home" / "Away".
   const homeLabel = homeTeam || (isHomeOurs ? "My Team" : "Opponent");
   const awayLabel = awayTeam || (isHomeOurs ? "Opponent" : "My Team");
-  const oursLabel = isHomeOurs ? homeLabel : awayLabel;
-  const oppLabel = isHomeOurs ? awayLabel : homeLabel;
+  
 
   const scoreStyle = (leading: boolean, flash: boolean, color: string, textColor: string): React.CSSProperties => {
     if (flash) return {};
@@ -248,110 +273,178 @@ export function Scoreboard(props: ScoreboardProps) {
         </span>
       </div>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        {/* Home */}
-        <div className="flex flex-col items-start">
-          <div className="flex items-center gap-1.5">
-            <span
-              className="max-w-[110px] truncate text-[13px] font-semibold"
-              style={{ color: homeText }}
-            >
-              {homeLabel}
-            </span>
-            {isHomeServing && (
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: homeColor }}
-                aria-label="serving"
-              />
+      {(() => {
+        const sides = {
+          home: {
+            label: homeLabel,
+            color: homeColor,
+            textColor: homeText,
+            score: homeScore,
+            scoreKey: homeKey,
+            leading: homeLeading,
+            flash: flashHome,
+            isServing: isHomeServing,
+            onScore: onScoreHome,
+            onTap: () => handleTap("home"),
+            ariaCorrect: "Double-tap to correct home score",
+          },
+          away: {
+            label: awayLabel,
+            color: awayColor,
+            textColor: awayText,
+            score: awayScore,
+            scoreKey: awayKey,
+            leading: awayLeading,
+            flash: flashAway,
+            isServing: !isHomeServing,
+            onScore: onScoreAway,
+            onTap: () => handleTap("away"),
+            ariaCorrect: "Double-tap to correct away score",
+          },
+        } as const;
+        const leftKey = flipped ? "away" : "home";
+        const rightKey = flipped ? "home" : "away";
+        const left = sides[leftKey];
+        const right = sides[rightKey];
+
+        return (
+          <>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              {/* Left side */}
+              <div className="flex flex-col items-start">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="max-w-[110px] truncate text-[13px] font-semibold"
+                    style={{ color: left.textColor }}
+                  >
+                    {left.label}
+                  </span>
+                  {left.isServing && (
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: left.color }}
+                      aria-label="serving"
+                    />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={left.onTap}
+                  className="bg-transparent p-0 text-left"
+                  aria-label={left.ariaCorrect}
+                >
+                  <span
+                    key={left.scoreKey}
+                    className={scoreClass(left.leading, left.flash)}
+                    style={scoreStyle(left.leading, left.flash, left.color, left.textColor)}
+                  >
+                    {left.score}
+                  </span>
+                </button>
+                <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-muted-foreground/60">
+                  2× to correct
+                </span>
+              </div>
+
+              {/* Center: swap button */}
+              <div className="relative flex flex-col items-center">
+                <button
+                  type="button"
+                  onClick={toggleFlip}
+                  aria-label="Flip scoreboard sides"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-muted-foreground active:scale-90"
+                >
+                  <ArrowLeftRight
+                    className={cn(
+                      "h-[18px] w-[18px] transition-transform duration-200 ease-out",
+                      iconSpin && "rotate-180",
+                    )}
+                  />
+                </button>
+                {showFlipTip && (
+                  <div className="absolute left-1/2 top-full z-30 -translate-x-1/2 translate-y-1">
+                    <Tip
+                      show={showFlipTip}
+                      message="Teams switching sides? Tap ⇄ to flip the scoreboard to match the court."
+                      arrow="up"
+                      autoDismissMs={4000}
+                      onDismiss={() => {
+                        setShowFlipTip(false);
+                        dismissTip("scoreboardFlip");
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Right side */}
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1.5">
+                  {right.isServing && (
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: right.color }}
+                      aria-label="serving"
+                    />
+                  )}
+                  <span
+                    className="max-w-[110px] truncate text-[13px] font-semibold"
+                    style={{ color: right.textColor }}
+                  >
+                    {right.label}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={right.onTap}
+                  className="bg-transparent p-0 text-right"
+                  aria-label={right.ariaCorrect}
+                >
+                  <span
+                    key={right.scoreKey}
+                    className={scoreClass(right.leading, right.flash)}
+                    style={scoreStyle(right.leading, right.flash, right.color, right.textColor)}
+                  >
+                    {right.score}
+                  </span>
+                </button>
+                <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-muted-foreground/60">
+                  2× to correct
+                </span>
+              </div>
+            </div>
+
+            {showHint && (
+              <button
+                type="button"
+                onClick={dismissHint}
+                className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground active:scale-[0.98]"
+              >
+                Tip: Double-tap a score to correct it · tap to dismiss
+              </button>
             )}
-          </div>
-          <button
-            type="button"
-            onClick={() => handleTap("home")}
-            className="bg-transparent p-0 text-left"
-            aria-label="Double-tap to correct home score"
-          >
-            <span
-              key={homeKey}
-              className={scoreClass(homeLeading, flashHome)}
-              style={scoreStyle(homeLeading, flashHome, homeColor, homeText)}
-            >
-              {homeScore}
-            </span>
-          </button>
-          <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-muted-foreground/60">
-            2× to correct
-          </span>
-        </div>
 
-        <span className="self-center text-3xl font-black text-muted-foreground/40">:</span>
-
-        {/* Away */}
-        <div className="flex flex-col items-end">
-          <div className="flex items-center gap-1.5">
-            {!isHomeServing && (
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: awayColor }}
-                aria-label="serving"
-              />
-            )}
-            <span
-              className="max-w-[110px] truncate text-[13px] font-semibold"
-              style={{ color: awayText }}
-            >
-              {awayLabel}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleTap("away")}
-            className="bg-transparent p-0 text-right"
-            aria-label="Double-tap to correct away score"
-          >
-            <span
-              key={awayKey}
-              className={scoreClass(awayLeading, flashAway)}
-              style={scoreStyle(awayLeading, flashAway, awayColor, awayText)}
-            >
-              {awayScore}
-            </span>
-          </button>
-          <span className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-muted-foreground/60">
-            2× to correct
-          </span>
-        </div>
-      </div>
-
-      {showHint && (
-        <button
-          type="button"
-          onClick={dismissHint}
-          className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground active:scale-[0.98]"
-        >
-          Tip: Double-tap a score to correct it · tap to dismiss
-        </button>
-      )}
-
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={isHomeOurs ? onScoreHome : onScoreAway}
-          data-tutorial="score-ours"
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-card text-foreground active:scale-95 transition-transform border border-border"
-        >
-          <Plus className="h-5 w-5" /> <span className="text-sm font-bold">{oursLabel}</span>
-        </button>
-        <button
-          type="button"
-          onClick={isHomeOurs ? onScoreAway : onScoreHome}
-          data-tutorial="score-opp"
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-card text-foreground active:scale-95 transition-transform border border-border"
-        >
-          <Plus className="h-5 w-5" /> <span className="text-sm font-bold">{oppLabel}</span>
-        </button>
-      </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={left.onScore}
+                data-tutorial={leftKey === (isHomeOurs ? "home" : "away") ? "score-ours" : "score-opp"}
+                className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-card text-foreground active:scale-95 transition-transform border border-border"
+              >
+                <Plus className="h-5 w-5" /> <span className="text-sm font-bold">{left.label}</span>
+              </button>
+              <button
+                type="button"
+                onClick={right.onScore}
+                data-tutorial={rightKey === (isHomeOurs ? "home" : "away") ? "score-ours" : "score-opp"}
+                className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-card text-foreground active:scale-95 transition-transform border border-border"
+              >
+                <Plus className="h-5 w-5" /> <span className="text-sm font-bold">{right.label}</span>
+              </button>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }

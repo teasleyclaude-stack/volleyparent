@@ -13,6 +13,7 @@ export const TIP_KEYS = {
   setterFlow: "tip_setter_flow",
   passingFlow: "tip_passing_flow",
   assistFlow: "tip_assist_flow",
+  scoreboardFlip: "tip_scoreboard_flip",
 } as const;
 
 export type TipKey = keyof typeof TIP_KEYS;
