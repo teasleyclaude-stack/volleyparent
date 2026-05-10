@@ -148,7 +148,7 @@ export function Scoreboard(props: ScoreboardProps) {
   // "My Team" / "Opponent" fallbacks instead of generic "Home" / "Away".
   const homeLabel = homeTeam || (isHomeOurs ? "My Team" : "Opponent");
   const awayLabel = awayTeam || (isHomeOurs ? "Opponent" : "My Team");
-  void isHomeOurs;
+  
 
   const scoreStyle = (leading: boolean, flash: boolean, color: string, textColor: string): React.CSSProperties => {
     if (flash) return {};
