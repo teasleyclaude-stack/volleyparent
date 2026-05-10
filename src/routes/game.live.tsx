@@ -12,6 +12,7 @@ import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
 import { SetOverPopup } from "@/components/game/SetOverPopup";
+import { CoinTossPopup } from "@/components/game/CoinTossPopup";
 import { LiberoSubPopup } from "@/components/game/LiberoSubPopup";
 import { LastActionLine } from "@/components/game/LastActionLine";
 import { QuickSubSheet } from "@/components/game/QuickSubSheet";
