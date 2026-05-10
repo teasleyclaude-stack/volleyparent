@@ -594,12 +594,8 @@ function LivePage() {
             <button
               type="button"
               onClick={() => {
-                endSet();
-                // Open lineup modal for the upcoming set if match isn't over.
-                const after = useGameStore.getState().session;
-                if (after && after.currentSet <= maxSets(after.matchFormat)) {
-                  setLineupModalOpen(true);
-                }
+                tapHaptic("medium");
+                setEndSetConfirmOpen(true);
               }}
               className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
             >
