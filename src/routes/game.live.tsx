@@ -548,6 +548,7 @@ function LivePage() {
           onBlock={() => handleStat("block")}
           onAce={() => handleStat("ace")}
           onAssistTap={() => {
+            if (!isOnCourt) return;
             if (shouldShowTip("assistFlow", isPractice)) {
               setShowAssistFlowTip(true);
               window.setTimeout(() => {
@@ -558,8 +559,12 @@ function LivePage() {
             recordAssist(tracked.id);
             setAssistPromptOpen(true);
           }}
-          onErrorTap={() => setErrorModal("standalone")}
+          onErrorTap={() => {
+            if (!isOnCourt) return;
+            setErrorModal("standalone");
+          }}
           onSetTap={() => {
+            if (!isOnCourt) return;
             if (shouldShowTip("setterFlow", isPractice)) {
               setShowSetterFlowTip(true);
               window.setTimeout(() => {
@@ -570,6 +575,7 @@ function LivePage() {
             setSetActionOpen(true);
           }}
           onPassTap={() => {
+            if (!isOnCourt) return;
             if (shouldShowTip("passingFlow", isPractice)) {
               setShowPassingFlowTip(true);
               window.setTimeout(() => {
