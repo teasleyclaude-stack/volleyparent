@@ -949,9 +949,19 @@ function LivePage() {
               type="button"
               onClick={() => {
                 setOverflowOpen(false);
-                setTrackedPickerOpen(true);
+                setCorrectRotationOpen(true);
               }}
               className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
+            >
+              <Repeat className="h-4 w-4" /> Correct Rotation
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOverflowOpen(false);
+                setTrackedPickerOpen(true);
+              }}
+              className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
             >
               <UserCheck className="h-4 w-4" /> Change Tracked Player
             </button>
