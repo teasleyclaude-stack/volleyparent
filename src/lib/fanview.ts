@@ -152,6 +152,7 @@ export function buildState(session: GameSession): FanviewState {
       isServingNow:
         !!tracked && session.isHomeServing === session.isHomeTeam && ourRotation[0] === tracked.id,
     },
+    isDeciding,
     lastUpdated: Date.now(),
   };
 }
