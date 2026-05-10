@@ -31,7 +31,7 @@ function SetupPage() {
   const [awayTeam, setAwayTeam] = useState("");
   const [homeColor, setHomeColor] = useState("#F4B400");
   const [awayColor, setAwayColor] = useState("#3B82F6");
-  const [isHomeTeam, setIsHomeTeam] = useState(true);
+  const isHomeTeam = true;
   const [isHomeServing, setIsHomeServing] = useState(true);
   const [matchFormat, setMatchFormat] = useState<MatchFormat>("club");
 
@@ -148,15 +148,15 @@ function SetupPage() {
       /* ignore */
     }
     startSession({
-      homeTeam: homeTeam.trim() || (isHomeTeam ? "My Team" : "Opponent"),
-      awayTeam: awayTeam.trim() || (isHomeTeam ? "Opponent" : "My Team"),
+      homeTeam: homeTeam.trim() || "My Team",
+      awayTeam: awayTeam.trim() || "Opponent",
       homeColor,
       awayColor,
       isHomeTeam,
       matchFormat,
       roster,
-      homeRotation: isHomeTeam ? ourRotation : placeholder,
-      awayRotation: isHomeTeam ? placeholder : ourRotation,
+      homeRotation: ourRotation,
+      awayRotation: placeholder,
       isHomeServing,
     });
     navigate({ to: "/game/live" });
@@ -182,13 +182,13 @@ function SetupPage() {
             <input
               value={homeTeam}
               onChange={(e) => setHomeTeam(e.target.value)}
-              placeholder={isHomeTeam ? "My team name (Home side)" : "Opponent name (Home side)"}
+              placeholder="My team name"
               className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
             />
             <input
               value={awayTeam}
               onChange={(e) => setAwayTeam(e.target.value)}
-              placeholder={isHomeTeam ? "Opponent name (Away side)" : "My team name (Away side)"}
+              placeholder="Opponent name"
               className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
             />
           </div>
@@ -198,8 +198,8 @@ function SetupPage() {
               Team colors
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <ColorPicker label={homeTeam.trim() || (isHomeTeam ? "My Team" : "Opponent")} value={homeColor} onChange={setHomeColor} />
-              <ColorPicker label={awayTeam.trim() || (isHomeTeam ? "Opponent" : "My Team")} value={awayColor} onChange={setAwayColor} />
+              <ColorPicker label={homeTeam.trim() || "My Team"} value={homeColor} onChange={setHomeColor} />
+              <ColorPicker label={awayTeam.trim() || "Opponent"} value={awayColor} onChange={setAwayColor} />
             </div>
             <p className="mt-1.5 text-[10px] text-muted-foreground">
               These tint the FanView scoreboard, court, and feed for watchers.
@@ -208,48 +208,24 @@ function SetupPage() {
 
           <div>
             <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              We are the
-            </div>
-            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-card p-1">
-              {(["home", "away"] as const).map((side) => {
-                const active = (side === "home") === isHomeTeam;
-                return (
-                  <button
-                    key={side}
-                    type="button"
-                    onClick={() => setIsHomeTeam(side === "home")}
-                    className={cn(
-                      "h-11 rounded-xl text-sm font-black uppercase tracking-widest transition-colors",
-                      active ? "bg-primary text-primary-foreground" : "text-muted-foreground",
-                    )}
-                  >
-                    {side} team
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
               Starting serve
             </div>
             <div className="grid grid-cols-2 gap-2 rounded-2xl bg-card p-1">
-              {(["home", "away"] as const).map((side) => {
-                const active = (side === "home") === isHomeServing;
+              {([true, false] as const).map((isOurs) => {
+                const active = isOurs === isHomeServing;
                 return (
                   <button
-                    key={side}
+                    key={String(isOurs)}
                     type="button"
-                    onClick={() => setIsHomeServing(side === "home")}
+                    onClick={() => setIsHomeServing(isOurs)}
                     className={cn(
                       "h-11 rounded-xl text-sm font-black uppercase tracking-widest transition-colors",
                       active ? "bg-[var(--gold)] text-background" : "text-muted-foreground",
                     )}
                   >
-                    {side === "home"
-                      ? homeTeam.split(" ")[0] || (isHomeTeam ? "My Team" : "Opponent")
-                      : awayTeam.split(" ")[0] || (isHomeTeam ? "Opponent" : "My Team")}
+                    {isOurs
+                      ? (homeTeam.split(" ")[0] || "My Team")
+                      : (awayTeam.split(" ")[0] || "Opponent")}
                   </button>
                 );
               })}
