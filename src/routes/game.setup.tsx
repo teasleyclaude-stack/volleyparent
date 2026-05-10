@@ -31,7 +31,7 @@ function SetupPage() {
   const [awayTeam, setAwayTeam] = useState("");
   const [homeColor, setHomeColor] = useState("#F4B400");
   const [awayColor, setAwayColor] = useState("#3B82F6");
-  const [isHomeTeam, setIsHomeTeam] = useState(true);
+  const isHomeTeam = true;
   const [isHomeServing, setIsHomeServing] = useState(true);
   const [matchFormat, setMatchFormat] = useState<MatchFormat>("club");
 
