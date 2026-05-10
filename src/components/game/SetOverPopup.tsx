@@ -20,6 +20,7 @@ interface SetOverPopupProps {
   homeSetsWon: number;
   awaySetsWon: number;
   matchFormat: MatchFormat;
+  isHomeOurs: boolean;
   onConfirm: () => void;
   onKeepPlaying: () => void;
 }
@@ -37,6 +38,7 @@ export function SetOverPopup({
   homeSetsWon,
   awaySetsWon,
   matchFormat,
+  isHomeOurs,
   onConfirm,
   onKeepPlaying,
 }: SetOverPopupProps) {
@@ -53,7 +55,9 @@ export function SetOverPopup({
 
   if (!open) return null;
 
-  const winningTeam = winner === "home" ? homeTeam : awayTeam;
+  const homeLabel = homeTeam || (isHomeOurs ? "My Team" : "Opponent");
+  const awayLabel = awayTeam || (isHomeOurs ? "Opponent" : "My Team");
+  const winningTeam = winner === "home" ? homeLabel : awayLabel;
   const winningColor = winner === "home" ? homeColor : awayColor;
   const winningText = readableTextColor(winningColor);
   const total = maxSets(matchFormat);
@@ -72,7 +76,7 @@ export function SetOverPopup({
           className="mt-4 text-2xl font-black leading-tight"
           style={{ color: winningText }}
         >
-          {winningTeam || (winner === "home" ? "Home" : "Away")} wins Set {setNumber}
+          {winningTeam} wins Set {setNumber}
         </div>
 
         <div
@@ -83,9 +87,9 @@ export function SetOverPopup({
         </div>
 
         <div className="mt-4 text-sm font-medium text-muted-foreground">
-          {homeTeam || "Home"} sets: <span className="font-black text-foreground tabular-nums">{homeSetsWon}</span>
+          {homeLabel} sets: <span className="font-black text-foreground tabular-nums">{homeSetsWon}</span>
           <span className="mx-2 text-muted-foreground/50">·</span>
-          {awayTeam || "Away"} sets: <span className="font-black text-foreground tabular-nums">{awaySetsWon}</span>
+          {awayLabel} sets: <span className="font-black text-foreground tabular-nums">{awaySetsWon}</span>
         </div>
 
         <button
