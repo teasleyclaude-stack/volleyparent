@@ -54,6 +54,7 @@ function LivePage() {
   const recordTimeout = useGameStore((s) => s.recordTimeout);
   const undo = useGameStore((s) => s.undoLastAction);
   const endSet = useGameStore((s) => s.endSet);
+  const setDecidingFirstServer = useGameStore((s) => s.setDecidingFirstServer);
   const endGame = useGameStore((s) => s.endGame);
   const makeSub = useGameStore((s) => s.makeSubstitution);
   const correctScore = useGameStore((s) => s.correctScore);
