@@ -81,6 +81,7 @@ function LivePage() {
   const [showPassingFlowTip, setShowPassingFlowTip] = useState(false);
   const [showAssistFlowTip, setShowAssistFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  const [endSetConfirmOpen, setEndSetConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [trackedPickerOpen, setTrackedPickerOpen] = useState(false);
