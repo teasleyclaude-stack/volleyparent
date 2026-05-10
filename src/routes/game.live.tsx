@@ -228,6 +228,34 @@ function LivePage() {
     return () => window.clearTimeout(t);
   }, [isPractice]);
 
+  // Track tracked-player on-court transitions to flash a bench/return banner
+  // and fire the first-time benched tip.
+  const trackedOnCourtRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!session) return;
+    const t = session.roster.find((p) => p.isTracked) ?? session.roster[0];
+    if (!t) return;
+    const rot = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
+    const onCourt = rot.includes(t.id);
+    const prev = trackedOnCourtRef.current;
+    trackedOnCourtRef.current = onCourt;
+    if (prev === null || prev === onCourt) return;
+    const name = t.name.split(" ")[0];
+    setBenchFlash({ kind: onCourt ? "return" : "bench", name });
+    const timer = window.setTimeout(() => setBenchFlash(null), 2500);
+    if (!onCourt && shouldShowTip("playerBenched", isPractice)) {
+      setShowBenchTip(true);
+    }
+    return () => window.clearTimeout(timer);
+  }, [
+    session?.homeRotationState,
+    session?.awayRotationState,
+    session?.isHomeTeam,
+    session?.roster,
+    session,
+    isPractice,
+  ]);
+
   const dismissLongPressTip = () => {
     if (!showLongPressTip) return;
     setShowLongPressTip(false);
