@@ -816,7 +816,13 @@ function LivePage() {
         setNumber={session.currentSet}
         rotation={ourRotation}
         roster={session.roster}
-        onKeep={() => setLineupModalOpen(false)}
+        onKeep={() => {
+          setLineupModalOpen(false);
+          const after = useGameStore.getState().session;
+          if (after?.pendingDecidingServePrompt) {
+            setCoinTossOpen(true);
+          }
+        }}
         onConfirm={(newRot) => {
           setRotationStore(ourTeamKey, newRot);
           setLineupModalOpen(false);
