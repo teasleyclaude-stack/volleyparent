@@ -54,6 +54,8 @@ export interface FanviewState {
   rotationState: RotationState;
   players: Record<string, FanviewPlayerInfo>;
   trackedStats: FanviewTrackedStats;
+  /** True when the current set is the deciding set for this match format. */
+  isDeciding: boolean;
   lastUpdated: number;
 }
 
@@ -65,7 +67,7 @@ export interface FanviewFeedItem {
   homeScore: number;
   awayScore: number;
   message: string;
-  tone: "kill" | "error" | "score" | "rotation" | "set" | "neutral" | "libero";
+  tone: "kill" | "error" | "score" | "rotation" | "set" | "neutral" | "libero" | "deciding";
   team?: "home" | "away";
 }
 
@@ -118,6 +120,8 @@ export function buildState(session: GameSession): FanviewState {
     };
   }
   const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
+  const fmt = session.matchFormat ?? "highschool";
+  const isDeciding = session.currentSet === (fmt === "club" ? 3 : 5);
   return {
     isLive: !session.isCompleted,
     currentSet: session.currentSet,
@@ -148,6 +152,7 @@ export function buildState(session: GameSession): FanviewState {
       isServingNow:
         !!tracked && session.isHomeServing === session.isHomeTeam && ourRotation[0] === tracked.id,
     },
+    isDeciding,
     lastUpdated: Date.now(),
   };
 }
@@ -310,6 +315,18 @@ export function eventToFeedItem(session: GameSession, ev: MatchEvent): FanviewFe
     };
   }
 
+  if (ev.type === "DECIDING_SERVE") {
+    const team = ev.scoringTeam ?? (ev.isHomeServing ? "home" : "away");
+    const teamName = team === "home" ? session.homeTeam : session.awayTeam;
+    return {
+      ...base,
+      type: "DECIDING_SERVE",
+      message: `Set ${ev.setNumber} — Deciding Set. ${teamName} serves first.`,
+      tone: "deciding",
+      team,
+    };
+  }
+
   if (ev.type === "LIBERO_SUB" && ev.liberoId && ev.liberoPartnerOutId) {
     const lib = findPlayer(session, ev.liberoId);
     const partner = findPlayer(session, ev.liberoPartnerOutId);
@@ -375,7 +392,12 @@ export function latestFeedItem(session: GameSession): FanviewFeedItem | null {
     if (ev.type === "SCORE") {
       for (let j = i - 1; j >= 0; j--) {
         const prev = events[j];
-        if (prev.type === "SCORE" || prev.type === "SET_END" || prev.type === "SCORE_CORRECTION") {
+        if (
+          prev.type === "SCORE" ||
+          prev.type === "SET_END" ||
+          prev.type === "SCORE_CORRECTION" ||
+          prev.type === "DECIDING_SERVE"
+        ) {
           break;
         }
         if (prev.type === "STAT" && prev.statType && POINT_CAUSING_STATS.has(prev.statType)) {

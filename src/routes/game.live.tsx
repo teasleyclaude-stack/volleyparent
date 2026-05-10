@@ -12,6 +12,7 @@ import { StatButton } from "@/components/game/StatButton";
 import { KillHeatMap } from "@/components/game/KillHeatMap";
 import { SetLineupModal } from "@/components/game/SetLineupModal";
 import { SetOverPopup } from "@/components/game/SetOverPopup";
+import { CoinTossPopup } from "@/components/game/CoinTossPopup";
 import { LiberoSubPopup } from "@/components/game/LiberoSubPopup";
 import { LastActionLine } from "@/components/game/LastActionLine";
 import { QuickSubSheet } from "@/components/game/QuickSubSheet";
@@ -54,6 +55,7 @@ function LivePage() {
   const recordTimeout = useGameStore((s) => s.recordTimeout);
   const undo = useGameStore((s) => s.undoLastAction);
   const endSet = useGameStore((s) => s.endSet);
+  const setDecidingFirstServer = useGameStore((s) => s.setDecidingFirstServer);
   const endGame = useGameStore((s) => s.endGame);
   const makeSub = useGameStore((s) => s.makeSubstitution);
   const correctScore = useGameStore((s) => s.correctScore);
@@ -97,6 +99,7 @@ function LivePage() {
     awayScore: number;
   } | null>(null);
   const [matchOverPopup, setMatchOverPopup] = useState<{ winner: "home" | "away" } | null>(null);
+  const [coinTossOpen, setCoinTossOpen] = useState(false);
   // Position-aware modals
   const [setActionOpen, setSetActionOpen] = useState(false);
   const [passSheetOpen, setPassSheetOpen] = useState(false);
@@ -157,12 +160,30 @@ function LivePage() {
     session?.homeScore,
     session?.awayScore,
     session?.currentSet,
+    session?.matchFormat,
     setOverPopup,
     matchOverPopup,
     lineupModalOpen,
     dismissedSetWins,
+  ]);
+
+  // Auto-open coin toss when the deciding-set prompt is pending and no other
+  // blocking modal is in front of it (covers app reload mid-flow).
+  useEffect(() => {
+    if (!session) return;
+    if (!session.pendingDecidingServePrompt) return;
+    if (lineupModalOpen || setOverPopup || matchOverPopup) return;
+    if (coinTossOpen) return;
+    setCoinTossOpen(true);
+  }, [
+    session?.pendingDecidingServePrompt,
+    lineupModalOpen,
+    setOverPopup,
+    matchOverPopup,
+    coinTossOpen,
     session,
   ]);
+
 
   // Fire confetti ONLY when the match is fully completed.
   useEffect(() => {
@@ -814,10 +835,20 @@ function LivePage() {
         setNumber={session.currentSet}
         rotation={ourRotation}
         roster={session.roster}
-        onKeep={() => setLineupModalOpen(false)}
+        onKeep={() => {
+          setLineupModalOpen(false);
+          const after = useGameStore.getState().session;
+          if (after?.pendingDecidingServePrompt) {
+            setCoinTossOpen(true);
+          }
+        }}
         onConfirm={(newRot) => {
           setRotationStore(ourTeamKey, newRot);
           setLineupModalOpen(false);
+          const after = useGameStore.getState().session;
+          if (after?.pendingDecidingServePrompt) {
+            setCoinTossOpen(true);
+          }
         }}
         onChangeTracked={(id) => {
           changeTrackedPlayer(id);
@@ -826,6 +857,21 @@ function LivePage() {
             setTrackedChangeFlash({ name: p.name.split(" ")[0], context: "set-break" });
             window.setTimeout(() => setTrackedChangeFlash(null), 2500);
           }
+        }}
+      />
+
+      <CoinTossPopup
+        open={coinTossOpen}
+        setNumber={session.currentSet}
+        homeTeam={session.homeTeam}
+        awayTeam={session.awayTeam}
+        homeColor={session.homeColor}
+        awayColor={session.awayColor}
+        isHomeOurs={session.isHomeTeam}
+        onSelect={(team) => {
+          setDecidingFirstServer(team);
+          setCoinTossOpen(false);
+          fanview.pushNow().catch((e) => console.error("fanview push failed", e));
         }}
       />
 

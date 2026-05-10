@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
-import { getSetLabel, maxSets, formatLabelShort } from "@/utils/setRules";
+import { getSetLabel, maxSets, formatLabelShort, isDecidingSet } from "@/utils/setRules";
 import type { MatchFormat } from "@/types";
 import { Tip } from "@/components/common/Tip";
 import { shouldShowTip, dismissTip } from "@/lib/tips";
@@ -173,13 +173,29 @@ export function Scoreboard(props: ScoreboardProps) {
     <div className="border-b border-border bg-popover px-4 pt-4 pb-3">
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Set {setNumber} of {totalSets}{" "}
-          <span
-            className="font-black"
-            style={setLabel.color ? { color: setLabel.color } : undefined}
-          >
-            · {setLabel.text}
-          </span>
+          {isDecidingSet(setNumber, matchFormat) ? (
+            <>
+              <span className="font-black" style={{ color: "#F59E0B" }}>
+                Set {setNumber} — Deciding
+              </span>{" "}
+              <span
+                className="font-black"
+                style={setLabel.color ? { color: setLabel.color } : undefined}
+              >
+                · {setLabel.text}
+              </span>
+            </>
+          ) : (
+            <>
+              Set {setNumber} of {totalSets}{" "}
+              <span
+                className="font-black"
+                style={setLabel.color ? { color: setLabel.color } : undefined}
+              >
+                · {setLabel.text}
+              </span>
+            </>
+          )}
         </span>
         <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
           ● Live

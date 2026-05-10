@@ -118,7 +118,8 @@ export type EventType =
   | "SET_END"
   | "SCORE_CORRECTION"
   | "LIBERO_SUB"
-  | "TRACKING_CHANGE";
+  | "TRACKING_CHANGE"
+  | "DECIDING_SERVE";
 
 export interface MatchEvent {
   id: string;
@@ -200,6 +201,10 @@ export interface GameSession {
     liberoId: string;
     rotationIndex: number; // 1, 2, or 3
   } | null;
+  /** When true, the deciding set has just begun and we need to prompt the coach
+   *  to record the result of the coin toss before play resumes. Cleared by
+   *  `setDecidingFirstServer`. */
+  pendingDecidingServePrompt?: boolean;
   isCompleted: boolean;
 }
 

@@ -20,6 +20,7 @@ const TONE_ACCENT: Record<FanviewFeedItem["tone"], string> = {
   rotation: "#00B4FF",
   set: "#8B5CF6",
   libero: "#00ACC1",
+  deciding: "#F59E0B",
   neutral: MUTED,
 };
 

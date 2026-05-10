@@ -19,6 +19,10 @@ export function decidingSet(matchFormat: MatchFormat): number {
   return matchFormat === "club" ? 3 : 5;
 }
 
+export function isDecidingSet(setNumber: number, matchFormat: MatchFormat): boolean {
+  return setNumber === decidingSet(matchFormat);
+}
+
 export function setTarget(setNumber: number, matchFormat: MatchFormat): number {
   return setNumber === decidingSet(matchFormat) ? 15 : 25;
 }
@@ -66,8 +70,8 @@ export function getSetLabel(
   if (higher >= target && lead < 2) {
     return { text: "WIN BY 2", color: "#FF4D4D" };
   }
-  if (setNumber === decidingSet(matchFormat)) {
-    return { text: "TO 15", color: "#F59E0B" };
+  if (isDecidingSet(setNumber, matchFormat)) {
+    return { text: "DECIDING SET — TO 15", color: "#F59E0B" };
   }
   return { text: `TO ${target}`, color: null };
 }
