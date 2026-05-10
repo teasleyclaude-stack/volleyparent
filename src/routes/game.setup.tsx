@@ -148,15 +148,15 @@ function SetupPage() {
       /* ignore */
     }
     startSession({
-      homeTeam: homeTeam.trim() || (isHomeTeam ? "My Team" : "Opponent"),
-      awayTeam: awayTeam.trim() || (isHomeTeam ? "Opponent" : "My Team"),
+      homeTeam: homeTeam.trim() || "My Team",
+      awayTeam: awayTeam.trim() || "Opponent",
       homeColor,
       awayColor,
       isHomeTeam,
       matchFormat,
       roster,
-      homeRotation: isHomeTeam ? ourRotation : placeholder,
-      awayRotation: isHomeTeam ? placeholder : ourRotation,
+      homeRotation: ourRotation,
+      awayRotation: placeholder,
       isHomeServing,
     });
     navigate({ to: "/game/live" });
