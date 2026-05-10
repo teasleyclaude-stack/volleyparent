@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Plus, Star, Trash2, Users, Volleyball, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
@@ -456,7 +456,6 @@ function SetupPage() {
           onClose={() => setShowAdd(false)}
           onAdd={(name, num, pos) => {
             addPlayer(name, num, pos);
-            setShowAdd(false);
           }}
         />
       )}
@@ -591,10 +590,24 @@ function AddPlayerModal({
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [position, setPosition] = useState<Position>("OH");
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const num = parseInt(number, 10);
   const numValid = !isNaN(num) && num >= 0 && num <= 99 && !existingNumbers.includes(num);
   const valid = name.trim().length > 0 && numValid;
+
+  const submit = (keepOpen: boolean) => {
+    if (!valid) return;
+    onAdd(name, num, position);
+    if (keepOpen) {
+      setName("");
+      setNumber("");
+      // keep position as-is for fast bulk entry
+      requestAnimationFrame(() => nameRef.current?.focus());
+    } else {
+      onClose();
+    }
+  };
 
   return (
     <div
@@ -618,6 +631,7 @@ function AddPlayerModal({
 
         <div className="space-y-2">
           <input
+            ref={nameRef}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Player name"
@@ -662,19 +676,34 @@ function AddPlayerModal({
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled={!valid}
-          onClick={() => onAdd(name, num, position)}
-          className={cn(
-            "h-13 flex h-13 w-full items-center justify-center rounded-2xl py-4 text-sm font-black uppercase tracking-widest transition-all",
-            valid
-              ? "bg-primary text-primary-foreground active:scale-[0.98]"
-              : "bg-card text-muted-foreground",
-          )}
-        >
-          Add Player
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            disabled={!valid}
+            onClick={() => submit(true)}
+            className={cn(
+              "flex h-13 items-center justify-center rounded-2xl py-4 text-xs font-black uppercase tracking-widest transition-all",
+              valid
+                ? "border border-primary/40 bg-card text-foreground active:scale-[0.98]"
+                : "border border-border bg-card text-muted-foreground",
+            )}
+          >
+            Save & Add Another
+          </button>
+          <button
+            type="button"
+            disabled={!valid}
+            onClick={() => submit(false)}
+            className={cn(
+              "flex h-13 items-center justify-center rounded-2xl py-4 text-xs font-black uppercase tracking-widest transition-all",
+              valid
+                ? "bg-primary text-primary-foreground active:scale-[0.98]"
+                : "bg-card text-muted-foreground",
+            )}
+          >
+            Add Player
+          </button>
+        </div>
       </div>
     </div>
   );

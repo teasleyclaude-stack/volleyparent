@@ -1,94 +1,40 @@
-# Refactor: My Team / Opponent (us-vs-them model)
-
 ## Goal
+Allow adding multiple players from the Add Player modal without closing back to the Setup screen between each one.
 
-Stop treating "Home" as a synonym for "the user's team." Today the data model already stores `isHomeTeam: boolean`, but a lot of code and labels assume **ours == home**. We'll keep home/away in storage (volleyball needs it for serve/court side and reports), and add a clean **us/them** layer on top so logic stops breaking when the tracked team is Away.
+## Current behavior
+`AddPlayerModal` (`src/routes/game.setup.tsx`) calls `onAdd` then the parent immediately calls `setShowAdd(false)`, dismissing the sheet. To add another player the user must tap "+ Add Player" again.
 
-## What changes for the user
+## Options
 
-- Scoreboard, stat buttons, reports, fanview, PDF, and history will say **"My Team" / "Opponent"** (or the team's actual name) instead of "Home" / "Away".
-- "Home" / "Away" wording survives only in the **setup screen** (where the user picks which side they are) and in any place where the literal court side actually matters.
-- Stats, momentum, and per-team displays will be correct regardless of which side the user picked.
+### Option A — "Save & Add Another" secondary button (recommended)
+Keep the existing primary **Add Player** button (saves and closes — preserves current muscle memory). Add a secondary button **Save & Add Another** that:
+- Calls `onAdd(name, num, position)`
+- Resets the form fields (`name=""`, `number=""`, position stays on last choice for speed)
+- Keeps the modal open and refocuses the name input
+- Auto-suggests next jersey # (optional: smallest unused 0–99)
 
-## What stays the same
+Pros: zero friction for the common "one player" case, explicit for bulk entry.
+Cons: two buttons in the footer.
 
-- Storage shape: `homeScore`, `awayScore`, `homeRotationState`, `awayRotationState`, `isHomeServing`, `isHomeTeam` are unchanged. No migration needed for existing saved games.
-- Volleyball rules engine in `gameStore.ts` (rotation, libero, serving) — already correct.
+### Option B — Always stay open; close via X / backdrop
+Make the primary **Add Player** button always reset the form and stay open. User dismisses with the X or by tapping the backdrop when done.
+Pros: simplest UI (one button).
+Cons: changes existing behavior — a user adding one player must take an extra tap to dismiss.
 
----
+### Option C — "Keep open" toggle / checkbox
+Add a small "Add another after saving" checkbox above the submit button. When checked, the modal stays open and resets after each save; when unchecked (default), behaves as today.
+Pros: user-controlled, discoverable.
+Cons: extra UI element, modal feels more cluttered.
 
-## Plan
+### Option D — Inline roster list inside the modal
+Convert the modal into a fuller "Roster Builder" sheet that shows the current roster at the top and a single inline form below; each save appends to the visible list. User taps Done to close.
+Pros: best for adding many players, gives visible progress.
+Cons: bigger refactor, duplicates the roster list already on the Setup screen behind the modal.
 
-### 1. New selector module: `src/lib/teamPerspective.ts`
+## Recommendation
+**Option A**. Smallest change, keeps the one-player path identical, and makes bulk entry obvious. Implementation is a ~15-line edit confined to `AddPlayerModal` plus a new `onAddAnother` callback (or reuse `onAdd` and let the modal control its own close).
 
-Single source of truth for "us vs them." Pure functions over `GameSession`:
-
-```ts
-type Side = "home" | "away";
-export const ourSide      = (s) => s.isHomeTeam ? "home" : "away";
-export const oppSide      = (s) => s.isHomeTeam ? "away" : "home";
-export const ourScore     = (s) => s.isHomeTeam ? s.homeScore : s.awayScore;
-export const oppScore     = (s) => s.isHomeTeam ? s.awayScore : s.homeScore;
-export const ourRotation  = (s) => s.isHomeTeam ? s.homeRotationState : s.awayRotationState;
-export const oppRotation  = (s) => ...
-export const weServe      = (s) => s.isHomeServing === s.isHomeTeam;
-export const ourTeamName  = (s) => s.isHomeTeam ? s.homeTeam : s.awayTeam;
-export const oppTeamName  = (s) => s.isHomeTeam ? s.awayTeam : s.homeTeam;
-export const ourColor     = (s) => s.isHomeTeam ? s.homeColor : s.awayColor;
-export const oppColor     = (s) => ...
-export const ourSetsWon   = (s) => s.completedSets.filter(x => (x.homeScore > x.awayScore) === s.isHomeTeam).length;
-export const oppSetsWon   = (s) => ...
-export const ourTimeouts  = (s) => s.isHomeTeam ? s.homeTimeoutsThisSet : s.awayTimeoutsThisSet;
-export const sideToOurs   = (s, side: Side) => side === ourSide(s) ? "ours" : "opp";
-```
-
-A tiny hook `useTeamPerspective(session)` returns the bundle for components.
-
-### 2. Audit every usage
-
-Sweep these files and replace ad-hoc ternaries with the selectors above:
-
-- `src/store/gameStore.ts` — internal logic stays, but `addPoint` callers and `ourTeamKey` derivations route through the selector for consistency.
-- `src/routes/game.live.tsx` — `weServe`, `ourRotation`, `ourTeamKey`, set-wins counters, timeout label, MatchOver winner color.
-- `src/routes/game.report.$sessionId.tsx` — `ourWin = (homeWon === isHomeTeam)` and the set chips.
-- `src/lib/fanview.ts` — already partially uses ours/opp; finish the conversion.
-- `src/utils/pdfReport.ts` — momentum + "+ X leads" line.
-- `src/components/report/MomentumGraph.tsx` — keep `isHomeOurs` as the existing prop name OR rename to `weAreHome`; either way values come from selector.
-- `src/components/game/Scoreboard.tsx`, `RotationCourt.tsx` — rename internal `isHomeOurs` to `weAreHome` for clarity (UI prop only).
-- `src/store/historyStore.ts` — `isHome` derivations.
-
-### 3. Rename UI labels (presentation only)
-
-Replace literal `"Home"` / `"Away"` strings with team name OR fallback "My Team" / "Opponent":
-
-- Scoreboard fallbacks: `homeTeam || (isHomeTeam ? "My Team" : "Opponent")` and same for away.
-- Stat buttons / +Home / +Away → `+My Team` / `+Opponent` (or just team names when set).
-- MatchOver / SetOver popups → use `ourTeamName`/`oppTeamName` with "My Team"/"Opponent" fallback.
-- `game.setup.tsx` keeps the literal "Home / Away" toggle since that's where the user explicitly chooses court side.
-- Tutorials, tips, and toasts that say "Home" / "Away" → switch to "My Team" / "Opponent".
-
-### 4. Lint guard (lightweight)
-
-Add an ESLint `no-restricted-syntax` rule (or a simple grep check in CI) that flags new code references to `isHomeTeam ? "home" : "away"` outside `src/lib/teamPerspective.ts` and `src/store/gameStore.ts`. Prevents regressions.
-
-### 5. Verification
-
-Manual:
-- Setup → pick **Away**, play a kill → **our score** goes up; momentum graph trends positive; PDF says "+ {our team} leads".
-- Setup → Away, opponent serves an ace → opponent score goes up; rotation does NOT advance for our team.
-- Reports for an existing **Home** session render identically to before the refactor (regression check).
-- Fanview shows our team on the left/highlighted regardless of side.
-
-Automated (optional): a small unit test on `teamPerspective.ts` with two fixture sessions (Home and Away) producing mirror-image outputs.
-
----
-
-## Out of scope
-
-- Schema migration of `fanview_sessions` JSON.
-- Storing rosters for the opponent.
-- Renaming `isHomeTeam` itself (touches saved sessions).
-
-## Risk
-
-Low–medium. All runtime logic in `gameStore.ts` already branches on `isHomeTeam`; the bugs are concentrated in display and report code, which is exactly what the selector layer fixes. Existing saved games remain readable because storage shape is unchanged.
+## Technical notes (for implementation step)
+- Add `onAddAndContinue` prop OR change `onAdd` signature to return whether to close, and let parent decide. Cleanest: lift close decision into the modal — pass `onAdd` (no close) and `onClose`; modal calls `onClose` itself for the "Add Player" button and skips it for "Save & Add Another".
+- After "Save & Add Another": clear name + number, keep position, autofocus name input via the existing ref pattern (add a `useRef<HTMLInputElement>`).
+- No changes outside `src/routes/game.setup.tsx`.
