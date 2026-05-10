@@ -19,6 +19,10 @@ export function decidingSet(matchFormat: MatchFormat): number {
   return matchFormat === "club" ? 3 : 5;
 }
 
+export function isDecidingSet(setNumber: number, matchFormat: MatchFormat): boolean {
+  return setNumber === decidingSet(matchFormat);
+}
+
 export function setTarget(setNumber: number, matchFormat: MatchFormat): number {
   return setNumber === decidingSet(matchFormat) ? 15 : 25;
 }
