@@ -184,18 +184,6 @@ function LivePage() {
     session,
   ]);
 
-  const _unusedAnchor = null;
-  void _unusedAnchor;
-  }, [
-    session?.homeScore,
-    session?.awayScore,
-    session?.currentSet,
-    setOverPopup,
-    matchOverPopup,
-    lineupModalOpen,
-    dismissedSetWins,
-    session,
-  ]);
 
   // Fire confetti ONLY when the match is fully completed.
   useEffect(() => {
