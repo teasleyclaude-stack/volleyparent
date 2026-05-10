@@ -1134,7 +1134,7 @@ function AttackerButtons(props: PositionPanelProps) {
         </div>
         <div data-tutorial="defense-row" className="grid grid-cols-3 gap-2.5">
           <StatButton stat="dig" label="Dig" onPress={props.onDig} />
-          <StatButton stat="block" label="Block" onPress={props.onBlock} />
+          <StatButton stat="block" label="Block" onPress={props.onBlock} disabled={!props.isMyPlayerFrontRow} />
           <div key={props.isMyPlayerServing ? "ace" : "assist"} className="animate-in fade-in duration-150">
             {props.isMyPlayerServing ? (
               <StatButton stat="ace" label="Ace" onPress={props.onAce} />
