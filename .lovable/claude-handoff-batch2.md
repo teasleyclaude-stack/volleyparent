@@ -351,3 +351,149 @@ Renders each past session as a tappable row (`HomeTeam vs AwayTeam`, date, playe
 ### Proof required
 Paste BEFORE/AFTER of the exact lines changed in `game.setup.tsx` and `historyStore.ts` (if touched), plus one console line confirming `useHistoryStore.getState().sessions.length > 0` after finishing a match. Write "Verified by re-reading file after edit." Do NOT rewrite the modal or the store — the wiring above already works in Lovable.
 
+
+---
+
+## FIX 12 — Restrict BLOCK to front-row positions (grey out in back row)
+
+### Goal
+The BLOCK button must only fire when the tracked player ("My Player") is in a front-row rotation slot (P2/P3/P4 → indices **1, 2, 3**). When they are in the back row (P1/P5/P6 → indices **0, 4, 5**), the Block button stays **visible in the same slot** but is **greyed out and non-interactive** so users learn where the button lives. No layout shifts, no slot swap, no removed buttons.
+
+Apply across **every panel that currently renders a Block button**: `AttackerButtons`, `SetterButtons`, and the non-Libero branch of `DefensiveButtons`. Libero panel already omits Block — leave alone.
+
+### Files to touch (only these two)
+1. `src/components/game/StatButton.tsx` — add a `disabled` prop.
+2. `src/routes/game.live.tsx` — derive `isMyPlayerFrontRow`, thread through `PositionPanelProps` + `AceOrAlt`, pass to the three Block call sites.
+
+DO NOT touch `gameStore.ts`, event types, stat schema, or `RotationCourt.tsx`. This is a UI gate, not a stat-recording change.
+
+### Step 1 — `src/components/game/StatButton.tsx`
+
+Add `disabled?: boolean` to the interface, accept it in the component, and apply muted styling + early-return guard.
+
+```tsx
+interface StatButtonProps {
+  stat: StatType;
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+}
+
+export function StatButton({ stat, label, onPress, disabled = false }: StatButtonProps) {
+  const [animKey, setAnimKey] = useState(0);
+  const s = STYLES[stat] ?? STYLES.kill;
+  const { Icon } = s;
+
+  return (
+    <button
+      key={animKey}
+      type="button"
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        tapHaptic("medium");
+        setAnimKey((k) => k + 1);
+        onPress();
+      }}
+      className={cn(
+        "vp-press-anim flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded-2xl shadow-lg shadow-black/30",
+        s.bg,
+        s.fg,
+        disabled && "pointer-events-none cursor-not-allowed opacity-40 grayscale",
+      )}
+    >
+      <Icon className="h-7 w-7" strokeWidth={2.4} />
+      <span className="text-[12px] font-black uppercase tracking-widest">{label}</span>
+    </button>
+  );
+}
+```
+
+### Step 2 — `src/routes/game.live.tsx`
+
+**(a)** Right after the existing `isMyPlayerServing` line (~line 232), add:
+
+```ts
+const myPlayerRotIndex = ourRotation.indexOf(tracked.id);
+const isMyPlayerFrontRow =
+  myPlayerRotIndex === 1 || myPlayerRotIndex === 2 || myPlayerRotIndex === 3;
+```
+
+This re-evaluates on every render, which already happens after rally scoring, rotation advance, substitutions, set start, and tracked-player change — they all update `session` state.
+
+**(b)** Extend `PositionPanelProps` (~line 1007):
+
+```ts
+interface PositionPanelProps {
+  tracked: PlayerType;
+  isMyPlayerServing: boolean;
+  isMyPlayerFrontRow: boolean;   // NEW
+  // ...rest unchanged
+}
+```
+
+**(c)** Pass it at the panel render site (~line 465), right after `isMyPlayerServing={isMyPlayerServing}`:
+
+```tsx
+isMyPlayerFrontRow={isMyPlayerFrontRow}
+```
+
+**(d)** `AttackerButtons` Block (~line 1133) — direct disabled prop:
+
+```tsx
+<StatButton stat="block" label="Block" onPress={props.onBlock} disabled={!props.isMyPlayerFrontRow} />
+```
+
+**(e)** Extend `AceOrAlt` to forward a disabled flag to its alt slot:
+
+```tsx
+function AceOrAlt({
+  isServing,
+  onAce,
+  altLabel,
+  altOnPress,
+  altStat,
+  altDisabled = false,
+}: {
+  isServing: boolean;
+  onAce: () => void;
+  altLabel: string;
+  altOnPress: () => void;
+  altStat: StatType;
+  altDisabled?: boolean;
+}) {
+  return (
+    <div key={isServing ? "ace" : "alt"} className="animate-in fade-in duration-150">
+      {isServing ? (
+        <StatButton stat="ace" label="Ace" onPress={onAce} />
+      ) : (
+        <StatButton stat={altStat} label={altLabel} onPress={altOnPress} disabled={altDisabled} />
+      )}
+    </div>
+  );
+}
+```
+
+**(f)** Pass `altDisabled={!props.isMyPlayerFrontRow}` to BOTH `AceOrAlt` call sites — the one inside `SetterButtons` (~line 1230) and the one inside `DefensiveButtons` non-Libero branch (~line 1325).
+
+### What NOT to do
+- Do **not** hide or remove the Block button when in back row. It must remain visible (greyed out) so users learn its location.
+- Do **not** add a separate `disabled` prop to `AceOrAlt`'s Ace branch — serving (P1) is always back row but the existing serving swap already replaces Block with Ace, so it's a non-issue.
+- Do **not** modify the Libero defensive branch (it already has no Block).
+- Do **not** change `gameStore.ts`, `handleStat`, or any event recording — the gate is purely on the button.
+- Do **not** add a tooltip, toast, or popup explaining why it's disabled. Greying is the only signal.
+
+### Proof required
+Paste BEFORE/AFTER of:
+1. `StatButton.tsx` interface + component body.
+2. The new `isMyPlayerFrontRow` derivation in `game.live.tsx`.
+3. The `PositionPanelProps` interface change.
+4. All three Block call sites + the updated `AceOrAlt` signature.
+
+Then walk through this manually and report results:
+- Tracked player at P2/P3/P4 → Block fully colored, tap fires `recordStat("block")`.
+- Score one rally so they rotate to P1 (serving) → Block slot now shows Ace (existing swap), no regression.
+- Score until they reach P5 or P6 → Block visible but greyed, opacity ~40%, taps do nothing, no haptic.
+- Repeat for a Setter and a non-Libero DS tracked player.
+
+Write "Verified by re-reading file after edit." Do NOT claim done without the BEFORE/AFTER paste.
