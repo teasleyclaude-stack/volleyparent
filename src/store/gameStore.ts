@@ -56,6 +56,8 @@ interface GameStore {
   changeTrackedPlayer: (newPlayerId: string) => void;
   undoLastAction: () => void;
   endSet: () => void;
+  /** Resolve the deciding-set coin toss by recording which team serves first. */
+  setDecidingFirstServer: (team: "home" | "away") => void;
   endGame: () => void;
   clearSession: () => void;
 }
