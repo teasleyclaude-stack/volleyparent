@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag, MoreVertical, UserCheck } from "lucide-react";
+import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag, MoreVertical, UserCheck, Repeat } from "lucide-react";
 import { TrackedPlayerPicker } from "@/components/game/TrackedPlayerPicker";
 import { ErrorTypeModal } from "@/components/game/ErrorTypeModal";
 import { PhoneShell } from "@/components/common/PhoneShell";
