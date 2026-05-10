@@ -674,3 +674,41 @@ Final-result block uses `homeLabel(session)` / `awayLabel(session)`. `ourWin` is
 - Pick Away → kill → user's score goes up; momentum trends positive in report.
 - SetOverPopup and MatchOverPopup show correct winning team text on either side.
 - `bunx tsc --noEmit` — clean.
+
+---
+
+## FIX 15 — Lock User's Team to Home Side (Remove Home/Away Concept from UI)
+
+**Goal:** Eliminate the "We are the Home/Away" toggle on setup. The user's tracked team is now ALWAYS stored as the Home side internally. This restores correctness for any legacy logic that implicitly assumes `ours == home` (the FIX 14 perspective layer remains as a safety net, but the assumption now holds by construction).
+
+### Rationale
+- Several stats / rotation / report code paths historically assumed the tracked team was Home. FIX 14 abstracted this with `teamPerspective.ts`, but the simplest guarantee of correctness is to never let the user pick Away in the first place.
+- Users don't think in "home/away court" terms when tracking their own team — they think "us vs them". Removing the toggle also removes a source of setup-time confusion.
+
+### Changes — `src/routes/game.setup.tsx`
+1. **Removed the "We are the" toggle UI** (the Home/Away segmented control).
+2. **Hardcoded** `const isHomeTeam = true;` (was `useState(true)`). The field is still passed through to `startSession` so the data model is unchanged.
+3. **Renamed input placeholders**: now plain `"My team name"` and `"Opponent name"` (dropped "(Home side)" / "(Away side)" qualifiers).
+4. **Starting serve toggle** no longer keys off `"home"`/`"away"` strings — it now iterates `[true, false]` representing "ours" / "opp" and labels buttons with the team-name first word or fallback `"My Team"` / `"Opponent"`.
+5. **`startSession` payload** simplified: `homeRotation: ourRotation`, `awayRotation: placeholder`, fallbacks `"My Team"` / `"Opponent"` (no more `isHomeTeam ? ... : ...` ternaries).
+
+### What did NOT change
+- `GameSession.isHomeTeam` field still exists in the type and in stored sessions — old saved games retain whatever value they had. Reports for legacy "we were Away" sessions still render via the FIX 14 perspective selectors.
+- `homeTeam` / `awayTeam` / `homeScore` / `awayScore` / `homeRotation` / `awayRotation` keys in storage and across the app are unchanged. No migration needed.
+- The starting-serve concept (`isHomeServing`) is unchanged — still tracks which side serves first; in the new world `isHomeServing === true` means "we serve first".
+- `teamPerspective.ts` selectors are kept — they're now effectively no-ops for new sessions but remain correct for legacy sessions and provide a defense-in-depth seam.
+
+### Net effect for new sessions
+- `isHomeTeam` is always `true`.
+- User's team scores → `homeScore` increments. User's roster → `homeRotation`. User's serve → `isHomeServing = true`.
+- Any code path that does `if (session.isHomeTeam) { /* ours */ }` now always takes the "ours" branch — original pre-FIX-14 logic works again.
+
+### Verification
+- Setup page no longer shows the "We are the" segmented control.
+- Team-name inputs read "My team name" / "Opponent name".
+- Start a game → live scoreboard left side = user's team, +score on left increments user's score, rotation matches user's roster.
+- Legacy sessions saved with `isHomeTeam: false` still render correctly in reports/FanView via the perspective selectors.
+- `bunx tsc --noEmit` — clean.
+
+### Files touched
+- `src/routes/game.setup.tsx` (only file modified)
