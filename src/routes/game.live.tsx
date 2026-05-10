@@ -1331,6 +1331,7 @@ function DefensiveButtons(props: PositionPanelProps) {
             altLabel="Block"
             altOnPress={props.onBlock}
             altStat="block"
+            altDisabled={!props.isMyPlayerFrontRow}
           />
           <div className="relative">
             <AssistButton onPress={props.onAssistTap} compact />
