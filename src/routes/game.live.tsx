@@ -978,6 +978,21 @@ function LivePage() {
         </div>
       )}
 
+      {benchFlash && (
+        <div className="pointer-events-none fixed inset-x-0 top-28 z-[70] flex justify-center px-4">
+          <div
+            className="rounded-full border-l-4 px-4 py-2 text-sm font-black text-foreground shadow-lg"
+            style={{
+              backgroundColor: "hsl(var(--popover))",
+              borderLeftColor: benchFlash.kind === "bench" ? "#FF4D4D" : "#39FF14",
+            }}
+          >
+            {benchFlash.kind === "bench"
+              ? `${benchFlash.name} is on the bench — stat tracking paused`
+              : `${benchFlash.name} is back on court — stat tracking resumed`}
+          </div>
+        </div>
+      )}
       <TrackedPlayerPicker
         open={trackedPickerOpen}
         roster={session.roster}
