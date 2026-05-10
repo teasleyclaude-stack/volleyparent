@@ -255,6 +255,9 @@ function LivePage() {
   const isMyPlayerServing = weServe && ourRotation[0] === tracked.id;
   const myPlayerRotIndex = ourRotation.indexOf(tracked.id);
   const isMyPlayerFrontRow = myPlayerRotIndex === 1 || myPlayerRotIndex === 2 || myPlayerRotIndex === 3;
+  const isOnCourt = myPlayerRotIndex !== -1;
+  const trackedFirstName = tracked.name.split(" ")[0];
+  const trackedPronoun = "they"; // generic — copy keeps it neutral with name fallback
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
