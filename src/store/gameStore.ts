@@ -229,6 +229,7 @@ export const useGameStore = create<GameStore>()(
           homeLiberoSubs: 0,
           awayLiberoSubs: 0,
           pendingLiberoViolation: null,
+          pendingDecidingServePrompt: false,
           isCompleted: false,
         };
         set({ session: s });
