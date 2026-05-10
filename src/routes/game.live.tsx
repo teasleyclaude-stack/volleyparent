@@ -1022,6 +1022,21 @@ function LivePage() {
         onCancel={() => setTrackedPickerOpen(false)}
       />
 
+      <CorrectRotationSheet
+        open={correctRotationOpen}
+        initialRotation={ourRotation}
+        roster={session.roster}
+        isHomeServing={session.isHomeServing}
+        isHomeOurs={ourTeamKey === "home"}
+        ourColor={ourTeamKey === "home" ? session.homeColor : session.awayColor}
+        onCancel={() => setCorrectRotationOpen(false)}
+        onConfirm={(netSteps) => {
+          setCorrectRotationOpen(false);
+          correctRotation(ourTeamKey, netSteps);
+          fanview.pushNow().catch((e) => console.error("fanview push failed", e));
+        }}
+      />
+
       {trackedChangeFlash && (
         <div className="pointer-events-none fixed inset-x-0 top-16 z-[70] flex justify-center px-4">
           <div
