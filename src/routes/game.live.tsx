@@ -287,7 +287,6 @@ function LivePage() {
   const isMyPlayerFrontRow = myPlayerRotIndex === 1 || myPlayerRotIndex === 2 || myPlayerRotIndex === 3;
   const isOnCourt = myPlayerRotIndex !== -1;
   const trackedFirstName = tracked.name.split(" ")[0];
-  const trackedPronoun = "they"; // generic — copy keeps it neutral with name fallback
 
   const handleStat = (stat: StatType) => {
     if (!isOnCourt) return;
