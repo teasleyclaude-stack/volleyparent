@@ -1,52 +1,100 @@
-# Restrict BLOCK to front-row positions
+# Confirm before manually ending a set
 
 ## Goal
-The BLOCK button should only fire when the tracked player is in a front-row rotation slot (P2/P3/P4 → indices 1, 2, 3). When the tracked player is in the back row (P1/P5/P6 → indices 0, 4, 5), the button stays visible in the same slot but is greyed out and non-interactive, so users learn where the button lives.
+Prevent accidental taps on the manual **End Set** buttons. Show a "Keep Playing / End Set" confirmation popup before actually ending the set. Mirror the existing "End Game?" confirmation pattern already in the file — same look, same feel.
 
-This applies to **every panel that currently renders a Block button**: Attacker, Setter, and Defensive (non-Libero). Libero panels already omit Block and stay unchanged.
+The auto end-of-set popup (`SetOverPopup`, fired when a side-out completes a set) already has Confirm / Keep Playing buttons and is unaffected.
 
-## How it works today
-- `src/routes/game.live.tsx` line 232 derives `isMyPlayerServing` from the rotation; this is the existing pattern referenced as Updates 26 & 27.
-- Block buttons render via `<StatButton stat="block" .../>` in three places:
-  - `AttackerButtons` (line ~1133) — dedicated Block slot in the 3-col secondary row.
-  - `SetterButtons` (line ~1230) — Block is the alt inside `<AceOrAlt>` (only shown when not serving).
-  - `DefensiveButtons` non-Libero branch (line ~1323) — also via `<AceOrAlt>`.
-- `StatButton` (`src/components/game/StatButton.tsx`) currently has no disabled state.
+## What triggers a manual end-of-set today
+Two places in `src/routes/game.live.tsx` call `endSet()` directly with no confirmation:
+1. **Line 583–596** — bottom-of-screen "End Set N" button (visible whenever it isn't the final set).
+2. **Line 817–830** — "End Set Early" item inside the overflow (⋯) menu.
+
+Both need to route through the new confirm.
 
 ## Changes
 
-### 1. Derive `isMyPlayerFrontRow` next to `isMyPlayerServing`
-In `src/routes/game.live.tsx` (~line 232), add:
+### 1. Add confirm state (`src/routes/game.live.tsx`, near line 83 next to `endConfirmOpen`)
 ```ts
-const FRONT_ROW_INDICES = [1, 2, 3] as const;
-const myPlayerRotIndex = ourRotation.indexOf(tracked.id);
-const isMyPlayerFrontRow = FRONT_ROW_INDICES.includes(myPlayerRotIndex as 1 | 2 | 3);
+const [endSetConfirmOpen, setEndSetConfirmOpen] = useState(false);
 ```
-This re-evaluates on every render, which already happens after rally scoring, rotation, sub, set start, and tracked-player change (all flow through `session` state).
 
-### 2. Thread it into `PositionPanelProps`
-Add `isMyPlayerFrontRow: boolean` to the `PositionPanelProps` interface (~line 1007) and pass it from the panel render site (~line 465) alongside `isMyPlayerServing`.
+### 2. Extract the actual "end set" effect into one helper
+Both call sites share identical follow-up logic (open lineup modal if more sets remain). Define once near other handlers:
+```ts
+const handleEndSetConfirmed = () => {
+  setEndSetConfirmOpen(false);
+  endSet();
+  const after = useGameStore.getState().session;
+  if (after && after.currentSet <= maxSets(after.matchFormat)) {
+    setLineupModalOpen(true);
+  }
+};
+```
 
-### 3. Add a `disabled` prop to `StatButton`
-In `src/components/game/StatButton.tsx`:
-- Accept `disabled?: boolean`.
-- When `disabled`, set `disabled` on the `<button>`, skip haptic + `onPress`, and apply muted styling: `opacity-40`, `grayscale`, `cursor-not-allowed`, `pointer-events-none` (still rendered for layout/training).
+### 3. Wire both manual triggers to open the confirm instead
+- Line 583 button `onClick`: `() => setEndSetConfirmOpen(true)` (with haptic `tapHaptic("medium")`).
+- Line 819 overflow item `onClick`: close overflow, then `setEndSetConfirmOpen(true)`.
 
-### 4. Wire the disabled flag into all Block buttons
-- `AttackerButtons`: `<StatButton stat="block" label="Block" onPress={...} disabled={!props.isMyPlayerFrontRow} />`.
-- `AceOrAlt` (used by Setter + Defensive): add an optional `altDisabled?: boolean` prop that forwards to the alt `<StatButton>`. Setter and Defensive call sites pass `altDisabled={!props.isMyPlayerFrontRow}`. The Ace branch is unaffected (serving implies back-row P1, but the existing serving-vs-block swap already handles that visually).
+### 4. Render the confirm popup
+Place right next to the existing `endConfirmOpen` block (~line 699). Same bottom-sheet-on-mobile / centered-on-desktop styling. Outside-tap = cancel:
 
-### 5. No other behavior changes
-- No store / event / stat changes.
-- Libero defensive branch unchanged (already no Block).
-- Layout grids stay 3-column; the slot is preserved exactly where it was.
+```tsx
+{endSetConfirmOpen && (
+  <div
+    className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+    onClick={() => setEndSetConfirmOpen(false)}
+  >
+    <div
+      className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h3 className="text-lg font-black text-foreground">
+        End Set {session.currentSet} now?
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Current score is {session.homeScore}–{session.awayScore}. The set will close
+        and you'll set the lineup for Set {session.currentSet + 1}.
+      </p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setEndSetConfirmOpen(false)}
+          className="h-12 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-muted-foreground"
+        >
+          Keep Playing
+        </button>
+        <button
+          type="button"
+          onClick={handleEndSetConfirmed}
+          className="h-12 rounded-2xl bg-destructive text-sm font-black uppercase tracking-widest text-destructive-foreground"
+        >
+          End Set {session.currentSet}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+```
+
+### 5. Haptic on the confirm tap
+`handleEndSetConfirmed` adds `tapHaptic("heavy")` before `endSet()` so it matches the auto popup's "destructive confirm" feel.
+
+## What stays unchanged
+- `SetOverPopup` (auto end-of-set after a side-out) — already has Confirm / Keep Playing.
+- `gameStore.endSet()` — no logic changes.
+- "End Match" / End Game flow — already confirmed via `endConfirmOpen`, untouched.
+- Final-set behavior — when it's the final set the bottom button is "End Match" (different `setEndConfirmOpen` modal), so no double confirm.
 
 ## Files touched
-- `src/routes/game.live.tsx` — derive `isMyPlayerFrontRow`, extend `PositionPanelProps`, pass it in, forward through `AceOrAlt`.
-- `src/components/game/StatButton.tsx` — add `disabled` prop + greyed style.
+- `src/routes/game.live.tsx` — add state, helper, two trigger swaps, one new modal block.
 
 ## Verification
-1. Start a match, set tracked player into P2/P3/P4 → Block button fully colored and tappable.
-2. Score until rotation moves them to P1/P5/P6 → Block button greys out, taps do nothing, no haptic.
-3. Test under all three panels (OH/MB/RS attacker, S setter, DS defensive). Libero panel unchanged.
-4. Sub the tracked flag onto another player in the back row → Block immediately greys without reload.
+1. Mid-set, tap the bottom **End Set N** button → confirm popup appears, score and set number shown correctly.
+2. Tap **Keep Playing** or outside → popup closes, set is NOT ended (score unchanged).
+3. Tap **End Set N** in popup → set closes, lineup modal opens for next set.
+4. Open ⋯ menu → **End Set Early** → same confirm popup behavior.
+5. Auto end-of-set popup still works normally on a winning rally (no double prompt).
+
+## Claude handoff
+After implementation, append this fix to `.lovable/claude-handoff-batch2.md` AND post the same prompt in chat (per user's standing rule).
