@@ -842,6 +842,21 @@ function LivePage() {
         }}
       />
 
+      <CoinTossPopup
+        open={coinTossOpen}
+        setNumber={session.currentSet}
+        homeTeam={session.homeTeam}
+        awayTeam={session.awayTeam}
+        homeColor={session.homeColor}
+        awayColor={session.awayColor}
+        isHomeOurs={session.isHomeTeam}
+        onSelect={(team) => {
+          setDecidingFirstServer(team);
+          setCoinTossOpen(false);
+          fanview.pushNow().catch((e) => console.error("fanview push failed", e));
+        }}
+      />
+
       {session.pendingLiberoViolation && session.pendingLiberoViolation.team === ourTeamKey && (
         <LiberoSubPopup
           open
