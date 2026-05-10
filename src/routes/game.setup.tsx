@@ -213,6 +213,8 @@ function SetupPage() {
             <div className="grid grid-cols-2 gap-2 rounded-2xl bg-card p-1">
               {([true, false] as const).map((isOurs) => {
                 const active = isOurs === isHomeServing;
+                const teamColor = isOurs ? homeColor : awayColor;
+                const textColor = readableTextColor(teamColor);
                 return (
                   <button
                     key={String(isOurs)}
@@ -220,8 +222,9 @@ function SetupPage() {
                     onClick={() => setIsHomeServing(isOurs)}
                     className={cn(
                       "h-11 rounded-xl text-sm font-black uppercase tracking-widest transition-colors",
-                      active ? "bg-[var(--gold)] text-background" : "text-muted-foreground",
+                      !active && "text-muted-foreground",
                     )}
+                    style={active ? { backgroundColor: teamColor, color: textColor } : undefined}
                   >
                     {isOurs
                       ? (homeTeam.split(" ")[0] || "My Team")
