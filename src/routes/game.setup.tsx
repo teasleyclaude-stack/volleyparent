@@ -148,8 +148,8 @@ function SetupPage() {
       /* ignore */
     }
     startSession({
-      homeTeam: homeTeam.trim() || "Home",
-      awayTeam: awayTeam.trim() || "Away",
+      homeTeam: homeTeam.trim() || (isHomeTeam ? "My Team" : "Opponent"),
+      awayTeam: awayTeam.trim() || (isHomeTeam ? "Opponent" : "My Team"),
       homeColor,
       awayColor,
       isHomeTeam,
@@ -182,13 +182,13 @@ function SetupPage() {
             <input
               value={homeTeam}
               onChange={(e) => setHomeTeam(e.target.value)}
-              placeholder="Home team"
+              placeholder={isHomeTeam ? "My team name (Home side)" : "Opponent name (Home side)"}
               className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
             />
             <input
               value={awayTeam}
               onChange={(e) => setAwayTeam(e.target.value)}
-              placeholder="Away team"
+              placeholder={isHomeTeam ? "Opponent name (Away side)" : "My team name (Away side)"}
               className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
             />
           </div>
@@ -198,8 +198,8 @@ function SetupPage() {
               Team colors
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <ColorPicker label={homeTeam.trim() || "Home"} value={homeColor} onChange={setHomeColor} />
-              <ColorPicker label={awayTeam.trim() || "Away"} value={awayColor} onChange={setAwayColor} />
+              <ColorPicker label={homeTeam.trim() || (isHomeTeam ? "My Team" : "Opponent")} value={homeColor} onChange={setHomeColor} />
+              <ColorPicker label={awayTeam.trim() || (isHomeTeam ? "Opponent" : "My Team")} value={awayColor} onChange={setAwayColor} />
             </div>
             <p className="mt-1.5 text-[10px] text-muted-foreground">
               These tint the FanView scoreboard, court, and feed for watchers.
@@ -247,7 +247,9 @@ function SetupPage() {
                       active ? "bg-[var(--gold)] text-background" : "text-muted-foreground",
                     )}
                   >
-                    {side === "home" ? homeTeam.split(" ")[0] || "Home" : awayTeam.split(" ")[0] || "Away"}
+                    {side === "home"
+                      ? homeTeam.split(" ")[0] || (isHomeTeam ? "My Team" : "Opponent")
+                      : awayTeam.split(" ")[0] || (isHomeTeam ? "Opponent" : "My Team")}
                   </button>
                 );
               })}
