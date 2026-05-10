@@ -710,6 +710,35 @@ export const useGameStore = create<GameStore>()(
         set({ session: s });
       },
 
+      correctRotation: (team, netSteps) => {
+        const cur = get().session;
+        if (!cur || netSteps === 0) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const key = team === "home" ? "homeRotationState" : "awayRotationState";
+        let rot = [...s[key]] as RotationState;
+        if (netSteps > 0) {
+          for (let i = 0; i < netSteps; i++) rot = applyRotation(rot);
+        } else {
+          for (let i = 0; i < -netSteps; i++) rot = reverseRotation(rot);
+        }
+        s[key] = rot;
+        // Manual correction overrides any pending Libero violation.
+        s.pendingLiberoViolation = null;
+        s.roster = s.roster.map((p) => (isLibero(p) ? { ...p, liberoPartnerId: null } : p));
+        pushEvent(s, {
+          type: "ROTATION_CORRECTION",
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          correctionSteps: netSteps,
+          correctionTeam: team,
+        });
+        set({ session: s });
+      },
+
       undoLastAction: () => {
         const cur = get().session;
         if (!cur || cur.events.length === 0) return;
