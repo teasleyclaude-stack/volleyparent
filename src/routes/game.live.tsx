@@ -33,7 +33,7 @@ import { SetActionModal, type SetOutcome } from "@/components/game/SetActionModa
 import { PassGradeSheet } from "@/components/game/PassGradeSheet";
 import { AssistKillerPrompt } from "@/components/game/AssistKillerPrompt";
 import { cn } from "@/lib/utils";
-import { ourSide, ourRotation as selOurRotation, weServe as selWeServe, ourTimeouts, oppSide } from "@/lib/teamPerspective";
+import { ourSide, ourRotation as selOurRotation, weServe as selWeServe, ourTimeouts } from "@/lib/teamPerspective";
 
 export const Route = createFileRoute("/game/live")({
   head: () => ({
@@ -229,7 +229,6 @@ function LivePage() {
 
   const tracked = session.roster.find((p) => p.isTracked) ?? session.roster[0];
   const ourTeamKey = ourSide(session);
-  const oppTeamKey = oppSide(session);
   const ourRotation = selOurRotation(session);
   const weServe = selWeServe(session);
   const isMyPlayerServing = weServe && ourRotation[0] === tracked.id;
