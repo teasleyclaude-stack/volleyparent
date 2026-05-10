@@ -761,7 +761,10 @@ export const useGameStore = create<GameStore>()(
           }
         }
 
-        if (last.type === "TIMEOUT" && last.timeoutTeam) {
+        if (last.type === "DECIDING_SERVE") {
+          // Restore the prompt — coach can re-pick the first server.
+          s.pendingDecidingServePrompt = true;
+        }
           if (last.timeoutTeam === "home")
             s.homeTimeoutsThisSet = Math.max(0, s.homeTimeoutsThisSet - 1);
           else s.awayTimeoutsThisSet = Math.max(0, s.awayTimeoutsThisSet - 1);
