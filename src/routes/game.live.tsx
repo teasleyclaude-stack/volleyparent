@@ -33,6 +33,7 @@ import { SetActionModal, type SetOutcome } from "@/components/game/SetActionModa
 import { PassGradeSheet } from "@/components/game/PassGradeSheet";
 import { AssistKillerPrompt } from "@/components/game/AssistKillerPrompt";
 import { cn } from "@/lib/utils";
+import { ourSide, ourRotation as selOurRotation, weServe as selWeServe, ourTimeouts, oppSide } from "@/lib/teamPerspective";
 
 export const Route = createFileRoute("/game/live")({
   head: () => ({
@@ -227,9 +228,10 @@ function LivePage() {
   }
 
   const tracked = session.roster.find((p) => p.isTracked) ?? session.roster[0];
-  const ourTeamKey: "home" | "away" = session.isHomeTeam ? "home" : "away";
-  const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
-  const weServe = session.isHomeServing === session.isHomeTeam;
+  const ourTeamKey = ourSide(session);
+  const oppTeamKey = oppSide(session);
+  const ourRotation = selOurRotation(session);
+  const weServe = selWeServe(session);
   const isMyPlayerServing = weServe && ourRotation[0] === tracked.id;
   const myPlayerRotIndex = ourRotation.indexOf(tracked.id);
   const isMyPlayerFrontRow = myPlayerRotIndex === 1 || myPlayerRotIndex === 2 || myPlayerRotIndex === 3;
@@ -432,7 +434,7 @@ function LivePage() {
         <RotationWarning
           issues={
             validateRotation(ourRotation, session.roster, {
-              oursServing: session.isHomeServing === session.isHomeTeam,
+              oursServing: weServe,
               requireTracked: true,
             }).issues
           }
@@ -547,8 +549,8 @@ function LivePage() {
         <section className="mt-3 grid grid-cols-3 gap-2 px-4">
           <ControlBtn
             icon={<Pause className="h-4 w-4" />}
-            label={`TO ${session.isHomeTeam ? session.homeTimeoutsThisSet : session.awayTimeoutsThisSet}/2`}
-            onClick={() => recordTimeout(session.isHomeTeam ? "home" : "away")}
+            label={`TO ${ourTimeouts(session)}/2`}
+            onClick={() => recordTimeout(ourTeamKey)}
           />
           <button
             type="button"
@@ -787,6 +789,7 @@ function LivePage() {
         onConfirm={confirmEndSet}
         onKeepPlaying={keepPlayingSet}
         matchFormat={matchFormat}
+        isHomeOurs={session.isHomeTeam}
       />
 
       <MatchOverPopup
@@ -800,6 +803,7 @@ function LivePage() {
         awaySetsWon={awaySetsWon}
         completedSets={session.completedSets}
         matchFormat={matchFormat}
+        isHomeOurs={session.isHomeTeam}
         onEndGame={() => {
           setMatchOverPopup(null);
           handleEndGame();
