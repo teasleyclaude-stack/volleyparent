@@ -1199,16 +1199,27 @@ function PositionAwareStatPanel(props: PositionPanelProps) {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            {group === "setter" ? "Assists" : group === "defensive" ? "Pass Avg" : "Hit %"}
-          </div>
-          <div className="text-2xl font-black tabular-nums text-primary">
-            {group === "setter"
-              ? tracked.stats.assists
-              : group === "defensive"
-                ? passAverage(tracked.stats)
-                : hittingPercentage(tracked.stats)}
-          </div>
+          {props.isOnCourt ? (
+            <>
+              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                {group === "setter" ? "Assists" : group === "defensive" ? "Pass Avg" : "Hit %"}
+              </div>
+              <div className="text-2xl font-black tabular-nums text-primary">
+                {group === "setter"
+                  ? tracked.stats.assists
+                  : group === "defensive"
+                    ? passAverage(tracked.stats)
+                    : hittingPercentage(tracked.stats)}
+              </div>
+            </>
+          ) : (
+            <span
+              className="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-black uppercase text-white"
+              style={{ backgroundColor: "#FF4D4D", letterSpacing: "1.5px" }}
+            >
+              ● Bench
+            </span>
+          )}
         </div>
       </div>
 
@@ -1224,10 +1235,43 @@ function PositionAwareStatPanel(props: PositionPanelProps) {
         ))}
       </div>
 
+      {!props.isOnCourt && (
+        <div className="mt-2 text-center text-[11px] italic text-muted-foreground">
+          Stat buttons unavailable until {props.benchedFirstName} returns
+        </div>
+      )}
+
       {/* Action buttons by position */}
-      {group === "attacker" && <AttackerButtons {...props} />}
-      {group === "setter" && <SetterButtons {...props} />}
-      {group === "defensive" && <DefensiveButtons {...props} />}
+      <div className="relative">
+        {!props.isOnCourt && (
+          <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
+            <span className="rounded-full bg-popover/95 px-3 py-1 text-[12px] font-bold text-muted-foreground shadow">
+              {props.benchedFirstName} is on the bench
+            </span>
+          </div>
+        )}
+        <div
+          className={cn(
+            "transition-opacity duration-150",
+            !props.isOnCourt && "pointer-events-none opacity-30",
+          )}
+          aria-disabled={!props.isOnCourt}
+        >
+          {group === "attacker" && <AttackerButtons {...props} />}
+          {group === "setter" && <SetterButtons {...props} />}
+          {group === "defensive" && <DefensiveButtons {...props} />}
+        </div>
+        {props.showBenchTip && !props.isOnCourt && (
+          <div className="absolute left-1/2 top-2 z-30 -translate-x-1/2">
+            <Tip
+              show={props.showBenchTip}
+              message={`${props.benchedFirstName} is on the bench — stat buttons are disabled until they return to court.`}
+              arrow="up"
+              onDismiss={props.onDismissBenchTip}
+            />
+          </div>
+        )}
+      </div>
     </section>
   );
 }
