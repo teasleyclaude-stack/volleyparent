@@ -456,7 +456,6 @@ function SetupPage() {
           onClose={() => setShowAdd(false)}
           onAdd={(name, num, pos) => {
             addPlayer(name, num, pos);
-            setShowAdd(false);
           }}
         />
       )}
