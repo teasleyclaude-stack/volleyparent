@@ -162,6 +162,8 @@ export interface MatchEvent {
   // TRACKING_CHANGE
   previousTrackedId?: string;
   newTrackedId?: string;
+  // ROTATION_CORRECTION — net steps applied (positive = forward, negative = back)
+  correctionSteps?: number;
 }
 
 export interface SetSummary {
