@@ -392,7 +392,12 @@ export function latestFeedItem(session: GameSession): FanviewFeedItem | null {
     if (ev.type === "SCORE") {
       for (let j = i - 1; j >= 0; j--) {
         const prev = events[j];
-        if (prev.type === "SCORE" || prev.type === "SET_END" || prev.type === "SCORE_CORRECTION") {
+        if (
+          prev.type === "SCORE" ||
+          prev.type === "SET_END" ||
+          prev.type === "SCORE_CORRECTION" ||
+          prev.type === "DECIDING_SERVE"
+        ) {
           break;
         }
         if (prev.type === "STAT" && prev.statType && POINT_CAUSING_STATS.has(prev.statType)) {
