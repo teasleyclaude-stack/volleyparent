@@ -736,6 +736,42 @@ function LivePage() {
         </div>
       )}
 
+      {endSetConfirmOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+          onClick={() => setEndSetConfirmOpen(false)}
+        >
+          <div
+            className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-black text-foreground">
+              End Set {session.currentSet} now?
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Current score is {session.homeScore}–{session.awayScore}. The set will close
+              and you'll set the lineup for Set {session.currentSet + 1}.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setEndSetConfirmOpen(false)}
+                className="h-12 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-muted-foreground"
+              >
+                Keep Playing
+              </button>
+              <button
+                type="button"
+                onClick={handleEndSetConfirmed}
+                className="h-12 rounded-2xl bg-destructive text-sm font-black uppercase tracking-widest text-destructive-foreground"
+              >
+                End Set {session.currentSet}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <SetOverPopup
         open={setOverPopup !== null}
         setNumber={setOverPopup?.setNumber ?? session.currentSet}
