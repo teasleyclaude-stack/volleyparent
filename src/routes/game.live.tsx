@@ -98,6 +98,7 @@ function LivePage() {
     awayScore: number;
   } | null>(null);
   const [matchOverPopup, setMatchOverPopup] = useState<{ winner: "home" | "away" } | null>(null);
+  const [coinTossOpen, setCoinTossOpen] = useState(false);
   // Position-aware modals
   const [setActionOpen, setSetActionOpen] = useState(false);
   const [passSheetOpen, setPassSheetOpen] = useState(false);
