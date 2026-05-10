@@ -54,6 +54,8 @@ export interface FanviewState {
   rotationState: RotationState;
   players: Record<string, FanviewPlayerInfo>;
   trackedStats: FanviewTrackedStats;
+  /** True when the current set is the deciding set for this match format. */
+  isDeciding: boolean;
   lastUpdated: number;
 }
 
@@ -65,7 +67,7 @@ export interface FanviewFeedItem {
   homeScore: number;
   awayScore: number;
   message: string;
-  tone: "kill" | "error" | "score" | "rotation" | "set" | "neutral" | "libero";
+  tone: "kill" | "error" | "score" | "rotation" | "set" | "neutral" | "libero" | "deciding";
   team?: "home" | "away";
 }
 
