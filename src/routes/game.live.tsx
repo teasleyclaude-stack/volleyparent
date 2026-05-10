@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag, MoreVertical, UserCheck } from "lucide-react";
+import { ArrowLeft, Undo2, Pause, RefreshCw, AlertTriangle, Flag, MoreVertical, UserCheck, Repeat } from "lucide-react";
 import { TrackedPlayerPicker } from "@/components/game/TrackedPlayerPicker";
 import { ErrorTypeModal } from "@/components/game/ErrorTypeModal";
 import { PhoneShell } from "@/components/common/PhoneShell";
@@ -15,6 +15,7 @@ import { SetOverPopup } from "@/components/game/SetOverPopup";
 import { CoinTossPopup } from "@/components/game/CoinTossPopup";
 import { LiberoSubPopup } from "@/components/game/LiberoSubPopup";
 import { LastActionLine } from "@/components/game/LastActionLine";
+import { CorrectRotationSheet } from "@/components/game/CorrectRotationSheet";
 import { QuickSubSheet } from "@/components/game/QuickSubSheet";
 import { MatchOverPopup } from "@/components/game/MatchOverPopup";
 import { FanviewButton } from "@/components/game/FanviewButton";
@@ -62,6 +63,7 @@ function LivePage() {
   const setRotationStore = useGameStore((s) => s.setRotation);
   const confirmLiberoSub = useGameStore((s) => s.confirmLiberoSub);
   const changeTrackedPlayer = useGameStore((s) => s.changeTrackedPlayer);
+  const correctRotation = useGameStore((s) => s.correctRotation);
   const recordDumpKill = useGameStore((s) => s.recordDumpKill);
   const recordDumpError = useGameStore((s) => s.recordDumpError);
   const recordSettingError = useGameStore((s) => s.recordSettingError);
@@ -88,6 +90,7 @@ function LivePage() {
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [trackedPickerOpen, setTrackedPickerOpen] = useState(false);
+  const [correctRotationOpen, setCorrectRotationOpen] = useState(false);
   const [trackedChangeFlash, setTrackedChangeFlash] = useState<{
     name: string;
     context: "set-break" | "mid-set";
@@ -946,9 +949,19 @@ function LivePage() {
               type="button"
               onClick={() => {
                 setOverflowOpen(false);
-                setTrackedPickerOpen(true);
+                setCorrectRotationOpen(true);
               }}
               className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
+            >
+              <Repeat className="h-4 w-4" /> Correct Rotation
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOverflowOpen(false);
+                setTrackedPickerOpen(true);
+              }}
+              className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
             >
               <UserCheck className="h-4 w-4" /> Change Tracked Player
             </button>
@@ -1007,6 +1020,21 @@ function LivePage() {
           }
         }}
         onCancel={() => setTrackedPickerOpen(false)}
+      />
+
+      <CorrectRotationSheet
+        open={correctRotationOpen}
+        initialRotation={ourRotation}
+        roster={session.roster}
+        isHomeServing={session.isHomeServing}
+        isHomeOurs={ourTeamKey === "home"}
+        ourColor={ourTeamKey === "home" ? session.homeColor : session.awayColor}
+        onCancel={() => setCorrectRotationOpen(false)}
+        onConfirm={(netSteps) => {
+          setCorrectRotationOpen(false);
+          correctRotation(ourTeamKey, netSteps);
+          fanview.pushNow().catch((e) => console.error("fanview push failed", e));
+        }}
       />
 
       {trackedChangeFlash && (

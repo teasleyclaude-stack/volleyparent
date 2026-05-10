@@ -54,6 +54,8 @@ interface GameStore {
   confirmLiberoSub: (subOutPlayerId: string) => void;
   /** Switch which roster player has isTracked=true. Logs a TRACKING_CHANGE event. */
   changeTrackedPlayer: (newPlayerId: string) => void;
+  /** Manual rotation correction. Applies netSteps forward (positive) or back (negative). Does not affect score, stats, or serving. */
+  correctRotation: (team: "home" | "away", netSteps: number) => void;
   undoLastAction: () => void;
   endSet: () => void;
   /** Resolve the deciding-set coin toss by recording which team serves first. */
@@ -708,6 +710,35 @@ export const useGameStore = create<GameStore>()(
         set({ session: s });
       },
 
+      correctRotation: (team, netSteps) => {
+        const cur = get().session;
+        if (!cur || netSteps === 0) return;
+        const s: GameSession = JSON.parse(JSON.stringify(cur));
+        const key = team === "home" ? "homeRotationState" : "awayRotationState";
+        let rot = [...s[key]] as RotationState;
+        if (netSteps > 0) {
+          for (let i = 0; i < netSteps; i++) rot = applyRotation(rot);
+        } else {
+          for (let i = 0; i < -netSteps; i++) rot = reverseRotation(rot);
+        }
+        s[key] = rot;
+        // Manual correction overrides any pending Libero violation.
+        s.pendingLiberoViolation = null;
+        s.roster = s.roster.map((p) => (isLibero(p) ? { ...p, liberoPartnerId: null } : p));
+        pushEvent(s, {
+          type: "ROTATION_CORRECTION",
+          setNumber: s.currentSet,
+          homeScore: s.homeScore,
+          awayScore: s.awayScore,
+          homeRotationState: s.homeRotationState,
+          awayRotationState: s.awayRotationState,
+          isHomeServing: s.isHomeServing,
+          correctionSteps: netSteps,
+          correctionTeam: team,
+        });
+        set({ session: s });
+      },
+
       undoLastAction: () => {
         const cur = get().session;
         if (!cur || cur.events.length === 0) return;
@@ -838,6 +869,19 @@ export const useGameStore = create<GameStore>()(
           } else {
             s.awayLiberoSubs = Math.max(0, (s.awayLiberoSubs ?? 0) - 1);
           }
+        }
+
+        if (last.type === "ROTATION_CORRECTION" && last.correctionTeam && last.correctionSteps) {
+          // Reverse the net rotation steps on the same team.
+          const key = last.correctionTeam === "home" ? "homeRotationState" : "awayRotationState";
+          let rot = [...s[key]] as RotationState;
+          const steps = last.correctionSteps;
+          if (steps > 0) {
+            for (let i = 0; i < steps; i++) rot = reverseRotation(rot);
+          } else {
+            for (let i = 0; i < -steps; i++) rot = applyRotation(rot);
+          }
+          s[key] = rot;
         }
 
         // Suppress unused
