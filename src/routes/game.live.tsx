@@ -820,6 +820,10 @@ function LivePage() {
         onConfirm={(newRot) => {
           setRotationStore(ourTeamKey, newRot);
           setLineupModalOpen(false);
+          const after = useGameStore.getState().session;
+          if (after?.pendingDecidingServePrompt) {
+            setCoinTossOpen(true);
+          }
         }}
         onChangeTracked={(id) => {
           changeTrackedPlayer(id);
