@@ -160,6 +160,36 @@ function LivePage() {
     session?.homeScore,
     session?.awayScore,
     session?.currentSet,
+    session?.matchFormat,
+    setOverPopup,
+    matchOverPopup,
+    lineupModalOpen,
+    dismissedSetWins,
+  ]);
+
+  // Auto-open coin toss when the deciding-set prompt is pending and no other
+  // blocking modal is in front of it (covers app reload mid-flow).
+  useEffect(() => {
+    if (!session) return;
+    if (!session.pendingDecidingServePrompt) return;
+    if (lineupModalOpen || setOverPopup || matchOverPopup) return;
+    if (coinTossOpen) return;
+    setCoinTossOpen(true);
+  }, [
+    session?.pendingDecidingServePrompt,
+    lineupModalOpen,
+    setOverPopup,
+    matchOverPopup,
+    coinTossOpen,
+    session,
+  ]);
+
+  const _unusedAnchor = null;
+  void _unusedAnchor;
+  }, [
+    session?.homeScore,
+    session?.awayScore,
+    session?.currentSet,
     setOverPopup,
     matchOverPopup,
     lineupModalOpen,
