@@ -120,6 +120,8 @@ export function buildState(session: GameSession): FanviewState {
     };
   }
   const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
+  const fmt = session.matchFormat ?? "highschool";
+  const isDeciding = session.currentSet === (fmt === "club" ? 3 : 5);
   return {
     isLive: !session.isCompleted,
     currentSet: session.currentSet,
