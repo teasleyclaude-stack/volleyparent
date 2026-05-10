@@ -1359,19 +1359,21 @@ function AceOrAlt({
   altLabel,
   altOnPress,
   altStat,
+  altDisabled = false,
 }: {
   isServing: boolean;
   onAce: () => void;
   altLabel: string;
   altOnPress: () => void;
   altStat: StatType;
+  altDisabled?: boolean;
 }) {
   return (
     <div key={isServing ? "ace" : "alt"} className="animate-in fade-in duration-150">
       {isServing ? (
         <StatButton stat="ace" label="Ace" onPress={onAce} />
       ) : (
-        <StatButton stat={altStat} label={altLabel} onPress={altOnPress} />
+        <StatButton stat={altStat} label={altLabel} onPress={altOnPress} disabled={altDisabled} />
       )}
     </div>
   );
