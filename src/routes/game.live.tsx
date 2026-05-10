@@ -465,6 +465,7 @@ function LivePage() {
         <PositionAwareStatPanel
           tracked={tracked}
           isMyPlayerServing={isMyPlayerServing}
+          isMyPlayerFrontRow={isMyPlayerFrontRow}
           attemptMenuOpen={attemptMenuOpen}
           onAttempt={() => handleStat("kill")}
           onAttemptOutcome={handleAttemptOutcome}
