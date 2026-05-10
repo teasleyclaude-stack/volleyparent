@@ -341,6 +341,15 @@ function LivePage() {
       return next;
     });
     setSetOverPopup(null);
+
+  const handleEndSetConfirmed = () => {
+    setEndSetConfirmOpen(false);
+    tapHaptic("heavy");
+    endSet();
+    const after = useGameStore.getState().session;
+    if (after && after.currentSet <= maxSets(after.matchFormat)) {
+      setLineupModalOpen(true);
+    }
   };
 
   return (
