@@ -871,6 +871,19 @@ export const useGameStore = create<GameStore>()(
           }
         }
 
+        if (last.type === "ROTATION_CORRECTION" && last.correctionTeam && last.correctionSteps) {
+          // Reverse the net rotation steps on the same team.
+          const key = last.correctionTeam === "home" ? "homeRotationState" : "awayRotationState";
+          let rot = [...s[key]] as RotationState;
+          const steps = last.correctionSteps;
+          if (steps > 0) {
+            for (let i = 0; i < steps; i++) rot = reverseRotation(rot);
+          } else {
+            for (let i = 0; i < -steps; i++) rot = applyRotation(rot);
+          }
+          s[key] = rot;
+        }
+
         // Suppress unused
         void snapshot;
 
