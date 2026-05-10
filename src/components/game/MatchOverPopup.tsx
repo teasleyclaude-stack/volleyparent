@@ -16,6 +16,7 @@ interface MatchOverPopupProps {
   awaySetsWon: number;
   completedSets: SetSummary[];
   matchFormat: MatchFormat;
+  isHomeOurs: boolean;
   onEndGame: () => void;
 }
 
@@ -30,6 +31,7 @@ export function MatchOverPopup({
   awaySetsWon,
   completedSets,
   matchFormat,
+  isHomeOurs,
   onEndGame,
 }: MatchOverPopupProps) {
   useEffect(() => {
@@ -38,7 +40,9 @@ export function MatchOverPopup({
 
   if (!open) return null;
 
-  const winningTeam = winner === "home" ? homeTeam : awayTeam;
+  const homeLabel = homeTeam || (isHomeOurs ? "My Team" : "Opponent");
+  const awayLabel = awayTeam || (isHomeOurs ? "Opponent" : "My Team");
+  const winningTeam = winner === "home" ? homeLabel : awayLabel;
   const winningColor = winner === "home" ? homeColor : awayColor;
   const winningText = readableTextColor(winningColor);
 
@@ -57,7 +61,7 @@ export function MatchOverPopup({
           className="mt-4 text-2xl font-black leading-tight"
           style={{ color: winningText }}
         >
-          {winningTeam || (winner === "home" ? "Home" : "Away")} wins the match!
+          {winningTeam} wins the match!
         </div>
 
         <div className="mt-4 text-[48px] font-black leading-none tabular-nums">
