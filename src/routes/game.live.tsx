@@ -290,6 +290,7 @@ function LivePage() {
   const trackedPronoun = "they"; // generic — copy keeps it neutral with name fallback
 
   const handleStat = (stat: StatType) => {
+    if (!isOnCourt) return;
     if (stat === "kill") {
       setAttemptMenuOpen((v) => {
         const next = !v;
@@ -315,6 +316,7 @@ function LivePage() {
   };
 
   const handleAttemptOutcome = (outcome: "kill" | "dug" | "error") => {
+    if (!isOnCourt) return;
     setAttemptMenuOpen(false);
     if (outcome === "kill") {
       setKillModalOpen(true);
