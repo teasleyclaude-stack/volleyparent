@@ -230,6 +230,8 @@ function LivePage() {
   const ourRotation = session.isHomeTeam ? session.homeRotationState : session.awayRotationState;
   const weServe = session.isHomeServing === session.isHomeTeam;
   const isMyPlayerServing = weServe && ourRotation[0] === tracked.id;
+  const myPlayerRotIndex = ourRotation.indexOf(tracked.id);
+  const isMyPlayerFrontRow = myPlayerRotIndex === 1 || myPlayerRotIndex === 2 || myPlayerRotIndex === 3;
 
   const handleStat = (stat: StatType) => {
     if (stat === "kill") {
@@ -463,6 +465,7 @@ function LivePage() {
         <PositionAwareStatPanel
           tracked={tracked}
           isMyPlayerServing={isMyPlayerServing}
+          isMyPlayerFrontRow={isMyPlayerFrontRow}
           attemptMenuOpen={attemptMenuOpen}
           onAttempt={() => handleStat("kill")}
           onAttemptOutcome={handleAttemptOutcome}
@@ -1007,6 +1010,7 @@ function SubSheet({
 interface PositionPanelProps {
   tracked: PlayerType;
   isMyPlayerServing: boolean;
+  isMyPlayerFrontRow: boolean;
   attemptMenuOpen: boolean;
   onAttempt: () => void;
   onAttemptOutcome: (o: "kill" | "dug" | "error") => void;
@@ -1130,7 +1134,7 @@ function AttackerButtons(props: PositionPanelProps) {
         </div>
         <div data-tutorial="defense-row" className="grid grid-cols-3 gap-2.5">
           <StatButton stat="dig" label="Dig" onPress={props.onDig} />
-          <StatButton stat="block" label="Block" onPress={props.onBlock} />
+          <StatButton stat="block" label="Block" onPress={props.onBlock} disabled={!props.isMyPlayerFrontRow} />
           <div key={props.isMyPlayerServing ? "ace" : "assist"} className="animate-in fade-in duration-150">
             {props.isMyPlayerServing ? (
               <StatButton stat="ace" label="Ace" onPress={props.onAce} />
@@ -1233,6 +1237,7 @@ function SetterButtons(props: PositionPanelProps) {
           altLabel="Block"
           altOnPress={props.onBlock}
           altStat="block"
+          altDisabled={!props.isMyPlayerFrontRow}
         />
         <StatButton stat="error" label="Error" onPress={props.onErrorTap} />
       </div>
@@ -1326,6 +1331,7 @@ function DefensiveButtons(props: PositionPanelProps) {
             altLabel="Block"
             altOnPress={props.onBlock}
             altStat="block"
+            altDisabled={!props.isMyPlayerFrontRow}
           />
           <div className="relative">
             <AssistButton onPress={props.onAssistTap} compact />
@@ -1353,19 +1359,21 @@ function AceOrAlt({
   altLabel,
   altOnPress,
   altStat,
+  altDisabled = false,
 }: {
   isServing: boolean;
   onAce: () => void;
   altLabel: string;
   altOnPress: () => void;
   altStat: StatType;
+  altDisabled?: boolean;
 }) {
   return (
     <div key={isServing ? "ace" : "alt"} className="animate-in fade-in duration-150">
       {isServing ? (
         <StatButton stat="ace" label="Ace" onPress={onAce} />
       ) : (
-        <StatButton stat={altStat} label={altLabel} onPress={altOnPress} />
+        <StatButton stat={altStat} label={altLabel} onPress={altOnPress} disabled={altDisabled} />
       )}
     </div>
   );
