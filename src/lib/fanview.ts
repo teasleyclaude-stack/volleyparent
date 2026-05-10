@@ -315,6 +315,18 @@ export function eventToFeedItem(session: GameSession, ev: MatchEvent): FanviewFe
     };
   }
 
+  if (ev.type === "DECIDING_SERVE") {
+    const team = ev.scoringTeam ?? (ev.isHomeServing ? "home" : "away");
+    const teamName = team === "home" ? session.homeTeam : session.awayTeam;
+    return {
+      ...base,
+      type: "DECIDING_SERVE",
+      message: `Set ${ev.setNumber} — Deciding Set. ${teamName} serves first.`,
+      tone: "deciding",
+      team,
+    };
+  }
+
   if (ev.type === "LIBERO_SUB" && ev.liberoId && ev.liberoPartnerOutId) {
     const lib = findPlayer(session, ev.liberoId);
     const partner = findPlayer(session, ev.liberoPartnerOutId);
