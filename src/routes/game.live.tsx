@@ -1147,6 +1147,10 @@ interface PositionPanelProps {
   tracked: PlayerType;
   isMyPlayerServing: boolean;
   isMyPlayerFrontRow: boolean;
+  isOnCourt: boolean;
+  benchedFirstName: string;
+  showBenchTip: boolean;
+  onDismissBenchTip: () => void;
   attemptMenuOpen: boolean;
   onAttempt: () => void;
   onAttemptOutcome: (o: "kill" | "dug" | "error") => void;
