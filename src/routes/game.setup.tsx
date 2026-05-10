@@ -7,6 +7,7 @@ import { useHistoryStore } from "@/store/historyStore";
 import { defaultStats, type MatchFormat, type Player, type Position, type RotationState } from "@/types";
 import { uid } from "@/utils/stats";
 import { cn } from "@/lib/utils";
+import { readableTextColor } from "@/lib/colorContrast";
 
 const POSITIONS: Position[] = ["S", "MB", "OH", "RS", "L", "DS"];
 const MATCH_FORMAT_KEY = "courtsideview_match_format";
