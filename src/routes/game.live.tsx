@@ -341,6 +341,7 @@ function LivePage() {
       return next;
     });
     setSetOverPopup(null);
+  };
 
   const handleEndSetConfirmed = () => {
     setEndSetConfirmOpen(false);
