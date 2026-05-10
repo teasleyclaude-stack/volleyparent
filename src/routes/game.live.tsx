@@ -534,6 +534,13 @@ function LivePage() {
           tracked={tracked}
           isMyPlayerServing={isMyPlayerServing}
           isMyPlayerFrontRow={isMyPlayerFrontRow}
+          isOnCourt={isOnCourt}
+          benchedFirstName={trackedFirstName}
+          showBenchTip={showBenchTip}
+          onDismissBenchTip={() => {
+            setShowBenchTip(false);
+            dismissTip("playerBenched");
+          }}
           attemptMenuOpen={attemptMenuOpen}
           onAttempt={() => handleStat("kill")}
           onAttemptOutcome={handleAttemptOutcome}
