@@ -1237,6 +1237,7 @@ function SetterButtons(props: PositionPanelProps) {
           altLabel="Block"
           altOnPress={props.onBlock}
           altStat="block"
+          altDisabled={!props.isMyPlayerFrontRow}
         />
         <StatButton stat="error" label="Error" onPress={props.onErrorTap} />
       </div>
