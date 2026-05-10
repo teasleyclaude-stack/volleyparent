@@ -356,6 +356,24 @@ export function eventToFeedItem(session: GameSession, ev: MatchEvent): FanviewFe
     };
   }
 
+  if (ev.type === "ROTATION_CORRECTION") {
+    const steps = ev.correctionSteps ?? 0;
+    let message = "Rotation corrected";
+    if (steps > 0) {
+      message = `Rotation corrected — moved forward ${steps} position${steps === 1 ? "" : "s"}`;
+    } else if (steps < 0) {
+      const n = -steps;
+      message = `Rotation corrected — moved back ${n} position${n === 1 ? "" : "s"}`;
+    }
+    return {
+      ...base,
+      type: "ROTATION_CORRECTION",
+      message,
+      tone: "score",
+      team: ev.correctionTeam,
+    };
+  }
+
   // Skip score corrections from feed (silent fix)
   return null;
   // Suppress unused var lint
