@@ -268,6 +268,14 @@ function Scoreboard({ state, meta }: { state: FanviewState; meta: FanviewMeta })
       </div>
       <div className="mt-3 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
         <span>Set {state.currentSet} of {maxSets(meta.matchFormat ?? "highschool")}</span>
+        {state.isDeciding && (
+          <span
+            className="rounded-full px-2 py-0.5 text-[10px]"
+            style={{ backgroundColor: "rgba(245,158,11,0.18)", color: "#F59E0B" }}
+          >
+            DECIDING SET
+          </span>
+        )}
         <span>·</span>
         <span>
           {meta.homeTeam} {state.homeSetsWon} — {state.awaySetsWon} {meta.awayTeam}
