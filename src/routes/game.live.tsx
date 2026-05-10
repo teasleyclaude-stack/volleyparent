@@ -81,6 +81,7 @@ function LivePage() {
   const [showPassingFlowTip, setShowPassingFlowTip] = useState(false);
   const [showAssistFlowTip, setShowAssistFlowTip] = useState(false);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  const [endSetConfirmOpen, setEndSetConfirmOpen] = useState(false);
   const [lineupModalOpen, setLineupModalOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [trackedPickerOpen, setTrackedPickerOpen] = useState(false);
@@ -342,6 +343,16 @@ function LivePage() {
     setSetOverPopup(null);
   };
 
+  const handleEndSetConfirmed = () => {
+    setEndSetConfirmOpen(false);
+    tapHaptic("heavy");
+    endSet();
+    const after = useGameStore.getState().session;
+    if (after && after.currentSet <= maxSets(after.matchFormat)) {
+      setLineupModalOpen(true);
+    }
+  };
+
   return (
     <PhoneShell>
       {/* Header */}
@@ -583,12 +594,8 @@ function LivePage() {
             <button
               type="button"
               onClick={() => {
-                endSet();
-                // Open lineup modal for the upcoming set if match isn't over.
-                const after = useGameStore.getState().session;
-                if (after && after.currentSet <= maxSets(after.matchFormat)) {
-                  setLineupModalOpen(true);
-                }
+                tapHaptic("medium");
+                setEndSetConfirmOpen(true);
               }}
               className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-foreground active:scale-95"
             >
@@ -729,6 +736,42 @@ function LivePage() {
         </div>
       )}
 
+      {endSetConfirmOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+          onClick={() => setEndSetConfirmOpen(false)}
+        >
+          <div
+            className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-black text-foreground">
+              End Set {session.currentSet} now?
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Current score is {session.homeScore}–{session.awayScore}. The set will close
+              and you'll set the lineup for Set {session.currentSet + 1}.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setEndSetConfirmOpen(false)}
+                className="h-12 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-muted-foreground"
+              >
+                Keep Playing
+              </button>
+              <button
+                type="button"
+                onClick={handleEndSetConfirmed}
+                className="h-12 rounded-2xl bg-destructive text-sm font-black uppercase tracking-widest text-destructive-foreground"
+              >
+                End Set {session.currentSet}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <SetOverPopup
         open={setOverPopup !== null}
         setNumber={setOverPopup?.setNumber ?? session.currentSet}
@@ -818,11 +861,7 @@ function LivePage() {
                 type="button"
                 onClick={() => {
                   setOverflowOpen(false);
-                  endSet();
-                  const after = useGameStore.getState().session;
-                  if (after && after.currentSet <= maxSets(after.matchFormat)) {
-                    setLineupModalOpen(true);
-                  }
+                  setEndSetConfirmOpen(true);
                 }}
                 className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
               >

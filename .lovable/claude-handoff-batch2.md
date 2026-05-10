@@ -497,3 +497,121 @@ Then walk through this manually and report results:
 - Repeat for a Setter and a non-Libero DS tracked player.
 
 Write "Verified by re-reading file after edit." Do NOT claim done without the BEFORE/AFTER paste.
+
+---
+
+## FIX 13 — Confirm before manually ending a set
+
+### Goal
+Prevent accidental taps on the manual **End Set** button. Show a "Keep Playing / End Set N" confirmation popup before `endSet()` actually fires. Mirror the existing **End Game?** confirmation pattern already in `game.live.tsx` — same look, same feel, same destructive button color.
+
+The auto end-of-set popup (`SetOverPopup`, fired when a side-out completes a set) already has Confirm / Keep Playing — DO NOT touch it.
+
+### Files to touch (only this one)
+`src/routes/game.live.tsx`
+
+DO NOT touch `gameStore.ts`, `endSet()`, or `SetOverPopup.tsx`.
+
+### Manual triggers that need confirm (currently call `endSet()` directly)
+1. **Bottom-of-screen "End Set N" button** (~line 593–607).
+2. **"End Set Early" item in overflow ⋯ menu** (~line 827–841).
+
+### Step 1 — Add confirm state
+Right next to `const [endConfirmOpen, setEndConfirmOpen] = useState(false);` (~line 83):
+```ts
+const [endSetConfirmOpen, setEndSetConfirmOpen] = useState(false);
+```
+
+### Step 2 — Add the shared handler near other set handlers
+After `keepPlayingSet` (~line 344):
+```ts
+const handleEndSetConfirmed = () => {
+  setEndSetConfirmOpen(false);
+  tapHaptic("heavy");
+  endSet();
+  const after = useGameStore.getState().session;
+  if (after && after.currentSet <= maxSets(after.matchFormat)) {
+    setLineupModalOpen(true);
+  }
+};
+```
+
+### Step 3 — Re-wire both manual triggers to open the confirm
+Bottom End Set button:
+```tsx
+onClick={() => {
+  tapHaptic("medium");
+  setEndSetConfirmOpen(true);
+}}
+```
+
+Overflow "End Set Early":
+```tsx
+onClick={() => {
+  setOverflowOpen(false);
+  setEndSetConfirmOpen(true);
+}}
+```
+
+### Step 4 — Render the confirm popup
+Place IMMEDIATELY AFTER the existing `endConfirmOpen` modal block, BEFORE `<SetOverPopup ... />`:
+```tsx
+{endSetConfirmOpen && (
+  <div
+    className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+    onClick={() => setEndSetConfirmOpen(false)}
+  >
+    <div
+      className="w-full max-w-[440px] rounded-t-3xl border border-border bg-popover p-5 sm:rounded-3xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h3 className="text-lg font-black text-foreground">
+        End Set {session.currentSet} now?
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Current score is {session.homeScore}–{session.awayScore}. The set will close
+        and you'll set the lineup for Set {session.currentSet + 1}.
+      </p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setEndSetConfirmOpen(false)}
+          className="h-12 rounded-2xl border border-border bg-card text-sm font-black uppercase tracking-widest text-muted-foreground"
+        >
+          Keep Playing
+        </button>
+        <button
+          type="button"
+          onClick={handleEndSetConfirmed}
+          className="h-12 rounded-2xl bg-destructive text-sm font-black uppercase tracking-widest text-destructive-foreground"
+        >
+          End Set {session.currentSet}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+```
+
+### What NOT to do
+- Do NOT touch `SetOverPopup` (auto end-of-set after a winning rally already has Confirm/Keep Playing).
+- Do NOT modify `gameStore.endSet()`.
+- Do NOT touch the End Match / End Game flow — it already uses `endConfirmOpen`.
+- Do NOT add a separate confirm to the auto popup path — only the two MANUAL triggers above.
+- Do NOT remove the lineup-modal-opens-after-end-set follow-up logic — keep it inside `handleEndSetConfirmed`.
+
+### Proof required
+Paste BEFORE/AFTER of:
+1. The new state line in the component body.
+2. The `handleEndSetConfirmed` helper.
+3. The two re-wired `onClick` blocks (bottom button + overflow item).
+4. The new `{endSetConfirmOpen && ...}` JSX block.
+
+Then verify manually:
+- Mid-set → tap bottom **End Set N** → popup shows correct score & set number.
+- Tap **Keep Playing** or backdrop → popup closes, score/set unchanged.
+- Tap **End Set N** in popup → set closes, lineup modal opens for next set.
+- Open ⋯ → **End Set Early** → same confirm behavior.
+- Win a rally that completes a set normally → original `SetOverPopup` still appears (no double prompt).
+
+Write "Verified by re-reading file after edit." Do NOT claim done without the BEFORE/AFTER paste.
