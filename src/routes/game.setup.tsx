@@ -631,6 +631,7 @@ function AddPlayerModal({
 
         <div className="space-y-2">
           <input
+            ref={nameRef}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Player name"
