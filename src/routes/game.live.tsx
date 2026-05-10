@@ -825,11 +825,7 @@ function LivePage() {
                 type="button"
                 onClick={() => {
                   setOverflowOpen(false);
-                  endSet();
-                  const after = useGameStore.getState().session;
-                  if (after && after.currentSet <= maxSets(after.matchFormat)) {
-                    setLineupModalOpen(true);
-                  }
+                  setEndSetConfirmOpen(true);
                 }}
                 className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
               >
