@@ -268,11 +268,9 @@ function LivePage() {
           />
         </div>
 
-        {/* -1 buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <SubButton label={`− ${session.myTeam}`} onPress={() => handleRemove("myTeam")} disabled={session.myTeamScore <= 0} />
-          <SubButton label={`− ${session.opponent}`} onPress={() => handleRemove("opponent")} disabled={session.opponentScore <= 0} />
-        </div>
+        <p className="text-center text-[10px] text-muted-foreground">
+          Tap to add · Double-tap to remove
+        </p>
 
         {/* Timeouts */}
         <div className="grid grid-cols-2 gap-2">
