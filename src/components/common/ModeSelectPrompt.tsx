@@ -15,9 +15,9 @@ interface ModeOption {
 
 const OPTIONS: ModeOption[] = [
   { id: "parent", label: "Parent", desc: "Follow my kid everywhere", emoji: "👨‍👩‍👦", available: true },
+  { id: "fan", label: "Fan", desc: "Just here to watch", emoji: "📣", available: false },
   { id: "player", label: "Player", desc: "Track my game, build my profile", emoji: "🏐", available: false },
   { id: "coach", label: "Coach", desc: "Run the team, run the data", emoji: "📋", available: false },
-  { id: "fan", label: "Fan", desc: "Just here to watch", emoji: "📣", available: false },
 ];
 
 interface Props {
