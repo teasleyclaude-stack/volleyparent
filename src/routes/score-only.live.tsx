@@ -257,14 +257,14 @@ function LivePage() {
           <ScoreActionButton
             label={`+ ${session.myTeam}`}
             onPress={() => handleAdd("myTeam")}
+            onDoublePress={() => handleRemove("myTeam")}
             color={session.myTeamColor}
-            tone="add"
           />
           <ScoreActionButton
             label={`+ ${session.opponent}`}
             onPress={() => handleAdd("opponent")}
+            onDoublePress={() => handleRemove("opponent")}
             color={session.opponentColor}
-            tone="add"
           />
         </div>
 
