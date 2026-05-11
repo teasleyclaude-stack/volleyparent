@@ -23,14 +23,19 @@ const OPTIONS: ModeOption[] = [
 interface Props {
   open: boolean;
   onContinue: (mode: Mode) => void;
+  beforeSave?: (mode: Mode) => Promise<boolean> | boolean;
 }
 
-export function ModeSelectPrompt({ open, onContinue }: Props) {
+export function ModeSelectPrompt({ open, onContinue, beforeSave }: Props) {
   const [selected, setSelected] = useState<Mode>("parent");
 
   if (!open) return null;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    if (beforeSave) {
+      const ok = await beforeSave(selected);
+      if (!ok) return;
+    }
     try {
       window.localStorage.setItem(STORAGE_KEY, selected);
     } catch {
