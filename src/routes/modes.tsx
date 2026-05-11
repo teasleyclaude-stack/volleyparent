@@ -25,17 +25,11 @@ function ModesPage() {
     router.preloadRoute({ to: "/" }).catch(() => {});
   }, [router]);
 
-  const beforeSave = () => {
-    console.log("[modes] beforeSave called, hasActive=", hasActive, "session=", session);
-    return new Promise<boolean>((resolve) => {
-      if (!hasActive) {
-        console.log("[modes] no active session, resolving true");
-        return resolve(true);
-      }
-      console.log("[modes] active session, opening confirm dialog");
+  const beforeSave = () =>
+    new Promise<boolean>((resolve) => {
+      if (!hasActive) return resolve(true);
       setPending({ resolve });
     });
-  };
 
   const handleConfirm = () => {
     pending?.resolve(true);
@@ -48,7 +42,7 @@ function ModesPage() {
 
   return (
     <>
-      <ModeSelectPrompt open beforeSave={beforeSave} onContinue={(m) => { console.log("[modes] onContinue", m); navigate({ to: "/" }); }} />
+      <ModeSelectPrompt open beforeSave={beforeSave} onContinue={() => navigate({ to: "/" })} />
       {pending && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 px-6">
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl">
