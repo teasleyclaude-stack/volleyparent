@@ -19,6 +19,7 @@ import { Route as ScoreOnlyLiveRouteImport } from './routes/score-only.live'
 import { Route as GameSetupRouteImport } from './routes/game.setup'
 import { Route as GameLiveRouteImport } from './routes/game.live'
 import { Route as FanviewSessionIdRouteImport } from './routes/fanview.$sessionId'
+import { Route as FanviewScoreSessionIdRouteImport } from './routes/fanview-score.$sessionId'
 import { Route as GameReportSessionIdRouteImport } from './routes/game.report.$sessionId'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -71,6 +72,11 @@ const FanviewSessionIdRoute = FanviewSessionIdRouteImport.update({
   path: '/fanview/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FanviewScoreSessionIdRoute = FanviewScoreSessionIdRouteImport.update({
+  id: '/fanview-score/$sessionId',
+  path: '/fanview-score/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GameReportSessionIdRoute = GameReportSessionIdRouteImport.update({
   id: '/game/report/$sessionId',
   path: '/game/report/$sessionId',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/modes': typeof ModesRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
+  '/fanview-score/$sessionId': typeof FanviewScoreSessionIdRoute
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/modes': typeof ModesRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
+  '/fanview-score/$sessionId': typeof FanviewScoreSessionIdRoute
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/modes': typeof ModesRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
+  '/fanview-score/$sessionId': typeof FanviewScoreSessionIdRoute
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/modes'
     | '/roster'
     | '/settings'
+    | '/fanview-score/$sessionId'
     | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/modes'
     | '/roster'
     | '/settings'
+    | '/fanview-score/$sessionId'
     | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/modes'
     | '/roster'
     | '/settings'
+    | '/fanview-score/$sessionId'
     | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   ModesRoute: typeof ModesRoute
   RosterRoute: typeof RosterRoute
   SettingsRoute: typeof SettingsRoute
+  FanviewScoreSessionIdRoute: typeof FanviewScoreSessionIdRoute
   FanviewSessionIdRoute: typeof FanviewSessionIdRoute
   GameLiveRoute: typeof GameLiveRoute
   GameSetupRoute: typeof GameSetupRoute
@@ -245,6 +258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FanviewSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fanview-score/$sessionId': {
+      id: '/fanview-score/$sessionId'
+      path: '/fanview-score/$sessionId'
+      fullPath: '/fanview-score/$sessionId'
+      preLoaderRoute: typeof FanviewScoreSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/game/report/$sessionId': {
       id: '/game/report/$sessionId'
       path: '/game/report/$sessionId'
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   ModesRoute: ModesRoute,
   RosterRoute: RosterRoute,
   SettingsRoute: SettingsRoute,
+  FanviewScoreSessionIdRoute: FanviewScoreSessionIdRoute,
   FanviewSessionIdRoute: FanviewSessionIdRoute,
   GameLiveRoute: GameLiveRoute,
   GameSetupRoute: GameSetupRoute,
@@ -271,3 +292,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
