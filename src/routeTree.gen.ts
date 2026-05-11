@@ -15,6 +15,7 @@ import { Route as ModesRouteImport } from './routes/modes'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ScoreOnlySetupRouteImport } from './routes/score-only.setup'
+import { Route as ScoreOnlyLiveRouteImport } from './routes/score-only.live'
 import { Route as GameSetupRouteImport } from './routes/game.setup'
 import { Route as GameLiveRouteImport } from './routes/game.live'
 import { Route as FanviewSessionIdRouteImport } from './routes/fanview.$sessionId'
@@ -50,6 +51,11 @@ const ScoreOnlySetupRoute = ScoreOnlySetupRouteImport.update({
   path: '/score-only/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScoreOnlyLiveRoute = ScoreOnlyLiveRouteImport.update({
+  id: '/score-only/live',
+  path: '/score-only/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GameSetupRoute = GameSetupRouteImport.update({
   id: '/game/setup',
   path: '/game/setup',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
+  '/score-only/live': typeof ScoreOnlyLiveRoute
   '/score-only/setup': typeof ScoreOnlySetupRoute
   '/game/report/$sessionId': typeof GameReportSessionIdRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
+  '/score-only/live': typeof ScoreOnlyLiveRoute
   '/score-only/setup': typeof ScoreOnlySetupRoute
   '/game/report/$sessionId': typeof GameReportSessionIdRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
   '/game/live': typeof GameLiveRoute
   '/game/setup': typeof GameSetupRoute
+  '/score-only/live': typeof ScoreOnlyLiveRoute
   '/score-only/setup': typeof ScoreOnlySetupRoute
   '/game/report/$sessionId': typeof GameReportSessionIdRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
+    | '/score-only/live'
     | '/score-only/setup'
     | '/game/report/$sessionId'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
+    | '/score-only/live'
     | '/score-only/setup'
     | '/game/report/$sessionId'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/fanview/$sessionId'
     | '/game/live'
     | '/game/setup'
+    | '/score-only/live'
     | '/score-only/setup'
     | '/game/report/$sessionId'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   FanviewSessionIdRoute: typeof FanviewSessionIdRoute
   GameLiveRoute: typeof GameLiveRoute
   GameSetupRoute: typeof GameSetupRoute
+  ScoreOnlyLiveRoute: typeof ScoreOnlyLiveRoute
   ScoreOnlySetupRoute: typeof ScoreOnlySetupRoute
   GameReportSessionIdRoute: typeof GameReportSessionIdRoute
 }
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScoreOnlySetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/score-only/live': {
+      id: '/score-only/live'
+      path: '/score-only/live'
+      fullPath: '/score-only/live'
+      preLoaderRoute: typeof ScoreOnlyLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/game/setup': {
       id: '/game/setup'
       path: '/game/setup'
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   FanviewSessionIdRoute: FanviewSessionIdRoute,
   GameLiveRoute: GameLiveRoute,
   GameSetupRoute: GameSetupRoute,
+  ScoreOnlyLiveRoute: ScoreOnlyLiveRoute,
   ScoreOnlySetupRoute: ScoreOnlySetupRoute,
   GameReportSessionIdRoute: GameReportSessionIdRoute,
 }
