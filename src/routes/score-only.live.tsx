@@ -257,6 +257,8 @@ function LivePage() {
               textColor={myTeamTextColor}
               leading={isLeading === "myTeam"}
               flash={flashTeam === "myTeam"}
+              onPress={() => handleAdd("myTeam")}
+              onDoublePress={() => handleRemove("myTeam")}
             />
             <ScoreCell
               name={session.opponent}
@@ -265,6 +267,8 @@ function LivePage() {
               textColor={opponentTextColor}
               leading={isLeading === "opponent"}
               flash={flashTeam === "opponent"}
+              onPress={() => handleAdd("opponent")}
+              onDoublePress={() => handleRemove("opponent")}
             />
           </div>
           <div className="mt-3 text-center text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
