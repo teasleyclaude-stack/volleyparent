@@ -257,6 +257,8 @@ function LivePage() {
               textColor={myTeamTextColor}
               leading={isLeading === "myTeam"}
               flash={flashTeam === "myTeam"}
+              onPress={() => handleAdd("myTeam")}
+              onDoublePress={() => handleRemove("myTeam")}
             />
             <ScoreCell
               name={session.opponent}
@@ -265,6 +267,8 @@ function LivePage() {
               textColor={opponentTextColor}
               leading={isLeading === "opponent"}
               flash={flashTeam === "opponent"}
+              onPress={() => handleAdd("opponent")}
+              onDoublePress={() => handleRemove("opponent")}
             />
           </div>
           <div className="mt-3 text-center text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -377,6 +381,8 @@ function ScoreCell({
   textColor,
   leading,
   flash,
+  onPress,
+  onDoublePress,
 }: {
   name: string;
   score: number;
@@ -384,12 +390,44 @@ function ScoreCell({
   textColor: string;
   leading: boolean | null;
   flash: boolean;
+  onPress?: () => void;
+  onDoublePress?: () => void;
 }) {
   const fontSize = leading ? 96 : leading === false ? 72 : 84;
+  const lastTapRef = useRef<number>(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleClick = () => {
+    if (!onPress && !onDoublePress) return;
+    if (!onDoublePress) {
+      onPress?.();
+      return;
+    }
+    const now = Date.now();
+    const dt = now - lastTapRef.current;
+    if (dt < 300) {
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = null;
+      }
+      lastTapRef.current = 0;
+      onDoublePress();
+      return;
+    }
+    lastTapRef.current = now;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      onPress?.();
+      tapTimerRef.current = null;
+    }, 220);
+  };
+
   return (
-    <div
+    <button
+      type="button"
+      onClick={onPress || onDoublePress ? handleClick : undefined}
       className={cn(
-        "flex flex-col items-center justify-center rounded-xl py-3 transition-colors",
+        "flex flex-col items-center justify-center rounded-xl py-3 transition-colors active:scale-[0.98] select-none",
         flash && "ring-2 ring-destructive",
       )}
       style={{ backgroundColor: leading ? `${color}22` : "transparent" }}
@@ -406,7 +444,7 @@ function ScoreCell({
       >
         {score}
       </div>
-    </div>
+    </button>
   );
 }
 
