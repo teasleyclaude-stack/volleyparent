@@ -54,7 +54,7 @@ function ModesPage() {
     <>
       <ModeSelectPrompt open beforeSave={beforeSave} onContinue={() => navigate({ to: "/" })} />
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && handleCancel()}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[200]">
           <AlertDialogHeader>
             <AlertDialogTitle>Switch mode during live game?</AlertDialogTitle>
             <AlertDialogDescription>
