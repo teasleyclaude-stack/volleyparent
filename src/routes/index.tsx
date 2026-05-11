@@ -31,6 +31,16 @@ function HomePage() {
   const session = useGameStore((s) => s.session);
   const sessions = useHistoryStore((s) => s.sessions);
   const activeLive = session && !session.isCompleted;
+  const [mode, setMode] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMode(getSavedMode());
+    const onStorage = () => setMode(getSavedMode());
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const modeMeta = mode ? MODE_META[mode] : null;
 
   return (
     <PhoneShell>
@@ -41,9 +51,20 @@ function HomePage() {
             alt="CourtsideView logo"
             className="h-12 w-12 object-contain"
           />
-          <h1 className="text-2xl font-black tracking-tight text-foreground">CourtsideView</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-black tracking-tight text-foreground">CourtsideView</h1>
+            {modeMeta && (
+              <Link
+                to="/modes"
+                className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-primary active:scale-[0.97]"
+              >
+                <span aria-hidden>{modeMeta.emoji}</span>
+                <span>{modeMeta.label}</span>
+              </Link>
+            )}
+          </div>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">Your game day companion.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Your game day companion.</p>
       </header>
 
       <main className="flex-1 space-y-4 px-5 pb-6">
