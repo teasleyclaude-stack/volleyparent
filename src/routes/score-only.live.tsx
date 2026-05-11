@@ -69,6 +69,26 @@ function LivePage() {
     }
   }, [matchOver, session, fv, saveHistory]);
 
+  // Allow free rotation while in Fan Mode (PWA installs are otherwise locked
+  // to portrait via the manifest). Best-effort — APIs vary across browsers.
+  useEffect(() => {
+    const scr = (typeof screen !== "undefined" ? screen : null) as
+      | (Screen & { orientation?: { unlock?: () => void; lock?: (o: string) => Promise<void> } })
+      | null;
+    try {
+      scr?.orientation?.unlock?.();
+    } catch {
+      /* noop */
+    }
+    return () => {
+      try {
+        scr?.orientation?.lock?.("portrait").catch(() => {});
+      } catch {
+        /* noop */
+      }
+    };
+  }, []);
+
   if (!session) {
     return (
       <PhoneShell>
@@ -257,22 +277,20 @@ function LivePage() {
           <ScoreActionButton
             label={`+ ${session.myTeam}`}
             onPress={() => handleAdd("myTeam")}
+            onDoublePress={() => handleRemove("myTeam")}
             color={session.myTeamColor}
-            tone="add"
           />
           <ScoreActionButton
             label={`+ ${session.opponent}`}
             onPress={() => handleAdd("opponent")}
+            onDoublePress={() => handleRemove("opponent")}
             color={session.opponentColor}
-            tone="add"
           />
         </div>
 
-        {/* -1 buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <SubButton label={`− ${session.myTeam}`} onPress={() => handleRemove("myTeam")} disabled={session.myTeamScore <= 0} />
-          <SubButton label={`− ${session.opponent}`} onPress={() => handleRemove("opponent")} disabled={session.opponentScore <= 0} />
-        </div>
+        <p className="text-center text-[10px] text-muted-foreground">
+          Tap to add · Double-tap to remove
+        </p>
 
         {/* Timeouts */}
         <div className="grid grid-cols-2 gap-2">
@@ -395,49 +413,51 @@ function ScoreCell({
 function ScoreActionButton({
   label,
   onPress,
+  onDoublePress,
   color,
-  tone,
 }: {
   label: string;
   onPress: () => void;
+  onDoublePress?: () => void;
   color: string;
-  tone: "add";
 }) {
+  const lastTapRef = useRef<number>(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleClick = () => {
+    if (!onDoublePress) {
+      onPress();
+      return;
+    }
+    const now = Date.now();
+    const dt = now - lastTapRef.current;
+    if (dt < 300) {
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = null;
+      }
+      lastTapRef.current = 0;
+      onDoublePress();
+      return;
+    }
+    lastTapRef.current = now;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      onPress();
+      tapTimerRef.current = null;
+    }, 220);
+  };
+
   return (
     <button
       type="button"
-      onClick={onPress}
+      onClick={handleClick}
       className="flex h-16 items-center justify-center rounded-2xl text-sm font-black uppercase tracking-widest active:scale-[0.98]"
       style={{
         backgroundColor: `${color}33`,
         color: readableTextColor(color),
         border: `2px solid ${color}`,
       }}
-    >
-      {label}
-      {tone === "add" ? null : null}
-    </button>
-  );
-}
-
-function SubButton({
-  label,
-  onPress,
-  disabled,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onPress}
-      disabled={disabled}
-      className={cn(
-        "flex h-12 items-center justify-center rounded-xl border border-border bg-card text-xs font-bold uppercase tracking-widest text-muted-foreground active:scale-[0.98]",
-        disabled && "opacity-40",
-      )}
     >
       {label}
     </button>

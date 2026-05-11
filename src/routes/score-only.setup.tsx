@@ -146,11 +146,16 @@ function SetupPage() {
                       : "bg-transparent text-muted-foreground",
                   )}
                 >
-                  {fmt === "club" ? "Club · Best of 3" : "HS · Best of 5"}
+                  {fmt === "club" ? "Best of 3" : "Best of 5"}
                 </button>
               );
             })}
           </div>
+          <p className="text-center text-[12px] text-muted-foreground">
+            {setup.matchFormat === "club"
+              ? "2 sets to win  ·  Set 3 to 15"
+              : "3 sets to win  ·  Set 5 to 15"}
+          </p>
         </section>
 
         <button
