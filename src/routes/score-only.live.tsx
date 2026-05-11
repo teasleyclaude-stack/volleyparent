@@ -69,6 +69,26 @@ function LivePage() {
     }
   }, [matchOver, session, fv, saveHistory]);
 
+  // Allow free rotation while in Fan Mode (PWA installs are otherwise locked
+  // to portrait via the manifest). Best-effort — APIs vary across browsers.
+  useEffect(() => {
+    const scr = (typeof screen !== "undefined" ? screen : null) as
+      | (Screen & { orientation?: { unlock?: () => void; lock?: (o: string) => Promise<void> } })
+      | null;
+    try {
+      scr?.orientation?.unlock?.();
+    } catch {
+      /* noop */
+    }
+    return () => {
+      try {
+        scr?.orientation?.lock?.("portrait").catch(() => {});
+      } catch {
+        /* noop */
+      }
+    };
+  }, []);
+
   if (!session) {
     return (
       <PhoneShell>
