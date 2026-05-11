@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RosterRouteImport } from './routes/roster'
+import { Route as ModesRouteImport } from './routes/modes'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GameSetupRouteImport } from './routes/game.setup'
@@ -26,6 +27,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const RosterRoute = RosterRouteImport.update({
   id: '/roster',
   path: '/roster',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModesRoute = ModesRouteImport.update({
+  id: '/modes',
+  path: '/modes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -62,6 +68,7 @@ const GameReportSessionIdRoute = GameReportSessionIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
+  '/modes': typeof ModesRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
+  '/modes': typeof ModesRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
+  '/modes': typeof ModesRoute
   '/roster': typeof RosterRoute
   '/settings': typeof SettingsRoute
   '/fanview/$sessionId': typeof FanviewSessionIdRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/history'
+    | '/modes'
     | '/roster'
     | '/settings'
     | '/fanview/$sessionId'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/history'
+    | '/modes'
     | '/roster'
     | '/settings'
     | '/fanview/$sessionId'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/history'
+    | '/modes'
     | '/roster'
     | '/settings'
     | '/fanview/$sessionId'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HistoryRoute: typeof HistoryRoute
+  ModesRoute: typeof ModesRoute
   RosterRoute: typeof RosterRoute
   SettingsRoute: typeof SettingsRoute
   FanviewSessionIdRoute: typeof FanviewSessionIdRoute
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/roster'
       fullPath: '/roster'
       preLoaderRoute: typeof RosterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/modes': {
+      id: '/modes'
+      path: '/modes'
+      fullPath: '/modes'
+      preLoaderRoute: typeof ModesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HistoryRoute: HistoryRoute,
+  ModesRoute: ModesRoute,
   RosterRoute: RosterRoute,
   SettingsRoute: SettingsRoute,
   FanviewSessionIdRoute: FanviewSessionIdRoute,
@@ -208,3 +229,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
