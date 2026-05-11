@@ -1,10 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Play, ArrowRight } from "lucide-react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { BottomTabs } from "@/components/common/BottomTabs";
+import { getSavedMode } from "@/components/common/ModeSelectPrompt";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
 import logo from "@/assets/courtsideview-logo.png";
+
+const MODE_META: Record<string, { label: string; emoji: string }> = {
+  parent: { label: "Parent Mode", emoji: "👨‍👩‍👦" },
+  fan: { label: "Fan Mode", emoji: "📣" },
+  player: { label: "Player Mode", emoji: "🏐" },
+  coach: { label: "Coach Mode", emoji: "📋" },
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
