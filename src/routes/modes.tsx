@@ -42,7 +42,13 @@ function ModesPage() {
 
   return (
     <>
-      <ModeSelectPrompt open beforeSave={beforeSave} onContinue={() => navigate({ to: "/" })} />
+      <ModeSelectPrompt
+        open
+        beforeSave={beforeSave}
+        onContinue={(mode) =>
+          navigate({ to: mode === "fan" ? "/score-only/setup" : "/" })
+        }
+      />
       {pending && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 px-6">
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl">
