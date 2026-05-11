@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { ModeSelectPrompt } from "@/components/common/ModeSelectPrompt";
 import { useGameStore } from "@/store/gameStore";
 import {
@@ -25,9 +25,15 @@ export const Route = createFileRoute("/modes")({
 
 function ModesPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const session = useGameStore((s) => s.session);
   const hasActive = !!session && !session.isCompleted;
   const [pending, setPending] = useState<{ resolve: (ok: boolean) => void } | null>(null);
+
+  // Warm up the Home route bundle so the post-Continue navigation feels instant.
+  useEffect(() => {
+    router.preloadRoute({ to: "/" }).catch(() => {});
+  }, [router]);
 
   const beforeSave = () =>
     new Promise<boolean>((resolve) => {
