@@ -25,11 +25,17 @@ function ModesPage() {
     router.preloadRoute({ to: "/" }).catch(() => {});
   }, [router]);
 
-  const beforeSave = () =>
-    new Promise<boolean>((resolve) => {
-      if (!hasActive) return resolve(true);
+  const beforeSave = () => {
+    console.log("[modes] beforeSave called, hasActive=", hasActive, "session=", session);
+    return new Promise<boolean>((resolve) => {
+      if (!hasActive) {
+        console.log("[modes] no active session, resolving true");
+        return resolve(true);
+      }
+      console.log("[modes] active session, opening confirm dialog");
       setPending({ resolve });
     });
+  };
 
   const handleConfirm = () => {
     pending?.resolve(true);
