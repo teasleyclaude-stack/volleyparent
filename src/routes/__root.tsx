@@ -7,6 +7,7 @@ import { InstallBanner } from "@/components/common/InstallBanner";
 import { PracticeBanner } from "@/components/practice/PracticeBanner";
 import { PracticeCoordinator } from "@/components/practice/PracticeCoordinator";
 import { WelcomePrompt } from "@/components/practice/WelcomePrompt";
+import { ModeSelectPrompt, getSavedMode } from "@/components/common/ModeSelectPrompt";
 
 function NotFoundComponent() {
   return (
@@ -96,15 +97,35 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const loc = useLocation();
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showMode, setShowMode] = useState(false);
+  const [modeChecked, setModeChecked] = useState(false);
 
   useEffect(() => {
+    if (loc.pathname !== "/") return;
+    const savedMode = getSavedMode();
+    if (!savedMode) {
+      setShowMode(true);
+      setModeChecked(true);
+      return;
+    }
+    setModeChecked(true);
+    try {
+      const seen = window.localStorage.getItem("courtsideview_practice_seen");
+      if (!seen) setShowWelcome(true);
+    } catch {
+      /* noop */
+    }
+  }, [loc.pathname]);
+
+  const handleModeContinue = () => {
+    setShowMode(false);
     try {
       const seen = window.localStorage.getItem("courtsideview_practice_seen");
       if (!seen && loc.pathname === "/") setShowWelcome(true);
     } catch {
       /* noop */
     }
-  }, [loc.pathname]);
+  };
 
   return (
     <SplashScreen>
@@ -113,6 +134,8 @@ function RootComponent() {
       <InstallBanner />
       <PracticeCoordinator />
       <WelcomePrompt open={showWelcome} onSkip={() => setShowWelcome(false)} />
+      <ModeSelectPrompt open={showMode} onContinue={handleModeContinue} />
+      {!modeChecked && loc.pathname === "/" ? null : null}
     </SplashScreen>
   );
 }
