@@ -411,12 +411,14 @@ function ScoreCell({
         tapTimerRef.current = null;
       }
       lastTapRef.current = 0;
+      tapHaptic("medium");
       onDoublePress();
       return;
     }
     lastTapRef.current = now;
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
     tapTimerRef.current = setTimeout(() => {
+      tapHaptic("heavy");
       onPress?.();
       tapTimerRef.current = null;
     }, 220);
