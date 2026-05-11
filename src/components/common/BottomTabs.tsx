@@ -4,7 +4,7 @@ import { Home, History, Users, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { to: "/", label: "Home", icon: Home },
+  { to: "/modes", label: "Home", icon: Home },
   { to: "/history", label: "History", icon: History },
   { to: "/roster", label: "Roster", icon: Users },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
