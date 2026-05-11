@@ -444,30 +444,6 @@ function ScoreActionButton({
   );
 }
 
-function SubButton({
-  label,
-  onPress,
-  disabled,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onPress}
-      disabled={disabled}
-      className={cn(
-        "flex h-12 items-center justify-center rounded-xl border border-border bg-card text-xs font-bold uppercase tracking-widest text-muted-foreground active:scale-[0.98]",
-        disabled && "opacity-40",
-      )}
-    >
-      {label}
-    </button>
-  );
-}
-
 function TimeoutButton({
   label,
   remaining,
