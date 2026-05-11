@@ -393,18 +393,45 @@ function ScoreCell({
 function ScoreActionButton({
   label,
   onPress,
+  onDoublePress,
   color,
-  tone,
 }: {
   label: string;
   onPress: () => void;
+  onDoublePress?: () => void;
   color: string;
-  tone: "add";
 }) {
+  const lastTapRef = useRef<number>(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleClick = () => {
+    if (!onDoublePress) {
+      onPress();
+      return;
+    }
+    const now = Date.now();
+    const dt = now - lastTapRef.current;
+    if (dt < 300) {
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = null;
+      }
+      lastTapRef.current = 0;
+      onDoublePress();
+      return;
+    }
+    lastTapRef.current = now;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      onPress();
+      tapTimerRef.current = null;
+    }, 220);
+  };
+
   return (
     <button
       type="button"
-      onClick={onPress}
+      onClick={handleClick}
       className="flex h-16 items-center justify-center rounded-2xl text-sm font-black uppercase tracking-widest active:scale-[0.98]"
       style={{
         backgroundColor: `${color}33`,
@@ -413,7 +440,6 @@ function ScoreActionButton({
       }}
     >
       {label}
-      {tone === "add" ? null : null}
     </button>
   );
 }
