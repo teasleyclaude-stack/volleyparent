@@ -22,6 +22,8 @@ export interface StepConfig {
   target: string;
   /** Optional secondary target spotlighted at the same time. */
   target2?: string;
+  /** Optional additional targets spotlighted alongside target/target2. */
+  extraTargets?: string[];
   /** Where to position the instruction card. Default: bottom. */
   cardPosition?: "bottom" | "top";
   /** If true, cell briefly pulses with a green ring (for long-press step). */
