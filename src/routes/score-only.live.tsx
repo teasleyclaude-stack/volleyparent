@@ -597,7 +597,7 @@ function MatchOver({
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
       <div className="w-full max-w-[420px] rounded-2xl border border-border bg-card p-6 text-center shadow-2xl">
         <div className="text-[12px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-          {formatLabel(session.matchFormat).toUpperCase()} Match Complete
+          Match Complete
         </div>
         <div className="mt-3 text-2xl font-black" style={{ color: winningColor }}>
           {winningTeam} wins!
