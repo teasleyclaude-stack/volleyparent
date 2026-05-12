@@ -12,9 +12,16 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
     description: "Tap the + button for whichever team just scored. The app handles rotation automatically when the other team earns the serve.",
     target: "score-home",
   },
+  doubleTapRemove: {
+    step: "doubleTapRemove",
+    index: 2,
+    title: "Oops — remove a point",
+    description: "Added a point by mistake? Double-tap the score itself to subtract one. The + buttons only ever add points, so you can't accidentally undo a score.",
+    target: "score-ours",
+  },
   attempt: {
     step: "attempt",
-    index: 2,
+    index: 3,
     title: "Recording an attack",
     description: "When your player attacks, tap ATTEMPT. You'll choose what happened — Kill, Dug, or Error.",
     target: "btn-attempt",

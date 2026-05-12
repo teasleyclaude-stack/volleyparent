@@ -2,22 +2,30 @@ import { create } from "zustand";
 
 export type PracticeStep =
   | "point"
+  | "doubleTapRemove"
   | "attempt"
   | "kill"
   | "killZone"
   | "defense"
   | "longPressSub"
   | "undo"
+  | "scoreSwap"
+  | "correctRotation"
+  | "changeTracked"
   | "complete";
 
 export const PRACTICE_STEPS: PracticeStep[] = [
   "point",
+  "doubleTapRemove",
   "attempt",
   "kill",
   "killZone",
   "defense",
   "longPressSub",
   "undo",
+  "scoreSwap",
+  "correctRotation",
+  "changeTracked",
 ];
 
 interface PracticeStore {
