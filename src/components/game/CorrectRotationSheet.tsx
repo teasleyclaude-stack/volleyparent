@@ -88,7 +88,13 @@ export function CorrectRotationSheet({
         <div className="mt-3 flex items-center gap-3 px-3">
           <button
             type="button"
-            onClick={goBack}
+            data-tutorial="correct-rot-back"
+            onClick={() => {
+              goBack();
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("practice:correct-rotation-changed"));
+              }
+            }}
             className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-border bg-card text-foreground active:scale-95"
             aria-label="Rotate back one"
           >
