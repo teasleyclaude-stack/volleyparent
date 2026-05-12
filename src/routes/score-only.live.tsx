@@ -173,7 +173,7 @@ function LivePage() {
     <PhoneShell>
       <header className="flex items-center justify-between border-b border-border bg-popover px-3 py-2">
         <div className="flex items-center gap-2">
-          <Link to="/" className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground">
+          <Link to="/score-only/setup" className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
