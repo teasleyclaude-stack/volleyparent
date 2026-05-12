@@ -6,6 +6,7 @@ import { BottomTabs } from "@/components/common/BottomTabs";
 import { getSavedMode } from "@/components/common/ModeSelectPrompt";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
+import { useScoreOnlyHistoryStore } from "@/store/scoreOnlyHistoryStore";
 import logo from "@/assets/courtsideview-logo.png";
 
 const MODE_META: Record<string, { label: string; emoji: string }> = {
