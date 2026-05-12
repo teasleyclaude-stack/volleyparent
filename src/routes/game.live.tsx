@@ -447,6 +447,7 @@ function LivePage() {
             type="button"
             onClick={() => setOverflowOpen(true)}
             aria-label="More options"
+            data-tutorial="overflow-menu"
             className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-foreground"
           >
             <MoreVertical className="h-4 w-4" />
@@ -950,6 +951,9 @@ function LivePage() {
               onClick={() => {
                 setOverflowOpen(false);
                 setCorrectRotationOpen(true);
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new Event("practice:correct-rotation-tapped"));
+                }
               }}
               className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
             >
@@ -960,6 +964,9 @@ function LivePage() {
               onClick={() => {
                 setOverflowOpen(false);
                 setTrackedPickerOpen(true);
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new Event("practice:tracked-changed-tapped"));
+                }
               }}
               className="flex w-full items-center gap-2.5 border-t border-border px-4 py-3 text-left text-sm font-bold text-foreground hover:bg-card"
             >

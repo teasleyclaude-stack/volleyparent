@@ -96,6 +96,9 @@ export function Scoreboard(props: ScoreboardProps) {
       setShowFlipTip(false);
       dismissTip("scoreboardFlip");
     }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("practice:flip-toggled"));
+    }
   };
 
   useEffect(() => {
@@ -126,6 +129,9 @@ export function Scoreboard(props: ScoreboardProps) {
       setTimeout(() => setFlashAway(false), 200);
     }
     dismissHint();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("practice:score-corrected"));
+    }
   };
 
   const handleTap = (team: "home" | "away") => {
@@ -352,6 +358,7 @@ export function Scoreboard(props: ScoreboardProps) {
                   type="button"
                   onClick={toggleFlip}
                   aria-label="Flip scoreboard sides"
+                  data-tutorial="score-swap"
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-muted-foreground active:scale-90"
                 >
                   <ArrowLeftRight
