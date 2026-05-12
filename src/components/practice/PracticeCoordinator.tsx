@@ -82,7 +82,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
     title: "Correct the rotation",
     description: "If the on-court lineup drifts out of sync, tap the ⋮ menu and pick Correct Rotation to nudge your team forward or back.",
     target: "overflow-menu",
-    target2: "menu-correct-rotation",
+    target2: "overflow-panel",
   },
   changeTracked: {
     step: "changeTracked",
