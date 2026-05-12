@@ -79,9 +79,10 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
     step: "correctRotation",
     index: 10,
     title: "Correct the rotation",
-    description: "If the on-court lineup drifts out of sync, tap the ⋮ menu and pick Correct Rotation to nudge your team forward or back.",
+    description: "If the on-court lineup drifts out of sync, tap the ⋮ menu, pick Correct Rotation, then nudge your team Back one or Forward one.",
     target: "overflow-menu",
     target2: "menu-correct-rotation",
+    extraTargets: ["correct-rot-back", "correct-rot-fwd"],
   },
   changeTracked: {
     step: "changeTracked",
@@ -232,6 +233,7 @@ export function PracticeCoordinator() {
     window.addEventListener("practice:score-corrected", onScoreCorrected);
     window.addEventListener("practice:flip-toggled", onFlip);
     window.addEventListener("practice:correct-rotation-tapped", onCorrectRot);
+    window.addEventListener("practice:correct-rotation-changed", onCorrectRot);
     window.addEventListener("practice:tracked-changed-tapped", onTrackedTapped);
     return () => {
       window.removeEventListener("practice:attempt-open", onAttempt);
@@ -240,6 +242,7 @@ export function PracticeCoordinator() {
       window.removeEventListener("practice:score-corrected", onScoreCorrected);
       window.removeEventListener("practice:flip-toggled", onFlip);
       window.removeEventListener("practice:correct-rotation-tapped", onCorrectRot);
+      window.removeEventListener("practice:correct-rotation-changed", onCorrectRot);
       window.removeEventListener("practice:tracked-changed-tapped", onTrackedTapped);
     };
   }, [isPractice, advance]);

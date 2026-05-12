@@ -22,6 +22,8 @@ export interface StepConfig {
   target: string;
   /** Optional secondary target spotlighted at the same time. */
   target2?: string;
+  /** Optional additional targets spotlighted alongside target/target2. */
+  extraTargets?: string[];
   /** Where to position the instruction card. Default: bottom. */
   cardPosition?: "bottom" | "top";
   /** If true, cell briefly pulses with a green ring (for long-press step). */
@@ -45,6 +47,7 @@ function rectOf(target: string): DOMRect | null {
 export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps) {
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [rect2, setRect2] = useState<DOMRect | null>(null);
+  const [extraRects, setExtraRects] = useState<DOMRect[]>([]);
   const [showHint, setShowHint] = useState(false);
   const stepStartRef = useRef<number>(Date.now());
 
@@ -62,11 +65,15 @@ export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps
     const tick = () => {
       setRect(rectOf(config.target));
       setRect2(config.target2 ? rectOf(config.target2) : null);
+      const extras = (config.extraTargets ?? [])
+        .map((t) => rectOf(t))
+        .filter((r): r is DOMRect => !!r);
+      setExtraRects(extras);
       raf = window.requestAnimationFrame(tick);
     };
     raf = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(raf);
-  }, [config.target, config.target2]);
+  }, [config.target, config.target2, config.extraTargets]);
 
   // On step change, scroll the target into view if needed so the spotlight
   // and instruction card don't overlap or miss the element.
@@ -87,6 +94,7 @@ export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps
   const cutouts: Array<{ rect: DOMRect | null; pulse?: boolean }> = [
     { rect, pulse: config.pulseRing || showHint },
     { rect: rect2 ?? null, pulse: config.pulseRing || showHint },
+    ...extraRects.map((r) => ({ rect: r, pulse: config.pulseRing || showHint })),
   ];
 
   // Build the dim layer using SVG so we can punch holes for the spotlight(s).
