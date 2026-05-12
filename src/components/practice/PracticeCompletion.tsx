@@ -9,10 +9,14 @@ interface PracticeCompletionProps {
 
 const ITEMS = [
   "Adding points and side outs",
+  "Double-tapping the score to remove a point",
   "Recording kills with the heat map",
   "Tracking digs, blocks, and aces",
   "Quick subs via long press",
   "Undoing mistakes",
+  "Swapping scoreboard sides between sets",
+  "Correcting the rotation mid-game",
+  "Changing the tracked player",
 ];
 
 export function PracticeCompletion({ onReturnToSettings }: PracticeCompletionProps) {
