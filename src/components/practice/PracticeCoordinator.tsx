@@ -233,6 +233,7 @@ export function PracticeCoordinator() {
     window.addEventListener("practice:score-corrected", onScoreCorrected);
     window.addEventListener("practice:flip-toggled", onFlip);
     window.addEventListener("practice:correct-rotation-tapped", onCorrectRot);
+    window.addEventListener("practice:correct-rotation-changed", onCorrectRot);
     window.addEventListener("practice:tracked-changed-tapped", onTrackedTapped);
     return () => {
       window.removeEventListener("practice:attempt-open", onAttempt);
