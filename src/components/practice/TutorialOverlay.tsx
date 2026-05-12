@@ -94,6 +94,7 @@ export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps
   const cutouts: Array<{ rect: DOMRect | null; pulse?: boolean }> = [
     { rect, pulse: config.pulseRing || showHint },
     { rect: rect2 ?? null, pulse: config.pulseRing || showHint },
+    ...extraRects.map((r) => ({ rect: r, pulse: config.pulseRing || showHint })),
   ];
 
   // Build the dim layer using SVG so we can punch holes for the spotlight(s).
