@@ -409,6 +409,26 @@ function LivePage() {
           }}
         />
       )}
+
+      <nav
+        className="sticky bottom-0 z-30 grid grid-cols-2 border-t border-border bg-popover/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+        aria-label="Primary"
+      >
+        <Link
+          to="/"
+          className="flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium tracking-wide text-muted-foreground"
+        >
+          <Home className="h-5 w-5" strokeWidth={1.8} />
+          <span className="uppercase">Home</span>
+        </Link>
+        <Link
+          to="/settings"
+          className="flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium tracking-wide text-muted-foreground"
+        >
+          <SettingsIcon className="h-5 w-5" strokeWidth={1.8} />
+          <span className="uppercase">Settings</span>
+        </Link>
+      </nav>
     </PhoneShell>
   );
 }
