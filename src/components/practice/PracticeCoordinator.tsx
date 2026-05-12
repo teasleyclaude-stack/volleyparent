@@ -29,7 +29,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
   },
   kill: {
     step: "kill",
-    index: 3,
+    index: 4,
     title: "It's a kill!",
     description: "Tap KILL when your player's attack scores a point. You'll then mark where it landed on the opponent's court.",
     target: "attempt-kill",
@@ -37,7 +37,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
   },
   killZone: {
     step: "killZone",
-    index: 4,
+    index: 5,
     title: "Where did it land?",
     description: "Tap the zone where the ball landed. Back row: 1·6·5 · Front row: 2·3·4. This builds your shot chart.",
     target: "kill-zones",
@@ -45,7 +45,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
   },
   defense: {
     step: "defense",
-    index: 5,
+    index: 6,
     title: "Tracking defensive plays",
     description: "Use these for defensive plays. DIG for passing attacks, BLOCK for net blocks, ACE when your player's serve scores directly.",
     target: "defense-row",
@@ -53,7 +53,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
   },
   longPressSub: {
     step: "longPressSub",
-    index: 6,
+    index: 7,
     title: "Quick substitution",
     description: "Long press any player on the court for 1 second to substitute them. Fastest way to make a change during a live rally.",
     target: "court",
@@ -62,15 +62,36 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
   },
   undo: {
     step: "undo",
-    index: 7,
+    index: 8,
     title: "Made a mistake? No problem.",
     description: "Tap UNDO to reverse the last action. Fat fingers happen — this keeps your stats accurate without interrupting the game.",
     target: "btn-undo",
     cardPosition: "top",
   },
+  scoreSwap: {
+    step: "scoreSwap",
+    index: 9,
+    title: "Swap scoreboard sides",
+    description: "Teams switch sides between sets. Tap the ⇄ button between the scores to flip the scoreboard so it matches what you see on the court.",
+    target: "score-swap",
+  },
+  correctRotation: {
+    step: "correctRotation",
+    index: 10,
+    title: "Correct the rotation",
+    description: "If the on-court lineup drifts out of sync, tap the ⋮ menu and pick Correct Rotation to nudge your team forward or back.",
+    target: "overflow-menu",
+  },
+  changeTracked: {
+    step: "changeTracked",
+    index: 11,
+    title: "Change tracked player",
+    description: "Following a different player tonight? Open the ⋮ menu and pick Change Tracked Player to switch who the stats are recorded for.",
+    target: "overflow-menu",
+  },
 };
 
-const TOTAL = 7;
+const TOTAL = 11;
 
 /**
  * Drives the Practice Mode tutorial: detects user actions via gameStore
