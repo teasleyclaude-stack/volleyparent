@@ -255,27 +255,55 @@ function LivePage() {
 
         {/* Scoreboard */}
         <div className="rounded-2xl border border-border bg-card p-4">
-          <div className="grid grid-cols-2 items-center gap-3">
-            <ScoreCell
-              name={session.myTeam}
-              score={session.myTeamScore}
-              color={session.myTeamColor}
-              textColor={myTeamTextColor}
-              leading={isLeading === "myTeam"}
-              flash={flashTeam === "myTeam"}
-              onPress={() => handleAdd("myTeam")}
-              onDoublePress={() => handleRemove("myTeam")}
-            />
-            <ScoreCell
-              name={session.opponent}
-              score={session.opponentScore}
-              color={session.opponentColor}
-              textColor={opponentTextColor}
-              leading={isLeading === "opponent"}
-              flash={flashTeam === "opponent"}
-              onPress={() => handleAdd("opponent")}
-              onDoublePress={() => handleRemove("opponent")}
-            />
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            {(() => {
+              const myCell = (
+                <ScoreCell
+                  key="myTeam"
+                  name={session.myTeam}
+                  score={session.myTeamScore}
+                  color={session.myTeamColor}
+                  textColor={myTeamTextColor}
+                  leading={isLeading === "myTeam"}
+                  flash={flashTeam === "myTeam"}
+                  onPress={() => handleAdd("myTeam")}
+                  onDoublePress={() => handleRemove("myTeam")}
+                />
+              );
+              const oppCell = (
+                <ScoreCell
+                  key="opponent"
+                  name={session.opponent}
+                  score={session.opponentScore}
+                  color={session.opponentColor}
+                  textColor={opponentTextColor}
+                  leading={isLeading === "opponent"}
+                  flash={flashTeam === "opponent"}
+                  onPress={() => handleAdd("opponent")}
+                  onDoublePress={() => handleRemove("opponent")}
+                />
+              );
+              return flipped ? [oppCell, null, myCell] : [myCell, null, oppCell];
+            })().map((node, i) =>
+              i === 1 ? (
+                <button
+                  key="flip"
+                  type="button"
+                  onClick={toggleFlip}
+                  aria-label="Flip scoreboard sides"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-transparent text-muted-foreground active:scale-90"
+                >
+                  <ArrowLeftRight
+                    className={cn(
+                      "h-[18px] w-[18px] transition-transform duration-200 ease-out",
+                      iconSpin && "rotate-180",
+                    )}
+                  />
+                </button>
+              ) : (
+                node
+              ),
+            )}
           </div>
           <div className="mt-3 text-center text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
             To {target} · {session.myTeamServing ? session.myTeam : session.opponent} serving
