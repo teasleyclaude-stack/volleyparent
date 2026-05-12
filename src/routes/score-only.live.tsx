@@ -5,7 +5,7 @@ import { PhoneShell } from "@/components/common/PhoneShell";
 import { useScoreOnlyStore } from "@/store/scoreOnlyStore";
 import { useScoreOnlyHistoryStore } from "@/store/scoreOnlyHistoryStore";
 import { useScoreOnlyFanview } from "@/hooks/useScoreOnlyFanview";
-import { isDecidingSet, setTarget, formatLabel } from "@/utils/setRules";
+import { isDecidingSet, setTarget } from "@/utils/setRules";
 import { checkScoreOnlySetWon } from "@/utils/scoreOnly";
 import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
@@ -69,24 +69,16 @@ function LivePage() {
     }
   }, [matchOver, session, fv, saveHistory]);
 
-  // Allow free rotation while in Fan Mode (PWA installs are otherwise locked
-  // to portrait via the manifest). Best-effort — APIs vary across browsers.
+  // Allow free rotation while in Fan Mode. Best-effort — APIs vary across browsers.
   useEffect(() => {
     const scr = (typeof screen !== "undefined" ? screen : null) as
-      | (Screen & { orientation?: { unlock?: () => void; lock?: (o: string) => Promise<void> } })
+      | (Screen & { orientation?: { unlock?: () => void } })
       | null;
     try {
       scr?.orientation?.unlock?.();
     } catch {
       /* noop */
     }
-    return () => {
-      try {
-        scr?.orientation?.lock?.("portrait").catch(() => {});
-      } catch {
-        /* noop */
-      }
-    };
   }, []);
 
   if (!session) {
@@ -239,7 +231,7 @@ function LivePage() {
           >
             {deciding
               ? `Set ${session.currentSet} — Deciding`
-              : `${formatLabel(session.matchFormat).toUpperCase()} Match · Set ${session.currentSet} of ${totalSets}`}
+              : `Match · Set ${session.currentSet} of ${totalSets}`}
           </div>
           <div className="mt-1 text-[12px] text-muted-foreground">
             {session.myTeam} <span className="font-black tabular-nums text-foreground">{session.myTeamSetsWon}</span> —{" "}
