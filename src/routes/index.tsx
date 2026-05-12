@@ -6,6 +6,7 @@ import { BottomTabs } from "@/components/common/BottomTabs";
 import { getSavedMode } from "@/components/common/ModeSelectPrompt";
 import { useGameStore } from "@/store/gameStore";
 import { useHistoryStore } from "@/store/historyStore";
+import { useScoreOnlyHistoryStore } from "@/store/scoreOnlyHistoryStore";
 import logo from "@/assets/courtsideview-logo.png";
 
 const MODE_META: Record<string, { label: string; emoji: string }> = {
@@ -30,7 +31,19 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const session = useGameStore((s) => s.session);
   const sessions = useHistoryStore((s) => s.sessions);
+  const fanSessions = useScoreOnlyHistoryStore((s) => s.sessions);
   const activeLive = session && !session.isCompleted;
+
+  type RecentItem =
+    | { kind: "full"; id: string; sortKey: number; data: (typeof sessions)[number] }
+    | { kind: "fan"; id: string; sortKey: number; data: (typeof fanSessions)[number] };
+
+  const recentItems: RecentItem[] = [
+    ...sessions.map((s) => ({ kind: "full" as const, id: s.id, sortKey: new Date(s.date).getTime(), data: s })),
+    ...fanSessions.map((s) => ({ kind: "fan" as const, id: s.id, sortKey: new Date(s.date).getTime(), data: s })),
+  ]
+    .sort((a, b) => b.sortKey - a.sortKey)
+    .slice(0, 5);
   const [mode, setMode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -102,38 +115,72 @@ function HomePage() {
             </Link>
           </div>
 
-          {sessions.length === 0 ? (
+          {recentItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-card/50 p-6 text-center">
               <p className="text-sm text-muted-foreground">No games yet. Tap <strong className="text-foreground">Start New Game</strong> to begin.</p>
             </div>
           ) : (
             <ul className="space-y-2">
-              {sessions.slice(0, 5).map((s) => {
-                const tracked = s.roster.find((p) => p.isTracked);
-                return (
-                  <li key={s.id}>
-                    <Link
-                      to="/game/report/$sessionId"
-                      params={{ sessionId: s.id }}
-                      className="flex items-center justify-between rounded-2xl border border-border bg-card p-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-bold text-foreground">
-                          {s.homeTeam} vs {s.awayTeam}
+              {recentItems.map((it) => {
+                if (it.kind === "full") {
+                  const s = it.data;
+                  const tracked = s.roster.find((p) => p.isTracked);
+                  return (
+                    <li key={`full-${s.id}`}>
+                      <Link
+                        to="/game/report/$sessionId"
+                        params={{ sessionId: s.id }}
+                        className="flex items-center justify-between rounded-2xl border border-border bg-card p-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary">
+                              Game Mode
+                            </span>
+                            <span className="truncate text-sm font-bold text-foreground">
+                              {s.homeTeam} vs {s.awayTeam}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-[11px] text-muted-foreground">
+                            {new Date(s.date).toLocaleDateString()} · {s.completedSets.length} set{s.completedSets.length === 1 ? "" : "s"}
+                          </div>
                         </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {new Date(s.date).toLocaleDateString()} · {s.completedSets.length} set{s.completedSets.length === 1 ? "" : "s"}
+                        {tracked && (
+                          <div className="ml-2 text-right">
+                            <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                              {tracked.name.split(" ")[0]}
+                            </div>
+                            <div className="text-lg font-black tabular-nums text-primary">{tracked.stats.kills}K</div>
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                }
+                const s = it.data;
+                return (
+                  <li key={`fan-${s.id}`}>
+                    <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest"
+                            style={{ backgroundColor: "rgba(57,255,20,0.15)", color: "#39FF14" }}
+                          >
+                            Fan Mode
+                          </span>
+                          <span className="truncate text-sm font-bold text-foreground">
+                            {s.myTeam} vs {s.opponent}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                          {new Date(s.date).toLocaleDateString()} · {s.completedSets.length} set{s.completedSets.length === 1 ? "" : "s"} ·{" "}
+                          <span className="font-black tabular-nums text-foreground">
+                            {s.myTeamSetsWon}–{s.opponentSetsWon}
+                          </span>
                         </div>
                       </div>
-                      {tracked && (
-                        <div className="text-right">
-                          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                            {tracked.name.split(" ")[0]}
-                          </div>
-                          <div className="text-lg font-black tabular-nums text-primary">{tracked.stats.kills}K</div>
-                        </div>
-                      )}
-                    </Link>
+                    </div>
                   </li>
                 );
               })}
