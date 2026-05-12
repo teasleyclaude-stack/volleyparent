@@ -83,6 +83,18 @@ function LivePage() {
     }
   }, []);
 
+  // Reset flip whenever a new set begins (teams may switch back).
+  useEffect(() => {
+    setFlipped(false);
+  }, [session?.currentSet]);
+
+  const toggleFlip = () => {
+    tapHaptic("light");
+    setFlipped((p) => !p);
+    setIconSpin(true);
+    window.setTimeout(() => setIconSpin(false), 220);
+  };
+
   if (!session) {
     return (
       <PhoneShell>
