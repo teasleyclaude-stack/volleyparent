@@ -242,6 +242,7 @@ export function PracticeCoordinator() {
       window.removeEventListener("practice:score-corrected", onScoreCorrected);
       window.removeEventListener("practice:flip-toggled", onFlip);
       window.removeEventListener("practice:correct-rotation-tapped", onCorrectRot);
+      window.removeEventListener("practice:correct-rotation-changed", onCorrectRot);
       window.removeEventListener("practice:tracked-changed-tapped", onTrackedTapped);
     };
   }, [isPractice, advance]);
