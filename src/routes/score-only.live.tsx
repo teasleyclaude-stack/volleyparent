@@ -38,6 +38,8 @@ function LivePage() {
   const [matchOver, setMatchOver] = useState<null | "myTeam" | "opponent">(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [flashTeam, setFlashTeam] = useState<null | "myTeam" | "opponent">(null);
+  const [flipped, setFlipped] = useState(false);
+  const [iconSpin, setIconSpin] = useState(false);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confettiFired = useRef(false);
 
