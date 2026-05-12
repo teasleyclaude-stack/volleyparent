@@ -47,6 +47,7 @@ function rectOf(target: string): DOMRect | null {
 export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps) {
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [rect2, setRect2] = useState<DOMRect | null>(null);
+  const [extraRects, setExtraRects] = useState<DOMRect[]>([]);
   const [showHint, setShowHint] = useState(false);
   const stepStartRef = useRef<number>(Date.now());
 
@@ -64,11 +65,15 @@ export function TutorialOverlay({ config, onSkip, onBack }: TutorialOverlayProps
     const tick = () => {
       setRect(rectOf(config.target));
       setRect2(config.target2 ? rectOf(config.target2) : null);
+      const extras = (config.extraTargets ?? [])
+        .map((t) => rectOf(t))
+        .filter((r): r is DOMRect => !!r);
+      setExtraRects(extras);
       raf = window.requestAnimationFrame(tick);
     };
     raf = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(raf);
-  }, [config.target, config.target2]);
+  }, [config.target, config.target2, config.extraTargets]);
 
   // On step change, scroll the target into view if needed so the spotlight
   // and instruction card don't overlap or miss the element.
