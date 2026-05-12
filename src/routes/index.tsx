@@ -31,7 +31,19 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const session = useGameStore((s) => s.session);
   const sessions = useHistoryStore((s) => s.sessions);
+  const fanSessions = useScoreOnlyHistoryStore((s) => s.sessions);
   const activeLive = session && !session.isCompleted;
+
+  type RecentItem =
+    | { kind: "full"; id: string; sortKey: number; data: (typeof sessions)[number] }
+    | { kind: "fan"; id: string; sortKey: number; data: (typeof fanSessions)[number] };
+
+  const recentItems: RecentItem[] = [
+    ...sessions.map((s) => ({ kind: "full" as const, id: s.id, sortKey: new Date(s.date).getTime(), data: s })),
+    ...fanSessions.map((s) => ({ kind: "fan" as const, id: s.id, sortKey: new Date(s.date).getTime(), data: s })),
+  ]
+    .sort((a, b) => b.sortKey - a.sortKey)
+    .slice(0, 5);
   const [mode, setMode] = useState<string | null>(null);
 
   useEffect(() => {
