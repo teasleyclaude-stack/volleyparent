@@ -114,7 +114,13 @@ export function CorrectRotationSheet({
           </div>
           <button
             type="button"
-            onClick={goForward}
+            data-tutorial="correct-rot-fwd"
+            onClick={() => {
+              goForward();
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("practice:correct-rotation-changed"));
+              }
+            }}
             className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-border bg-card text-foreground active:scale-95"
             aria-label="Rotate forward one"
           >
