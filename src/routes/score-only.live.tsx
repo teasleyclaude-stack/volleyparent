@@ -5,7 +5,7 @@ import { PhoneShell } from "@/components/common/PhoneShell";
 import { useScoreOnlyStore } from "@/store/scoreOnlyStore";
 import { useScoreOnlyHistoryStore } from "@/store/scoreOnlyHistoryStore";
 import { useScoreOnlyFanview } from "@/hooks/useScoreOnlyFanview";
-import { isDecidingSet, setTarget, formatLabel } from "@/utils/setRules";
+import { isDecidingSet, setTarget } from "@/utils/setRules";
 import { checkScoreOnlySetWon } from "@/utils/scoreOnly";
 import { tapHaptic } from "@/utils/haptics";
 import { readableTextColor } from "@/lib/colorContrast";
@@ -69,24 +69,16 @@ function LivePage() {
     }
   }, [matchOver, session, fv, saveHistory]);
 
-  // Allow free rotation while in Fan Mode (PWA installs are otherwise locked
-  // to portrait via the manifest). Best-effort — APIs vary across browsers.
+  // Allow free rotation while in Fan Mode. Best-effort — APIs vary across browsers.
   useEffect(() => {
     const scr = (typeof screen !== "undefined" ? screen : null) as
-      | (Screen & { orientation?: { unlock?: () => void; lock?: (o: string) => Promise<void> } })
+      | (Screen & { orientation?: { unlock?: () => void } })
       | null;
     try {
       scr?.orientation?.unlock?.();
     } catch {
       /* noop */
     }
-    return () => {
-      try {
-        scr?.orientation?.lock?.("portrait").catch(() => {});
-      } catch {
-        /* noop */
-      }
-    };
   }, []);
 
   if (!session) {
@@ -239,7 +231,7 @@ function LivePage() {
           >
             {deciding
               ? `Set ${session.currentSet} — Deciding`
-              : `${formatLabel(session.matchFormat).toUpperCase()} Match · Set ${session.currentSet} of ${totalSets}`}
+              : `Match · Set ${session.currentSet} of ${totalSets}`}
           </div>
           <div className="mt-1 text-[12px] text-muted-foreground">
             {session.myTeam} <span className="font-black tabular-nums text-foreground">{session.myTeamSetsWon}</span> —{" "}
@@ -605,7 +597,7 @@ function MatchOver({
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
       <div className="w-full max-w-[420px] rounded-2xl border border-border bg-card p-6 text-center shadow-2xl">
         <div className="text-[12px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-          {formatLabel(session.matchFormat).toUpperCase()} Match Complete
+          Match Complete
         </div>
         <div className="mt-3 text-2xl font-black" style={{ color: winningColor }}>
           {winningTeam} wins!
