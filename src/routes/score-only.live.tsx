@@ -312,18 +312,23 @@ function LivePage() {
 
         {/* +1 buttons */}
         <div className="grid grid-cols-2 gap-2">
-          <ScoreActionButton
-            label={`+ ${session.myTeam}`}
-            onPress={() => handleAdd("myTeam")}
-            onDoublePress={() => handleRemove("myTeam")}
-            color={session.myTeamColor}
-          />
-          <ScoreActionButton
-            label={`+ ${session.opponent}`}
-            onPress={() => handleAdd("opponent")}
-            onDoublePress={() => handleRemove("opponent")}
-            color={session.opponentColor}
-          />
+          {(flipped
+            ? [
+                { team: "opponent" as const, label: session.opponent, color: session.opponentColor },
+                { team: "myTeam" as const, label: session.myTeam, color: session.myTeamColor },
+              ]
+            : [
+                { team: "myTeam" as const, label: session.myTeam, color: session.myTeamColor },
+                { team: "opponent" as const, label: session.opponent, color: session.opponentColor },
+              ]
+          ).map((b) => (
+            <ScoreActionButton
+              key={b.team}
+              label={`+ ${b.label}`}
+              onPress={() => handleAdd(b.team)}
+              color={b.color}
+            />
+          ))}
         </div>
 
         <p className="text-center text-[10px] text-muted-foreground">
