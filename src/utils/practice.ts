@@ -19,7 +19,7 @@ function stats() {
   return { kills: 0, errors: 0, totalAttempts: 0, digs: 0, blocks: 0, aces: 0, assists: 0, dugAttempts: 0 };
 }
 
-const HOME_ROT: RotationState = ["p1", "p2", "p3", "p4", "p5", "p6"];
+const HOME_ROT: RotationState = ["p1", "p2", "p3", "p4", "p7", "p6"];
 const AWAY_ROT: RotationState = ["opp-1", "opp-2", "opp-3", "opp-4", "opp-5", "opp-6"];
 
 /**
