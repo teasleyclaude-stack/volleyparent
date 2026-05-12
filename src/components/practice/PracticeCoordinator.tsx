@@ -206,13 +206,39 @@ export function PracticeCoordinator() {
     const onZone = () => {
       if (usePracticeStore.getState().step === "killZone") advance();
     };
+    const onScoreCorrected = () => {
+      if (usePracticeStore.getState().step === "doubleTapRemove") {
+        setFlash("Point removed!");
+        advance();
+      }
+    };
+    const onFlip = () => {
+      if (usePracticeStore.getState().step === "scoreSwap") {
+        setFlash("Sides flipped!");
+        advance();
+      }
+    };
+    const onCorrectRot = () => {
+      if (usePracticeStore.getState().step === "correctRotation") advance();
+    };
+    const onTrackedTapped = () => {
+      if (usePracticeStore.getState().step === "changeTracked") advance();
+    };
     window.addEventListener("practice:attempt-open", onAttempt);
     window.addEventListener("practice:kill-tapped", onKillTapped);
     window.addEventListener("practice:kill-zone-selected", onZone);
+    window.addEventListener("practice:score-corrected", onScoreCorrected);
+    window.addEventListener("practice:flip-toggled", onFlip);
+    window.addEventListener("practice:correct-rotation-tapped", onCorrectRot);
+    window.addEventListener("practice:tracked-changed-tapped", onTrackedTapped);
     return () => {
       window.removeEventListener("practice:attempt-open", onAttempt);
       window.removeEventListener("practice:kill-tapped", onKillTapped);
       window.removeEventListener("practice:kill-zone-selected", onZone);
+      window.removeEventListener("practice:score-corrected", onScoreCorrected);
+      window.removeEventListener("practice:flip-toggled", onFlip);
+      window.removeEventListener("practice:correct-rotation-tapped", onCorrectRot);
+      window.removeEventListener("practice:tracked-changed-tapped", onTrackedTapped);
     };
   }, [isPractice, advance]);
 
