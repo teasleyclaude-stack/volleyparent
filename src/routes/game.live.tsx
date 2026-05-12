@@ -948,6 +948,7 @@ function LivePage() {
           >
             <button
               type="button"
+              data-tutorial="menu-correct-rotation"
               onClick={() => {
                 setOverflowOpen(false);
                 setCorrectRotationOpen(true);
@@ -961,6 +962,7 @@ function LivePage() {
             </button>
             <button
               type="button"
+              data-tutorial="menu-change-tracked"
               onClick={() => {
                 setOverflowOpen(false);
                 setTrackedPickerOpen(true);
