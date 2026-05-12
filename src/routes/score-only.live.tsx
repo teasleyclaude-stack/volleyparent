@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, MoreVertical, Undo2, Radio, ArrowLeftRight } from "lucide-react";
+import { ArrowLeft, MoreVertical, Undo2, Radio, ArrowLeftRight, Home, Settings as SettingsIcon } from "lucide-react";
 import { PhoneShell } from "@/components/common/PhoneShell";
 import { useScoreOnlyStore } from "@/store/scoreOnlyStore";
 import { useScoreOnlyHistoryStore } from "@/store/scoreOnlyHistoryStore";
