@@ -336,6 +336,7 @@ export function Scoreboard(props: ScoreboardProps) {
                 <button
                   type="button"
                   onClick={left.onTap}
+                  data-tutorial={leftKey === (isHomeOurs ? "home" : "away") ? "score-cell-ours" : "score-cell-opp"}
                   className="bg-transparent p-0 text-left"
                   aria-label={left.ariaCorrect}
                 >
@@ -404,6 +405,7 @@ export function Scoreboard(props: ScoreboardProps) {
                 <button
                   type="button"
                   onClick={right.onTap}
+                  data-tutorial={rightKey === (isHomeOurs ? "home" : "away") ? "score-cell-ours" : "score-cell-opp"}
                   className="bg-transparent p-0 text-right"
                   aria-label={right.ariaCorrect}
                 >
