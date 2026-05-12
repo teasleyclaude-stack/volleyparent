@@ -90,7 +90,7 @@ const STEPS: Record<string, Omit<StepConfig, "totalSteps">> = {
     title: "Change tracked player",
     description: "Following a different player tonight? Open the ⋮ menu and pick Change Tracked Player to switch who the stats are recorded for.",
     target: "overflow-menu",
-    target2: "menu-change-tracked",
+    target2: "overflow-panel",
   },
 };
 
