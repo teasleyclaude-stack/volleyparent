@@ -943,7 +943,6 @@ function LivePage() {
           onClick={() => setOverflowOpen(false)}
         >
           <div
-            data-tutorial="overflow-panel"
             className="mr-3 mt-14 w-56 overflow-hidden rounded-2xl border border-border bg-popover shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
