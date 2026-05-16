@@ -105,6 +105,7 @@ export function ModeSelectPrompt({ open, onContinue, beforeSave }: Props) {
           You can change this anytime in Settings
         </p>
       </div>
+      </div>
     </div>
   );
 }
