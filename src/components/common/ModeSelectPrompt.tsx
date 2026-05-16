@@ -45,7 +45,8 @@ export function ModeSelectPrompt({ open, onContinue, beforeSave }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[140] flex flex-col overflow-y-auto bg-background px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+2rem)]">
+    <div className="fixed inset-0 z-[140] overflow-y-auto bg-background pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+2rem)]">
+      <div className="mx-auto flex min-h-full w-full max-w-[440px] flex-col px-6 sm:my-4 sm:min-h-[calc(100vh-2rem)] sm:rounded-[2.5rem] sm:border sm:border-border sm:bg-background sm:py-8 sm:shadow-2xl sm:shadow-black/40">
       <header className="mb-6">
         <h1 className="text-[34px] font-black leading-[1.05] text-foreground">Welcome,</h1>
         <h1 className="text-[34px] font-black italic leading-[1.05] text-primary">
@@ -103,6 +104,7 @@ export function ModeSelectPrompt({ open, onContinue, beforeSave }: Props) {
         <p className="mt-3 text-center text-[12px] text-muted-foreground">
           You can change this anytime in Settings
         </p>
+      </div>
       </div>
     </div>
   );
